@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Switch, Image } from 'react-native';
-import styles from '../screens/SettingsScreenStyles';
 import { HEALTH_METRICS, HealthMetric, CATEGORY_ORDER } from '../constants/HealthMetrics';
-import { useTheme } from '../contexts/ThemeContext';
+import { useCSSVariable } from 'uniwind';
 import CollapsibleSection from './CollapsibleSection';
 import { saveCollapsedCategories, loadCollapsedCategories } from '../services/storage';
 
@@ -33,7 +32,10 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   isAllMetricsEnabled,
   handleToggleAllMetrics,
 }) => {
-  const { colors } = useTheme();
+  const [inputBackground, primary] = useCSSVariable([
+    '--color-input-background',
+    '--color-primary',
+  ]) as [string, string];
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -66,11 +68,11 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   const groupedMetrics = groupMetricsByCategory(HEALTH_METRICS);
 
   const renderMetricItem = (metric: HealthMetric) => (
-    <View key={metric.id} style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-        <Image source={metric.icon} style={styles.icon} />
+    <View key={metric.id} className="flex-row justify-between items-center mb-2">
+      <View className="flex-row items-center flex-1 mr-2">
+        <Image source={metric.icon} className="w-6 h-6" />
         <Text
-          style={[styles.settingLabel, { marginLeft: 8, color: colors.text, flex: 1 }]}
+          className="ml-2 text-base text-text flex-1"
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -80,19 +82,19 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
       <Switch
         onValueChange={(newValue) => handleToggleHealthMetric(metric, newValue)}
         value={healthMetricStates[metric.stateKey]}
-        trackColor={{ false: colors.inputBackground, true: colors.primary }}
+        trackColor={{ false: inputBackground, true: primary }}
         thumbColor="#FFFFFF"
       />
     </View>
   );
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Health Data to Sync</Text>
-      <View style={[styles.settingItem]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+    <View className="bg-card rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text">Health Data to Sync</Text>
+      <View className="flex-row justify-between items-center mb-2">
+        <View className="flex-row items-center flex-1 mr-2">
           <Text
-            style={[styles.settingLabel, { fontWeight: 'bold', color: colors.text, flex: 1 }]}
+            className="font-bold text-base text-text flex-1"
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -102,7 +104,7 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
         <Switch
           onValueChange={handleToggleAllMetrics}
           value={isAllMetricsEnabled}
-          trackColor={{ false: colors.inputBackground, true: colors.primary }}
+          trackColor={{ false: inputBackground, true: primary }}
           thumbColor="#FFFFFF"
         />
       </View>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert, Text, ScrollView, Platform, TouchableOpacity } from 'react-native';
-import styles from './SettingsScreenStyles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getActiveServerConfig, saveServerConfig, deleteServerConfig, getAllServerConfigs, setActiveServerConfig } from '../services/storage';
 import type { ServerConfig } from '../services/storage';
@@ -16,7 +15,6 @@ import SyncFrequency from '../components/SyncFrequency';
 import AppearanceSettings from '../components/AppearanceSettings';
 import DevTools from '../components/DevTools';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
-import { useTheme } from '../contexts/ThemeContext';
 import * as Application from 'expo-application';
 import type { HealthMetricStates } from '../types/healthRecords';
 import Constants from 'expo-constants';
@@ -26,7 +24,6 @@ interface SettingsScreenProps {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { theme: appTheme, setTheme: setAppTheme, colors } = useTheme();
   const [url, setUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
 
@@ -269,9 +266,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top}]}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.contentContainer}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
+        <View className="flex-1 p-4 pb-20">
           <ServerConfigComponent
             url={url}
             setUrl={setUrl}
@@ -297,10 +294,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             setDailySyncTime={setDailySyncTime}
           />
 
-          <AppearanceSettings
-            appTheme={appTheme}
-            setAppTheme={setAppTheme}
-          />
+          <AppearanceSettings />
 
           <HealthDataSync
             healthMetricStates={healthMetricStates}
@@ -309,17 +303,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             handleToggleAllMetrics={handleToggleAllMetrics}
           />
 
-          {__DEV__ && 
-            (Constants.expoConfig?.extra?.APP_VARIANT === 'development' || 
+          {__DEV__ &&
+            (Constants.expoConfig?.extra?.APP_VARIANT === 'development' ||
              Constants.expoConfig?.extra?.APP_VARIANT === 'dev') && (
             <DevTools />
           )}
 
-          <View style={styles.footer}>
+          <View className="items-center z-[100]">
             <TouchableOpacity onPress={() => setShowPrivacyModal(true)} activeOpacity={0.7}>
-              <Text style={{ color: colors.primary, marginBottom: 8 }}>Privacy Policy</Text>
+              <Text className="text-primary mb-2">Privacy Policy</Text>
             </TouchableOpacity>
-            <Text style={{ color: colors.textMuted }}>Version {Application.nativeApplicationVersion} ({Application.nativeBuildVersion})</Text>
+            <Text className="text-text-muted">Version {Application.nativeApplicationVersion} ({Application.nativeBuildVersion})</Text>
           </View>
         </View>
       </ScrollView>

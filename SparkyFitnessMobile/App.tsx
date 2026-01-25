@@ -1,6 +1,6 @@
-import './global.css' 
+import './global.css'
 import React, { useEffect, useState } from 'react';
-import { StatusBar, Platform, StyleSheet, type ImageSourcePropType } from 'react-native';
+import { StatusBar, Platform, type ImageSourcePropType } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   NavigationContainer,
@@ -9,6 +9,7 @@ import {
 } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useUniwind, useCSSVariable } from 'uniwind';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,7 +17,7 @@ import MainScreen from './src/screens/MainScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import LogScreen from './src/screens/LogScreen';
 import { configureBackgroundSync } from './src/services/backgroundSyncService';
-import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { initializeTheme } from './src/services/themeService';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 
@@ -30,14 +31,16 @@ type TabIcons = {
 };
 
 function AppContent() {
-  const { isDarkMode } = useTheme();
+  const { theme, hasAdaptiveThemes } = useUniwind();
+  const [primary, textMuted, navBar] = useCSSVariable([
+    '--color-primary',
+    '--color-text-muted',
+    '--color-navbar',
+  ]) as [string, string, string];
   const [icons, setIcons] = useState<TabIcons | null>(null);
 
-  const styles = StyleSheet.create({
-    tabBar: {
-      backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
-    },
-  });
+  // Determine if we're in dark mode based on current theme
+  const isDarkMode = theme === 'dark' || theme === 'amoled';
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {
@@ -54,6 +57,9 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    // Initialize theme from storage on app start
+    initializeTheme();
+
     // Reset the auto-open flag on every app start
     const initializeApp = async () => {
       // Remove the flag so the dashboard will auto-open on first MainScreen visit
@@ -78,10 +84,10 @@ function AppContent() {
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <Tab.Navigator
             initialRouteName="Main"
-            tabBarActiveTintColor="#007bff"
-            tabBarInactiveTintColor="#888888"
+            tabBarActiveTintColor={primary}
+            tabBarInactiveTintColor={textMuted}
             activeIndicatorColor={isDarkMode ? '#424242' : '#E7EAEC'}
-            tabBarStyle={Platform.OS !== 'ios' ? styles.tabBar : undefined}
+            tabBarStyle={Platform.OS !== 'ios' ? { backgroundColor: navBar } : undefined}
           >
           <Tab.Screen
             name="Main"
@@ -116,12 +122,10 @@ function AppContent() {
 
 function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <BottomSheetModalProvider>
-          <AppContent />
-        </BottomSheetModalProvider>
-      </ThemeProvider>
+    <GestureHandlerRootView className="flex-1">
+      <BottomSheetModalProvider>
+        <AppContent />
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

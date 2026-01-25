@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import styles from '../screens/SettingsScreenStyles';
-import { useTheme } from '../contexts/ThemeContext';
 import { seedHealthData } from '../services/seedHealthData';
 import { triggerManualSync } from '../services/backgroundSyncService';
 
 const DevTools: React.FC = () => {
-  const { colors } = useTheme();
   const [isSeeding, setIsSeeding] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -44,73 +41,65 @@ const DevTools: React.FC = () => {
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Dev Tools</Text>
-      <Text style={{ color: colors.textMuted, marginBottom: 12, fontSize: 13 }}>
+    <View className="bg-card rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text">Dev Tools</Text>
+      <Text className="text-text-muted mb-3 text-[13px]">
         These tools are only visible in development builds.
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>Seed Health Data</Text>
-      <Text style={{ color: colors.textMuted, marginBottom: 12, fontSize: 13 }}>
+      <Text className="text-sm text-text">Seed Health Data</Text>
+      <Text className="text-text-muted mb-3 text-[13px]">
         Insert sample health data for testing.
       </Text>
 
-      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+      <View className="flex-row gap-2 flex-wrap">
         <TouchableOpacity
-          style={[
-            styles.addConfigButton,
-            { opacity: isSeeding ? 0.6 : 1, minWidth: 80 },
-          ]}
+          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(7)}
           disabled={isSeeding}
         >
           {isSeeding ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.addConfigButtonText}>7 Days</Text>
+            <Text className="text-white text-base font-bold">7 Days</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.addConfigButton,
-            { opacity: isSeeding ? 0.6 : 1, minWidth: 80 },
-          ]}
+          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(14)}
           disabled={isSeeding}
         >
-          <Text style={styles.addConfigButtonText}>14 Days</Text>
+          <Text className="text-white text-base font-bold">14 Days</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.addConfigButton,
-            { opacity: isSeeding ? 0.6 : 1, minWidth: 80 },
-          ]}
+          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(30)}
           disabled={isSeeding}
         >
-          <Text style={styles.addConfigButtonText}>30 Days</Text>
+          <Text className="text-white text-base font-bold">30 Days</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={{ marginTop: 20 }}>
-        <Text style={[styles.label, { color: colors.text }]}>Background Sync</Text>
-        <Text style={{ color: colors.textMuted, marginBottom: 12, fontSize: 13 }}>
+      <View className="mt-5">
+        <Text className="text-sm text-text">Background Sync</Text>
+        <Text className="text-text-muted mb-3 text-[13px]">
           Manually trigger the background sync process.
         </Text>
         <TouchableOpacity
-          style={[
-            styles.addConfigButton,
-            { opacity: isSyncing ? 0.6 : 1, minWidth: 120 },
-          ]}
+          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[120px]"
+          style={{ opacity: isSyncing ? 0.6 : 1 }}
           onPress={handleTriggerSync}
           disabled={isSyncing}
         >
           {isSyncing ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.addConfigButtonText}>Trigger Sync</Text>
+            <Text className="text-white text-base font-bold">Trigger Sync</Text>
           )}
         </TouchableOpacity>
       </View>

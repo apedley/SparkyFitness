@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Image, ScrollView, Linking, Platform } from 'react-native';
+import { View, Text, Alert, TouchableOpacity, Image, ScrollView, Linking, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetPicker from '../components/BottomSheetPicker';
 import ConnectionStatus from '../components/ConnectionStatus';
@@ -23,7 +23,6 @@ import type { TimeRange } from '../services/storage';
 import * as api from '../services/api';
 import { addLog } from '../services/LogService';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
-import { useTheme } from '../contexts/ThemeContext';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
 import type { HealthMetricStates, HealthDataDisplayState } from '../types/healthRecords';
@@ -39,7 +38,6 @@ interface TimeRangeOption {
 
 const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
   const [healthMetricStates, setHealthMetricStates] = useState<HealthMetricStates>({});
   const [healthData, setHealthData] = useState<HealthDataDisplayState>({});
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -597,35 +595,46 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       {/* Header Bar */}
-      <View style={[styles.headerBar, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>SparkyFitness</Text>
+      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border">
+        <Text className="text-2xl font-bold text-text">SparkyFitness</Text>
         <ConnectionStatus isConnected={isConnected} variant="header" />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
         {/* Open Web Dashboard Button */}
-        <TouchableOpacity style={styles.webButtonContainer} onPress={openWebDashboard}>
-          <Ionicons name="globe-outline" size={24} color="#fff" style={styles.buttonIcon} />
-          <View style={styles.buttonTextContainer}>
-            <Text style={styles.webButtonText}>Open Web Dashboard</Text>
-            <Text style={styles.webButtonSubText}>View your full fitness dashboard</Text>
+        <TouchableOpacity
+          className="bg-[#3D4654] rounded-xl py-3.5 px-4 flex-row items-center mb-3"
+          onPress={openWebDashboard}
+        >
+          <Ionicons name="globe-outline" size={24} color="#fff" className="mr-3" />
+          <View className="flex-1">
+            <Text className="text-white text-lg font-semibold">Open Web Dashboard</Text>
+            <Text className="text-white/80 text-sm mt-0.5">View your full fitness dashboard</Text>
           </View>
         </TouchableOpacity>
 
         {/* Sync Now Button */}
-        <TouchableOpacity style={[styles.syncButtonContainer, { backgroundColor: colors.primary }]} onPress={handleSync} disabled={isSyncing || !isHealthConnectInitialized}>
-          <Image source={require('../../assets/icons/sync_now_alt.png')} style={styles.syncButtonIconImage} tintColor="#fff" />
-          <View style={styles.buttonTextContainer}>
-            <Text style={styles.syncButtonText}>{isSyncing ? "Syncing..." : "Sync Now"}</Text>
-            <Text style={styles.syncButtonSubText}>Sync your health data to the server</Text>
+        <TouchableOpacity
+          className="bg-primary rounded-xl py-3.5 px-4 flex-row items-center mb-4"
+          onPress={handleSync}
+          disabled={isSyncing || !isHealthConnectInitialized}
+        >
+          <Image
+            source={require('../../assets/icons/sync_now_alt.png')}
+            className="w-6 h-6 mr-3"
+            tintColor="#fff"
+          />
+          <View className="flex-1">
+            <Text className="text-white text-lg font-semibold">{isSyncing ? "Syncing..." : "Sync Now"}</Text>
+            <Text className="text-white/80 text-sm mt-0.5">Sync your health data to the server</Text>
           </View>
         </TouchableOpacity>
 
 
         {!isHealthConnectInitialized && (
-          <Text style={styles.errorText}>
+          <Text className="text-red-500 mt-2.5 text-center">
             {isAndroid
               ? 'Health Connect is not available. Please make sure it is installed and enabled.'
               : 'Health data (HealthKit) is not available. Please enable Health access in the iOS Health app.'}
@@ -634,7 +643,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 
         {/* Last Synced Time - always reserve space to prevent layout shift */}
         <View>
-          <Text style={{ color: colors.textMuted, textAlign: 'center', marginBottom: 16 }}>
+          <Text className="text-text-muted text-center mb-4">
             {lastSyncedTimeLoaded
               ? formatRelativeTime(lastSyncedTime ? new Date(lastSyncedTime) : null)
               : ' '}
@@ -642,8 +651,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Time Range */}
-        <View style={[styles.card, styles.timeRangeCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.timeRangeLabel, { color: colors.text }]}>Time Range</Text>
+        <View className="bg-card rounded-xl p-4 py-3 mb-4 flex-row items-center justify-between">
+          <Text className="text-base font-semibold text-text">Time Range</Text>
           <BottomSheetPicker
             value={selectedTimeRange}
             options={timeRangeOptions}
@@ -653,20 +662,23 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
               fetchHealthData(healthMetricStates, value);
             }}
             title="Select Time Range"
-            containerStyle={styles.timeRangeDropdownContainer}
+            containerStyle={{ flex: 1, maxWidth: 180, marginLeft: 16 }}
           />
         </View>
 
         {/* Health Overview */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Health Overview ({timeRangeOptions.find(o => o.value === selectedTimeRange)?.label || '...'})</Text>
-          <View style={styles.healthMetricsContainer}>
+        <View className="bg-card rounded-xl p-4 mb-4">
+          <Text className="text-lg font-bold mb-3 text-text">Health Overview ({timeRangeOptions.find(o => o.value === selectedTimeRange)?.label || '...'})</Text>
+          <View className="flex-row flex-wrap justify-between">
             {HEALTH_METRICS.map(metric => healthMetricStates[metric.stateKey] && (
-              <View style={[styles.metricItem, { backgroundColor: colors.metricBackground, borderBottomColor: colors.border }]} key={metric.id}>
-                <Image source={metric.icon} style={styles.metricIcon} />
+              <View
+                key={metric.id}
+                className="w-[48%] bg-metric-background rounded-lg p-3 mb-3 items-start flex-row border-b border-border"
+              >
+                <Image source={metric.icon} className="w-6 h-6 mr-2" />
                 <View>
-                  <Text style={[styles.metricValue, { color: colors.text }]}>{healthData[metric.id] || '0'}</Text>
-                  <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>{metric.label}</Text>
+                  <Text className="text-lg font-bold text-text">{healthData[metric.id] || '0'}</Text>
+                  <Text className="text-sm text-text-secondary">{metric.label}</Text>
                 </View>
               </View>
             ))}
@@ -684,173 +696,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f2f5',
-  },
-  headerBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  scrollViewContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-    elevation: 1,
-  },
-  timeRangeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  timeRangeLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  timeRangeDropdownContainer: {
-    flex: 1,
-    maxWidth: 180,
-    marginLeft: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#333',
-  },
-  healthMetricsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  metricItem: {
-    width: '48%',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  metricIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-  },
-  metricValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  metricLabel: {
-    fontSize: 14,
-    color: '#777',
-
-  },
-  syncButtonContainer: {
-    // backgroundColor: '#007bff',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  syncButtonIconImage: {
-    width: 24,
-    height: 24,
-    marginRight: 12,
-  },
-  syncButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  syncButtonSubText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    marginTop: 2,
-  },
-  webButtonContainer: {
-    backgroundColor: '#3D4654',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  buttonIcon: {
-    marginRight: 12,
-  },
-  buttonTextContainer: {
-    flex: 1,
-  },
-  webButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  webButtonSubText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    marginTop: 2,
-  },
-  errorText: {
-    color: 'red',
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  bottomNavBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  navBarItem: {
-    alignItems: 'center',
-  },
-  navBarIcon: {
-    width: 24,
-    height: 24,
-  },
-  navBarIconActive: {
-  },
-  navBarText: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 4,
-  },
-  navBarTextActive: {
-    color: '#007bff',
-    fontWeight: 'bold',
-  },
-});
 
 const formatRelativeTime = (timestamp: Date | null): string => {
   if (!timestamp) return 'Never synced';

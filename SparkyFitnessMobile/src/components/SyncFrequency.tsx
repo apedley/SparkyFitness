@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, Platform } from 'react-native';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
-import styles from '../screens/SettingsScreenStyles';
 import { saveSyncDuration, saveStringPreference } from '../services/healthConnectService';
 import type { SyncInterval } from '../services/healthconnect/preferences';
 import BottomSheetPicker from './BottomSheetPicker';
-import { useTheme } from '../contexts/ThemeContext';
+import { useCSSVariable } from 'uniwind';
 
 interface SyncFrequencyProps {
   syncDuration: SyncInterval;
@@ -27,7 +26,12 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   dailySyncTime,
   setDailySyncTime,
 }) => {
-  const { colors } = useTheme();
+  const [inputBackground, tagBackground, primary, textSecondary] = useCSSVariable([
+    '--color-input-background',
+    '--color-tag-background',
+    '--color-primary',
+    '--color-text-secondary',
+  ]) as [string, string, string, string];
 
   const fourHourTimeItems = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'].map(time => ({ label: time, value: time }));
 
@@ -45,26 +49,26 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Background Sync Frequency</Text>
+    <View className="bg-card rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text">Background Sync Frequency</Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Sync Interval</Text>
+      <View className="mb-3">
+        <Text className="text-sm mb-2 text-text-secondary">Sync Interval</Text>
         <SegmentedControl
           values={SYNC_INTERVAL_LABELS}
           selectedIndex={selectedSyncIndex}
           onChange={(event) => handleSyncIntervalChange(event.nativeEvent.selectedSegmentIndex)}
-          backgroundColor={Platform.OS === 'ios' ? colors.inputBackground : colors.tagBackground}
-          tintColor={colors.primary}
-          fontStyle={{ color: colors.textSecondary }}
+          backgroundColor={Platform.OS === 'ios' ? inputBackground : tagBackground}
+          tintColor={primary}
+          fontStyle={{ color: textSecondary }}
           activeFontStyle={{ color: '#FFFFFF' }}
-          style={[styles.segmented]}
+          style={{ marginVertical: 8 }}
         />
       </View>
 
       {syncDuration === '4h' && (
-        <View style={styles.settingItem}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>Sync Time</Text>
+        <View className="flex-row justify-between items-center mb-2">
+          <Text className="text-base text-text">Sync Time</Text>
           <BottomSheetPicker
             value={fourHourSyncTime}
             options={fourHourTimeItems}
@@ -79,8 +83,8 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
       )}
 
       {syncDuration === '24h' && (
-        <View style={styles.settingItem}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>Sync Time</Text>
+        <View className="flex-row justify-between items-center mb-2">
+          <Text className="text-base text-text">Sync Time</Text>
           <BottomSheetPicker
             value={dailySyncTime}
             options={dailyTimeItems}
