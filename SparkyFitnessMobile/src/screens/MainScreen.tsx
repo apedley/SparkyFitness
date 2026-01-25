@@ -16,16 +16,15 @@ import {
   getAggregatedTotalCaloriesByDate,
   getAggregatedDistanceByDate,
   getAggregatedFloorsClimbedByDate,
-  syncHealthData as healthConnectSyncData,
 } from '../services/healthConnectService';
-import { saveTimeRange, loadTimeRange, loadLastSyncedTime, saveLastSyncedTime, getActiveServerConfig } from '../services/storage';
+import { saveTimeRange, loadTimeRange, loadLastSyncedTime, getActiveServerConfig } from '../services/storage';
 import type { TimeRange } from '../services/storage';
-import * as api from '../services/api';
 import { addLog } from '../services/LogService';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
 import type { HealthMetricStates, HealthDataDisplayState } from '../types/healthRecords';
+import { useServerConnection, useSyncHealthData } from '../hooks';
 
 interface MainScreenProps {
   navigation: { navigate: (screen: string) => void };
@@ -40,15 +39,21 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [healthMetricStates, setHealthMetricStates] = useState<HealthMetricStates>({});
   const [healthData, setHealthData] = useState<HealthDataDisplayState>({});
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
   const [lastSyncedTimeLoaded, setLastSyncedTimeLoaded] = useState<boolean>(false);
   const [isHealthConnectInitialized, setIsHealthConnectInitialized] = useState<boolean>(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('3d');
-  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
   const hasCheckedOnboarding = useRef(false);
   const isAndroid = Platform.OS === 'android';
+
+  const { isConnected } = useServerConnection({ enablePolling: true });
+
+  const syncMutation = useSyncHealthData({
+    onSuccess: (newLastSyncedTime) => {
+      setLastSyncedTime(newLastSyncedTime);
+    },
+  });
 
   const timeRangeOptions: TimeRangeOption[] = [
     { label: "Today", value: "today" },
@@ -80,9 +85,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 
     await fetchHealthData(newHealthMetricStates, initialTimeRange);
 
-    const connectionStatus = await api.checkServerConnection();
-    setIsConnected(connectionStatus);
-
     const loadedSyncTime = await loadLastSyncedTime();
     setLastSyncedTime(loadedSyncTime);
     setLastSyncedTimeLoaded(true);
@@ -101,15 +103,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   useEffect(() => {
     fetchHealthData(healthMetricStates, selectedTimeRange);
   }, [healthMetricStates, selectedTimeRange]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const connectionStatus = await api.checkServerConnection();
-      setIsConnected(connectionStatus);
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Check for onboarding on initial mount only
   useEffect(() => {
@@ -525,33 +518,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     }
 
     setHealthData(newHealthData);
-
-    const connectionStatus = await api.checkServerConnection();
-    setIsConnected(connectionStatus);
   };
 
-  const handleSync = async (): Promise<void> => {
-    if (isSyncing) return;
-    setIsSyncing(true);
-
-    try {
-      const result = await healthConnectSyncData(selectedTimeRange, healthMetricStates);
-
-      if (result.success) {
-        const newSyncedTime = await saveLastSyncedTime();
-        setLastSyncedTime(newSyncedTime);
-        Alert.alert('Success', 'Health data synced successfully.');
-      } else {
-        addLog(`Sync Error: ${result.error}`, 'ERROR');
-        Alert.alert('Sync Error', result.error || 'Unknown error');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      addLog(`Sync Error: ${errorMessage}`, 'ERROR');
-      Alert.alert('Sync Error', errorMessage);
-    } finally {
-      setIsSyncing(false);
-    }
+  const handleSync = (): void => {
+    if (syncMutation.isPending) return;
+    syncMutation.mutate({ timeRange: selectedTimeRange, healthMetricStates });
   };
 
   const openWebDashboard = async (): Promise<void> => {
@@ -619,7 +590,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         <TouchableOpacity
           className="bg-primary rounded-xl py-3.5 px-4 flex-row items-center mb-4"
           onPress={handleSync}
-          disabled={isSyncing || !isHealthConnectInitialized}
+          disabled={syncMutation.isPending || !isHealthConnectInitialized}
         >
           <Image
             source={require('../../assets/icons/sync_now_alt.png')}
@@ -627,7 +598,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
             tintColor="#fff"
           />
           <View className="flex-1">
-            <Text className="text-white text-lg font-semibold">{isSyncing ? "Syncing..." : "Sync Now"}</Text>
+            <Text className="text-white text-lg font-semibold">{syncMutation.isPending ? "Syncing..." : "Sync Now"}</Text>
             <Text className="text-white/80 text-sm mt-0.5">Sync your health data to the server</Text>
           </View>
         </TouchableOpacity>

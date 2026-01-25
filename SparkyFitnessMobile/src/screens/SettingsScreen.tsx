@@ -6,8 +6,8 @@ import type { ServerConfig } from '../services/storage';
 import { addLog } from '../services/LogService';
 import { initHealthConnect, requestHealthPermissions, saveHealthPreference, loadHealthPreference, loadSyncDuration, loadStringPreference } from '../services/healthConnectService';
 import type { SyncInterval } from '../services/healthconnect/preferences';
-import { checkServerConnection } from '../services/api';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
+import { useServerConnection } from '../hooks';
 import type { HealthMetric } from '../constants/HealthMetrics';
 import ServerConfigComponent from '../components/ServerConfig';
 import HealthDataSync from '../components/HealthDataSync';
@@ -38,8 +38,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const [serverConfigs, setServerConfigs] = useState<ServerConfig[]>([]);
   const [activeConfigId, setActiveConfigId] = useState<string | null>(null);
   const [currentConfigId, setCurrentConfigId] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
+
+  const { isConnected, refetch: refetchConnection } = useServerConnection();
 
   const healthSettingsName = Platform.OS === 'android' ? 'Health Connect settings' : 'Health app settings';
 
@@ -89,9 +90,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     setDailySyncTime(dailyTime !== null ? dailyTime : '00:00');
 
     await initHealthConnect();
-
-    const connectionStatus = await checkServerConnection();
-    setIsConnected(connectionStatus);
   };
 
   useEffect(() => {
@@ -113,6 +111,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       await saveServerConfig(configToSave);
 
       await loadConfig();
+      refetchConnection();
       Alert.alert('Success', 'Settings saved successfully.');
       addLog('Settings saved successfully.', 'SUCCESS');
     } catch (error) {
@@ -127,6 +126,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     try {
       await setActiveServerConfig(configId);
       await loadConfig();
+      refetchConnection();
       Alert.alert('Success', 'Active server configuration changed.');
       addLog('Active server configuration changed.', 'SUCCESS');
     } catch (error) {
@@ -141,6 +141,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     try {
       await deleteServerConfig(configId);
       await loadConfig();
+      refetchConnection();
       if (activeConfigId === configId) {
         setUrl('');
         setApiKey('');
@@ -282,7 +283,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             handleEditConfig={handleEditConfig}
             handleAddNewConfig={handleAddNewConfig}
             isConnected={isConnected}
-            checkServerConnection={checkServerConnection}
+            checkServerConnection={() => refetchConnection().then(() => isConnected)}
           />
 
           <SyncFrequency
