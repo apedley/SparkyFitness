@@ -62,7 +62,7 @@ describe('useSyncHealthData', () => {
 
   describe('mutation success', () => {
     test('calls healthConnectSyncData with correct parameters', async () => {
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -82,7 +82,7 @@ describe('useSyncHealthData', () => {
     });
 
     test('saves last synced time on success', async () => {
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -99,7 +99,7 @@ describe('useSyncHealthData', () => {
     });
 
     test('shows success alert by default', async () => {
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -119,7 +119,7 @@ describe('useSyncHealthData', () => {
     });
 
     test('does not show alert when showAlerts is false', async () => {
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData({ showAlerts: false }), {
@@ -139,7 +139,7 @@ describe('useSyncHealthData', () => {
 
     test('calls onSuccess callback with last synced time', async () => {
       const onSuccess = jest.fn();
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData({ onSuccess }), {
@@ -161,6 +161,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: 'Sync failed',
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -180,6 +181,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: 'Server unavailable',
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -202,6 +204,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: 'Server unavailable',
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData({ showAlerts: false }), {
@@ -223,6 +226,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: 'Connection timeout',
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -246,6 +250,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: 'Network error',
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData({ onError }), {
@@ -265,6 +270,7 @@ describe('useSyncHealthData', () => {
       mockHealthConnectSyncData.mockResolvedValue({
         success: false,
         error: undefined,
+        syncErrors: [],
       });
 
       const { result } = renderHook(() => useSyncHealthData(), {
@@ -286,7 +292,7 @@ describe('useSyncHealthData', () => {
 
   describe('mutation state', () => {
     test('isPending transitions correctly during mutation', async () => {
-      let resolvePromise: (value: { success: boolean }) => void;
+      let resolvePromise: (value: { success: boolean; syncErrors: [] }) => void;
       mockHealthConnectSyncData.mockImplementation(
         () => new Promise((resolve) => { resolvePromise = resolve; })
       );
@@ -311,7 +317,7 @@ describe('useSyncHealthData', () => {
 
       // Resolve the promise
       await act(async () => {
-        resolvePromise!({ success: true });
+        resolvePromise!({ success: true, syncErrors: [] });
       });
 
       // Should no longer be pending
@@ -321,7 +327,7 @@ describe('useSyncHealthData', () => {
     });
 
     test('isSuccess is true after successful mutation', async () => {
-      mockHealthConnectSyncData.mockResolvedValue({ success: true });
+      mockHealthConnectSyncData.mockResolvedValue({ success: true, syncErrors: [] });
       mockSaveLastSyncedTime.mockResolvedValue('2024-01-15T10:00:00Z');
 
       const { result } = renderHook(() => useSyncHealthData(), {

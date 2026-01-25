@@ -1,7 +1,7 @@
 import './global.css'
 import React, { useEffect, useState } from 'react';
 import { StatusBar, Platform, type ImageSourcePropType } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   NavigationContainer,
   DefaultTheme,
