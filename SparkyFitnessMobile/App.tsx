@@ -15,21 +15,23 @@ import { useUniwind, useCSSVariable } from 'uniwind';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { queryClient } from './src/hooks';
 
+import { createStackNavigator } from '@react-navigation/stack';
 import MainScreen from './src/screens/MainScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import SummaryScreen from './src/screens/SummaryScreen';
 import LogScreen from './src/screens/LogScreen';
 import { configureBackgroundSync } from './src/services/backgroundSyncService';
 import { initializeTheme } from './src/services/themeService';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 
-
 const Tab = createNativeBottomTabNavigator();
+const Stack = createStackNavigator();
 
 type TabIcons = {
-  home: ImageSourcePropType;
+  sync: ImageSourcePropType;
+  chart: ImageSourcePropType;
   settings: ImageSourcePropType;
-  document: ImageSourcePropType;
 };
 
 function AppContent() {
@@ -47,12 +49,12 @@ function AppContent() {
   useEffect(() => {
     if (Platform.OS !== 'ios') {
       Promise.all([
-        Ionicons.getImageSource('home', 24, '#999999'),
+        Ionicons.getImageSource('sync', 24, '#999999'),
+        Ionicons.getImageSource('bar-chart', 24, '#999999'),
         Ionicons.getImageSource('settings', 24, '#999999'),
-        Ionicons.getImageSource('document-text', 24, '#999999'),
-      ]).then(([home, settings, document]) => {
-        if (home && settings && document) {
-          setIcons({ home, settings, document });
+      ]).then(([sync, chart, settings]) => {
+        if (sync && chart && settings) {
+          setIcons({ sync, chart, settings });
         }
       });
     }
@@ -84,39 +86,52 @@ function AppContent() {
     <NavigationContainer theme={isDarkMode ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <Tab.Navigator
-            initialRouteName="Main"
-            tabBarActiveTintColor={primary}
-            tabBarInactiveTintColor={textMuted}
-            activeIndicatorColor={isDarkMode ? '#424242' : '#E7EAEC'}
-            tabBarStyle={Platform.OS !== 'ios' ? { backgroundColor: navBar } : undefined}
-          >
-          <Tab.Screen
-            name="Main"
-            component={MainScreen}
-            options={{
-              tabBarIcon: () =>
-                Platform.OS === 'ios' ? { sfSymbol: 'house.fill' } : icons!.home,
-            }}
-          />
-          <Tab.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              tabBarIcon: () =>
-                Platform.OS === 'ios' ? { sfSymbol: 'gearshape.fill' } : icons!.settings,
-            }}
-          />
-          <Tab.Screen
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tabs">
+            {() => (
+              <Tab.Navigator
+                initialRouteName="Sync"
+                tabBarActiveTintColor={primary}
+                tabBarInactiveTintColor={textMuted}
+                activeIndicatorColor={isDarkMode ? '#424242' : '#E7EAEC'}
+                tabBarStyle={Platform.OS !== 'ios' ? { backgroundColor: navBar } : undefined}
+              >
+                <Tab.Screen
+                  name="Sync"
+                  component={MainScreen}
+                  options={{
+                    tabBarIcon: () =>
+                      Platform.OS === 'ios' ? { sfSymbol: 'arrow.triangle.2.circlepath' } : icons!.sync,
+                  }}
+                />
+                <Tab.Screen
+                  name="Summary"
+                  component={SummaryScreen}
+                  options={{
+                    tabBarIcon: () =>
+                      Platform.OS === 'ios' ? { sfSymbol: 'chart.bar.fill' } : icons!.chart,
+                  }}
+                />
+                <Tab.Screen
+                  name="Settings"
+                  component={SettingsScreen}
+                  options={{
+                    tabBarIcon: () =>
+                      Platform.OS === 'ios' ? { sfSymbol: 'gearshape.fill' } : icons!.settings,
+                  }}
+                />
+              </Tab.Navigator>
+            )}
+          </Stack.Screen>
+          <Stack.Screen
             name="Logs"
             component={LogScreen}
             options={{
-              tabBarIcon: () =>
-                Platform.OS === 'ios' ? { sfSymbol: 'doc.fill' } : icons!.document,
+              headerShown: true,
+              title: 'Logs',
             }}
           />
-        </Tab.Navigator>
-
+        </Stack.Navigator>
       </SafeAreaProvider>
     </NavigationContainer>
   );

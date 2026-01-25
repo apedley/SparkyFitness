@@ -16,6 +16,7 @@ import AppearanceSettings from '../components/AppearanceSettings';
 import DevTools from '../components/DevTools';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import * as Application from 'expo-application';
+import { Ionicons } from '@expo/vector-icons';
 import type { HealthMetricStates } from '../types/healthRecords';
 import Constants from 'expo-constants';
 interface SettingsScreenProps {
@@ -309,6 +310,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
              Constants.expoConfig?.extra?.APP_VARIANT === 'dev') && (
             <DevTools />
           )}
+
+          <TouchableOpacity
+            className="bg-card rounded-xl p-4 mb-4 flex-row items-center justify-between"
+            onPress={() => navigation.navigate('Logs')}
+            activeOpacity={0.7}
+          >
+            <Text className="text-base font-semibold text-text">View Logs</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
 
           <View className="items-center z-[100]">
             <TouchableOpacity onPress={() => setShowPrivacyModal(true)} activeOpacity={0.7}>
