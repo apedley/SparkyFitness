@@ -41,20 +41,20 @@ const DevTools: React.FC = () => {
   };
 
   return (
-    <View className="bg-card rounded-xl p-4 mb-4">
-      <Text className="text-lg font-bold mb-3 text-text">Dev Tools</Text>
+    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text-primary">Dev Tools</Text>
       <Text className="text-text-muted mb-3 text-[13px]">
         These tools are only visible in development builds.
       </Text>
 
-      <Text className="text-sm text-text">Seed Health Data</Text>
+      <Text className="text-sm text-text-primary">Seed Health Data</Text>
       <Text className="text-text-muted mb-3 text-[13px]">
         Insert sample health data for testing.
       </Text>
 
       <View className="flex-row gap-2 flex-wrap">
         <TouchableOpacity
-          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(7)}
           disabled={isSeeding}
@@ -67,7 +67,7 @@ const DevTools: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(14)}
           disabled={isSeeding}
@@ -76,7 +76,7 @@ const DevTools: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(30)}
           disabled={isSeeding}
@@ -86,12 +86,12 @@ const DevTools: React.FC = () => {
       </View>
 
       <View className="mt-5">
-        <Text className="text-sm text-text">Background Sync</Text>
+        <Text className="text-sm text-text-primary">Background Sync</Text>
         <Text className="text-text-muted mb-3 text-[13px]">
           Manually trigger the background sync process.
         </Text>
         <TouchableOpacity
-          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[120px]"
+          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[120px]"
           style={{ opacity: isSyncing ? 0.6 : 1 }}
           onPress={handleTriggerSync}
           disabled={isSyncing}

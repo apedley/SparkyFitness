@@ -50,7 +50,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   return (
     <View className="mt-2">
       <TouchableOpacity
-        className="flex-row justify-between items-center py-3 border-b border-border"
+        className="flex-row justify-between items-center py-3 border-b border-border-subtle"
         style={{ borderBottomWidth: StyleSheet.hairlineWidth }}
         onPress={handleToggle}
         activeOpacity={0.7}
@@ -62,7 +62,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
             <Ionicons name="chevron-down" size={20} color={textSecondary} />
           </Animated.View>
-          <Text className="text-base font-semibold text-text">{title}</Text>
+          <Text className="text-base font-semibold text-text-primary">{title}</Text>
         </View>
         <Text className="text-sm text-text-muted">
           ({itemCount} {itemCount === 1 ? 'item' : 'items'})

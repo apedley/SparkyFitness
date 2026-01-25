@@ -1,89 +1,125 @@
 @import 'tailwindcss';
 @import 'uniwind';
 
-@theme {
-  /* Placeholder */
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
-}
+
 @layer theme {
   :root {
-
     @variant light {
-      --color-background: #f0f2f5;
-      --color-card: #fff;
-      --color-text: #333;
-      --color-text-secondary: #555;
-      --color-text-muted: #777;
-      --color-border: #ddd;
-      --color-primary: #007bff;
-      --color-navbar: #fff;
-      --color-navbar-border: #eee;
-      --color-input-background: #fff;
-      --color-tag-background: #e0e0e0;
-      --color-metric-background: #f9f9f9;
+      --color-bg-primary:        #F0F2F5;
+      --color-bg-secondary:      #F7F8FA;
+      --color-bg-tertiary:       #EEF1F4;
 
-      --color-success: #28a745;
-      --color-warning: #ffc107;
-      --color-danger: #dc3545;
-      --color-background-success: #e6ffe6;
-      --color-background-warning: #fff3cd;
-      --color-background-danger: #ffe6e6;
-      --color-text-warning: #856404;
+      --color-surface-primary:   #FFFFFF;
+      --color-surface-secondary: #F2F4F7;
+
+      --color-border-subtle:     #E1E5EA;
+      --color-border-strong:     #CBD2DA;
+
+      --color-text-primary:      #0F172A;
+      --color-text-secondary:    #475569;
+      --color-text-tertiary:     #64748B;
+      --color-text-muted:        #94A3B8;
+
+      --color-accent-primary:    #4F6CF7;
+      --color-accent-muted:      #8FA2FF;
+      --color-accent-subtle:     #E6EBFF;
+
+      --color-macro-protein:     #5B6FD6; /* closest to accent */
+      --color-macro-carbs:       #6B7FE0;
+      --color-macro-fat:         #7C8FE8;
+      --color-macro-fiber:       #A3AEDF; /* intentionally lighter */
+
+      --color-progress-track:    #E5E9F0;
+      --color-progress-fill:     #4F6CF7;
+      --color-progress-overfill: #C44B4F;
+
+      --color-state-success:     #3F7D6B;
+      --color-state-warning:     #B7791F;
+      --color-state-danger:      #C44B4F;
     }
-
+      
     @variant dark {
-      --color-background: #121212;
-      --color-card: #1e1e1e;
-      --color-text: #e0e0e0;
-      --color-text-secondary: #b0b0b0;
-      --color-text-muted: #888;
-      --color-border: #333;
-      --color-primary: #007bff;
-      --color-navbar: #1e1e1e;
-      --color-navbar-border: #333;
-      --color-input-background: #2c2c2c;
-      --color-tag-background: #3a3a3a;
-      --color-metric-background: #2c2c2c;
+      /* Backgrounds */
+      --color-bg-primary:        #0B1220; /* deep navy */
+      --color-bg-secondary:      #111827;
+      --color-bg-tertiary:       #1F2937;
 
-      --color-success: #78df9e;
-      --color-warning: #facc15;
-      --color-danger: #f87171;
-      --color-background-success: #1a3926;
-      --color-background-warning: #422006;
-      --color-background-danger: #450a0a;
-      --color-text-warning: #fef08a;
+      /* Surfaces */
+      --color-surface-primary:   #0F172A;
+      --color-surface-secondary: #111E35;
+
+      /* Borders */
+      --color-border-subtle:     #263244;
+      --color-border-strong:     #334155;
+
+      /* Text */
+      --color-text-primary:      #E5E7EB;
+      --color-text-secondary:    #CBD5E1;
+      --color-text-tertiary:     #94A3B8;
+      --color-text-muted:        #64748B;
+
+      /* Accent */
+      --color-accent-primary:    #7C8CFF;
+      --color-accent-muted:      #A5B4FF;
+      --color-accent-subtle:     #1E2A52;
+
+      /* Macros (same hue family, calm) */
+      --color-macro-protein:     #8393FF;
+      --color-macro-carbs:       #93A0FF;
+      --color-macro-fat:         #A3ADFF;
+      --color-macro-fiber:       #8E97C9; /* intentionally more neutral */
+
+      /* Progress */
+      --color-progress-track:    #243042;
+      --color-progress-fill:     #7C8CFF;
+      --color-progress-overfill: #E06A70;
+
+      /* States (muted) */
+      --color-state-success:     #55A38A;
+      --color-state-warning:     #D7A24A;
+      --color-state-danger:      #E06A70;
     }
 
     @variant amoled {
-      --color-background: #000000;
-      --color-card: #0a0a0a;
-      --color-text: #ffffff;
-      --color-text-secondary: #b0b0b0;
-      --color-text-muted: #888;
-      --color-border: #1a1a1a;
-      --color-primary: #007bff;
-      --color-navbar: #000000;
-      --color-navbar-border: #1a1a1a;
-      --color-input-background: #0f0f0f;
-      --color-tag-background: #1a1a1a;
-      --color-metric-background: #1a1a1a;
+      /* Backgrounds (true black base) */
+      --color-bg-primary:        #000000;
+      --color-bg-secondary:      #05070B; /* barely off-black to avoid banding */
+      --color-bg-tertiary:       #0B0F17;
 
-      --color-success: #4ade80;
-      --color-warning: #facc15;
-      --color-danger: #f87171;
-      --color-background-success: #0a2e14;
-      --color-background-warning: #2a1503;
-      --color-background-danger: #2a0505;
-      --color-text-warning: #fef08a;
+      /* Surfaces (lifted blacks) */
+      --color-surface-primary:   #0A0D14;
+      --color-surface-secondary: #0F1420;
+
+      /* Borders (thin, subtle) */
+      --color-border-subtle:     #151A24;
+      --color-border-strong:     #1F2937;
+
+      /* Text (slightly softer than pure white) */
+      --color-text-primary:      #E7EAF0;
+      --color-text-secondary:    #C9D1E1;
+      --color-text-tertiary:     #94A3B8;
+      --color-text-muted:        #64748B;
+
+      /* Accent (slightly brighter, still not neon) */
+      --color-accent-primary:    #8896FF;
+      --color-accent-muted:      #B3BCFF;
+      --color-accent-subtle:     #12162A;
+
+      /* Macros */
+      --color-macro-protein:     #8E9CFF;
+      --color-macro-carbs:       #9BA6FF;
+      --color-macro-fat:         #ABB2FF;
+      --color-macro-fiber:       #8A90BE;
+
+      /* Progress */
+      --color-progress-track:    #141A26;
+      --color-progress-fill:     #8896FF;
+      --color-progress-overfill: #E06A70;
+
+      /* States */
+      --color-state-success:     #5BB79A;
+      --color-state-warning:     #E0B15A;
+      --color-state-danger:      #E06A70;
     }
   }
 }

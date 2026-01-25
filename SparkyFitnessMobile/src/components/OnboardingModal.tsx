@@ -36,7 +36,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   onGoToSettings,
   onDismiss,
 }) => {
-  const primary = useCSSVariable('--color-primary') as string;
+  const primary = useCSSVariable('--color-accent-primary') as string;
 
   const handleGoToSettings = () => {
     markOnboardingShown();
@@ -59,7 +59,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         className="flex-1 justify-center items-center p-6"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       >
-        <View className="w-full max-w-[360px] rounded-2xl p-6 bg-card">
+        <View className="w-full max-w-[360px] rounded-2xl p-6 bg-surface-primary">
           {/* Header */}
           <View className="items-center mb-5">
             <Image
@@ -67,7 +67,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
               className="w-16 h-16"
               resizeMode="contain"
             />
-            <Text className="text-[22px] font-bold mt-3 text-center text-text">
+            <Text className="text-[22px] font-bold mt-3 text-center text-text-primary">
               Welcome to SparkyFitness
             </Text>
           </View>
@@ -79,10 +79,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </Text>
 
             {/* Privacy Section */}
-            <View className="flex-row p-4 rounded-xl bg-background">
+            <View className="flex-row p-4 rounded-xl bg-bg-primary">
               <Ionicons name="shield-checkmark-outline" size={24} color={primary} className="mr-3 mt-0.5" />
               <View className="flex-1">
-                <Text className="text-[15px] font-semibold mb-1 text-text">
+                <Text className="text-[15px] font-semibold mb-1 text-text-primary">
                   Your Privacy Matters
                 </Text>
                 <Text className="text-sm leading-5 text-text-secondary">
@@ -95,7 +95,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           {/* Buttons */}
           <View className="gap-3">
             <TouchableOpacity
-              className="flex-row items-center justify-center py-3.5 rounded-[10px] bg-primary"
+              className="flex-row items-center justify-center py-3.5 rounded-[10px] bg-accent-primary"
               onPress={handleGoToSettings}
               activeOpacity={0.8}
             >

@@ -566,10 +566,10 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
       {/* Header Bar */}
-      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border">
-        <Text className="text-2xl font-bold text-text">SparkyFitness</Text>
+      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border-subtle">
+        <Text className="text-2xl font-bold text-text-primary">SparkyFitness</Text>
         <ConnectionStatus isConnected={isConnected} variant="header" />
       </View>
 
@@ -588,7 +588,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 
         {/* Sync Now Button */}
         <TouchableOpacity
-          className="bg-primary rounded-xl py-3.5 px-4 flex-row items-center mb-4"
+          className="bg-accent-primary rounded-xl py-3.5 px-4 flex-row items-center mb-4"
           onPress={handleSync}
           disabled={syncMutation.isPending || !isHealthConnectInitialized}
         >
@@ -622,8 +622,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Time Range */}
-        <View className="bg-card rounded-xl p-4 py-3 mb-4 flex-row items-center justify-between">
-          <Text className="text-base font-semibold text-text">Time Range</Text>
+        <View className="bg-surface-primary rounded-xl p-4 py-3 mb-4 flex-row items-center justify-between">
+          <Text className="text-base font-semibold text-text-primary">Time Range</Text>
           <BottomSheetPicker
             value={selectedTimeRange}
             options={timeRangeOptions}
@@ -638,17 +638,17 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Health Overview */}
-        <View className="bg-card rounded-xl p-4 mb-4">
-          <Text className="text-lg font-bold mb-3 text-text">Health Overview ({timeRangeOptions.find(o => o.value === selectedTimeRange)?.label || '...'})</Text>
+        <View className="bg-surface-primary rounded-xl p-4 mb-4">
+          <Text className="text-lg font-bold mb-3 text-text-primary">Health Overview ({timeRangeOptions.find(o => o.value === selectedTimeRange)?.label || '...'})</Text>
           <View className="flex-row flex-wrap justify-between">
             {HEALTH_METRICS.map(metric => healthMetricStates[metric.stateKey] && (
               <View
                 key={metric.id}
-                className="w-[48%] bg-metric-background rounded-lg p-3 mb-3 items-start flex-row border-b border-border"
+                className="w-[48%] bg-surface-secondary rounded-lg p-3 mb-3 items-start flex-row border-b border-border-subtle"
               >
                 <Image source={metric.icon} className="w-6 h-6 mr-2" />
                 <View>
-                  <Text className="text-lg font-bold text-text">{healthData[metric.id] || '0'}</Text>
+                  <Text className="text-lg font-bold text-text-primary">{healthData[metric.id] || '0'}</Text>
                   <Text className="text-sm text-text-secondary">{metric.label}</Text>
                 </View>
               </View>

@@ -42,9 +42,9 @@ function BottomSheetPicker<T extends string | number>({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const { theme } = useUniwind();
   const [primary, textMuted, card] = useCSSVariable([
-    '--color-primary',
+    '--color-accent-primary',
     '--color-text-muted',
-    '--color-card',
+    '--color-surface-primary',
   ]) as [string, string, string];
   const isDarkMode = theme === 'dark' || theme === 'amoled';
 
@@ -95,13 +95,13 @@ function BottomSheetPicker<T extends string | number>({
     return (
       <TouchableOpacity
         key={String(item.value)}
-        className="flex-row items-center justify-between px-4 py-3.5 border-b border-border"
+        className="flex-row items-center justify-between px-4 py-3.5 border-b border-border-subtle"
         style={{ borderBottomWidth: StyleSheet.hairlineWidth }}
         onPress={() => handleSelect(item)}
         activeOpacity={0.7}
       >
         <Text
-          className={`text-base text-text ${isSelected ? 'font-semibold' : ''}`}
+          className={`text-base text-text-primary ${isSelected ? 'font-semibold' : ''}`}
         >
           {item.label}
         </Text>
@@ -115,7 +115,7 @@ function BottomSheetPicker<T extends string | number>({
   return (
     <>
       <TouchableOpacity
-        className="flex-row items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-input-background min-h-[44px]"
+        className="flex-row items-center justify-between px-3 py-2.5 rounded-lg border border-border-subtle bg-surface-secondary min-h-[44px]"
         style={containerStyle}
         onPress={handleOpen}
         activeOpacity={0.7}
@@ -123,7 +123,7 @@ function BottomSheetPicker<T extends string | number>({
         accessibilityLabel={title || placeholder}
         accessibilityHint="Opens selection menu"
       >
-        <Text className="text-base flex-1 text-text">
+        <Text className="text-base flex-1 text-text-primary">
           {displayText}
         </Text>
         <Ionicons name="chevron-down" size={16} color={textMuted} />
@@ -140,8 +140,8 @@ function BottomSheetPicker<T extends string | number>({
         {enableDynamic ? (
           <BottomSheetView className="pb-5">
             {title && (
-              <View className="px-4 py-4 border-b border-border">
-                <Text className="text-lg font-semibold text-center text-text">
+              <View className="px-4 py-4 border-b border-border-subtle">
+                <Text className="text-lg font-semibold text-center text-text-primary">
                   {title}
                 </Text>
               </View>
@@ -151,8 +151,8 @@ function BottomSheetPicker<T extends string | number>({
         ) : (
           <BottomSheetScrollView contentContainerStyle={styles.listContent}>
             {title && (
-              <View className="px-4 py-4 border-b border-border">
-                <Text className="text-lg font-semibold text-center text-text">
+              <View className="px-4 py-4 border-b border-border-subtle">
+                <Text className="text-lg font-semibold text-center text-text-primary">
                   {title}
                 </Text>
               </View>

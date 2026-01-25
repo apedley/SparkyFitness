@@ -22,11 +22,11 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   onRefresh,
 }) => {
   const [success, successBackground, danger, warning, warningText] = useCSSVariable([
-    '--color-success',
-    '--color-background-success',
-    '--color-danger',
-    '--color-warning',
-    '--color-text-warning',
+    '--color-state-success',
+    '--color-accent-subtle',
+    '--color-state-danger',
+    '--color-state-warning',
+    '--color-state-warning',
   ]) as [string, string, string, string, string];
 
   const getConnectionState = (): ConnectionState => {

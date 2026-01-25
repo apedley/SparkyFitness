@@ -40,9 +40,9 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
   const [textMuted, textSecondary, primary, success, successBackground] = useCSSVariable([
     '--color-text-muted',
     '--color-text-secondary',
-    '--color-primary',
-    '--color-success',
-    '--color-background-success',
+    '--color-accent-primary',
+    '--color-state-success',
+    '--color-accent-subtle',
   ]) as [string, string, string, string, string];
 
   const showConfigMenu = (item: ServerConfigType) => {
@@ -62,9 +62,9 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
   return (
     <View>
       {/* Server Configuration */}
-      <View className="bg-card rounded-xl p-4 mb-4">
+      <View className="bg-surface-primary rounded-xl p-4 mb-4">
         <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-lg font-bold text-text">Server Setup</Text>
+          <Text className="text-lg font-bold text-text-primary">Server Setup</Text>
           <ConnectionStatus
             isConnected={isConnected}
             hasConfig={!!activeConfigId}
@@ -73,9 +73,9 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
         </View>
         <View className="mb-3">
           <Text className="text-sm mb-2 text-text-secondary">Server URL</Text>
-          <View className="flex-row items-center border border-border rounded-lg pr-2.5 bg-input-background">
+          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-surface-secondary">
             <TextInput
-              className="flex-1 p-2.5 text-base text-text"
+              className="flex-1 p-2.5 text-base text-text-primary"
               placeholder="https://your-server-url.com"
               placeholderTextColor={textMuted}
               value={url}
@@ -103,9 +103,9 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
         </View>
         <View className="mb-3">
           <Text className="text-sm mb-2 text-text-secondary">API Key</Text>
-          <View className="flex-row items-center border border-border rounded-lg pr-2.5 bg-input-background">
+          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-surface-secondary">
             <TextInput
-              className="flex-1 p-2.5 text-base text-text"
+              className="flex-1 p-2.5 text-base text-text-primary"
               placeholder="Enter your API key"
               placeholderTextColor={textMuted}
               value={apiKey}
@@ -131,7 +131,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
           </View>
         </View>
         <TouchableOpacity
-          className="bg-primary py-3 px-6 rounded-lg my-1 items-center self-center"
+          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center"
           onPress={handleSaveConfig}
         >
           <Text className="text-white text-base font-bold">Save Current Config</Text>
@@ -139,9 +139,9 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
       </View>
 
       {/* Display existing configurations */}
-      <View className="bg-card rounded-xl p-4 mb-4">
+      <View className="bg-surface-primary rounded-xl p-4 mb-4">
         <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-lg font-bold text-text">Manage Configurations</Text>
+          <Text className="text-lg font-bold text-text-primary">Manage Configurations</Text>
           <TouchableOpacity
             onPress={handleAddNewConfig}
             accessibilityLabel="Add new configuration"
@@ -155,7 +155,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
           <View key={item.id} className="py-0.5 flex-row items-center">
             <View className="flex-1 flex-row items-center gap-2">
               <Text
-                className="text-sm text-text shrink max-w-[80%]"
+                className="text-sm text-text-primary shrink max-w-[80%]"
                 numberOfLines={1}
                 ellipsizeMode="middle"
               >

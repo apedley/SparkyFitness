@@ -27,9 +27,9 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   setDailySyncTime,
 }) => {
   const [inputBackground, tagBackground, primary, textSecondary] = useCSSVariable([
-    '--color-input-background',
-    '--color-tag-background',
-    '--color-primary',
+    '--color-surface-secondary',
+    '--color-bg-tertiary',
+    '--color-accent-primary',
     '--color-text-secondary',
   ]) as [string, string, string, string];
 
@@ -49,8 +49,8 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   };
 
   return (
-    <View className="bg-card rounded-xl p-4 mb-4">
-      <Text className="text-lg font-bold mb-3 text-text">Background Sync Frequency</Text>
+    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text-primary">Background Sync Frequency</Text>
 
       <View className="mb-3">
         <Text className="text-sm mb-2 text-text-secondary">Sync Interval</Text>
@@ -68,7 +68,7 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
 
       {syncDuration === '4h' && (
         <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-base text-text">Sync Time</Text>
+          <Text className="text-base text-text-primary">Sync Time</Text>
           <BottomSheetPicker
             value={fourHourSyncTime}
             options={fourHourTimeItems}
@@ -84,7 +84,7 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
 
       {syncDuration === '24h' && (
         <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-base text-text">Sync Time</Text>
+          <Text className="text-base text-text-primary">Sync Time</Text>
           <BottomSheetPicker
             value={dailySyncTime}
             options={dailyTimeItems}

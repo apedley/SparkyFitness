@@ -18,11 +18,11 @@ const AppearanceSettings: React.FC = () => {
   };
 
   return (
-    <View className="bg-card rounded-xl p-4 mb-4">
-      <Text className="text-lg font-bold mb-3 text-text">Appearance</Text>
+    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text-primary">Appearance</Text>
       <View className="flex-row justify-between items-center mb-2">
         <View className="flex-row items-center">
-          <Text className="text-base text-text">Theme</Text>
+          <Text className="text-base text-text-primary">Theme</Text>
         </View>
         <BottomSheetPicker
           value={appTheme}

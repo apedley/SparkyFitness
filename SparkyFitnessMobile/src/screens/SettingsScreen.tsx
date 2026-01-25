@@ -268,7 +268,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
         <View className="flex-1 p-4 pb-20">
           <ServerConfigComponent
@@ -312,17 +312,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           )}
 
           <TouchableOpacity
-            className="bg-card rounded-xl p-4 mb-4 flex-row items-center justify-between"
+            className="bg-surface-primary rounded-xl p-4 mb-4 flex-row items-center justify-between"
             onPress={() => navigation.navigate('Logs')}
             activeOpacity={0.7}
           >
-            <Text className="text-base font-semibold text-text">View Logs</Text>
+            <Text className="text-base font-semibold text-text-primary">View Logs</Text>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
           <View className="items-center z-[100]">
             <TouchableOpacity onPress={() => setShowPrivacyModal(true)} activeOpacity={0.7}>
-              <Text className="text-primary mb-2">Privacy Policy</Text>
+              <Text className="text-accent-primary mb-2">Privacy Policy</Text>
             </TouchableOpacity>
             <Text className="text-text-muted">Version {Application.nativeApplicationVersion} ({Application.nativeBuildVersion})</Text>
           </View>

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 import { useServerConnection, useDailySummary } from '../hooks';
 
 interface SummaryScreenProps {
@@ -74,7 +75,7 @@ interface SideStatProps {
 
 const SideStat: React.FC<SideStatProps> = ({ label, value }) => (
   <View className="items-center justify-center flex-1">
-    <Text className="text-xl font-bold text-text">
+    <Text className="text-xl font-bold text-text-primary">
       {Math.round(value).toLocaleString()}
     </Text>
     <Text className="text-text-secondary text-sm mt-1">{label}</Text>
@@ -91,26 +92,125 @@ interface MacroCardProps {
 
 const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, unit = 'g' }) => {
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
-  const isOver = consumed > goal && goal > 0;
 
   return (
-    <View className="w-[48%] bg-card rounded-xl p-3 mb-3">
+    <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 opacity-85">
       <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-sm font-medium text-text">{label}</Text>
+        <Text className="text-sm font-medium text-text-primary">{label}</Text>
         <Text className="text-xs text-text-secondary">
           {Math.round(consumed)}{unit} / {Math.round(goal)}{unit}
         </Text>
       </View>
       {/* Progress bar background */}
-      <View className="h-2 bg-gray-700 rounded-full overflow-hidden">
+      <View className="h-2 bg-progress-track rounded-full overflow-hidden">
         {/* Progress bar fill */}
         <View
           className="h-full rounded-full"
           style={{
             width: `${progress * 100}%`,
-            backgroundColor: isOver ? '#EF4444' : color,
+            backgroundColor: color,
           }}
         />
+      </View>
+    </View>
+  );
+};
+
+interface MacroColors {
+  protein: string;
+  carbs: string;
+  fat: string;
+}
+
+interface MacroStackedBarProps {
+  protein: number; // grams
+  carbs: number;   // grams
+  fat: number;     // grams
+  colors: MacroColors;
+}
+
+const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
+  protein,
+  carbs,
+  fat,
+  colors,
+}) => {
+  // Convert grams to calories
+  const proteinCal = protein * 4;
+  const carbsCal = carbs * 4;
+  const fatCal = fat * 9;
+
+  const macroCals = proteinCal + carbsCal + fatCal;
+
+  // Calculate percentages of the bar
+  const proteinPct = macroCals > 0 ? (proteinCal / macroCals) * 100 : 0;
+  const carbsPct = macroCals > 0 ? (carbsCal / macroCals) * 100 : 0;
+  const fatPct = macroCals > 0 ? (fatCal / macroCals) * 100 : 0;
+
+  return (
+    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <Text className="text-sm font-medium text-text-primary mb-3">Macro Breakdown</Text>
+
+      {/* Stacked bar */}
+      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row opacity-85">
+        {proteinPct > 0 && (
+          <View
+            style={{
+              width: `${proteinPct}%`,
+              backgroundColor: colors.protein,
+            }}
+            className="h-full"
+          />
+        )}
+        {carbsPct > 0 && (
+          <View
+            style={{
+              width: `${carbsPct}%`,
+              backgroundColor: colors.carbs,
+            }}
+            className="h-full"
+          />
+        )}
+        {fatPct > 0 && (
+          <View
+            style={{
+              width: `${fatPct}%`,
+              backgroundColor: colors.fat,
+            }}
+            className="h-full"
+          />
+        )}
+      </View>
+
+      {/* Legend */}
+      <View className="flex-row mt-3 justify-between">
+        <View className="flex-row items-center">
+          <View
+            className="w-3 h-3 rounded-full mr-1"
+            style={{ backgroundColor: colors.protein }}
+          />
+          <Text className="text-xs text-text-secondary">
+            Protein {Math.round(proteinCal)} cal
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <View
+            className="w-3 h-3 rounded-full mr-1"
+            style={{ backgroundColor: colors.carbs }}
+          />
+          <Text className="text-xs text-text-secondary">
+            Carbs {Math.round(carbsCal)} cal
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <View
+            className="w-3 h-3 rounded-full mr-1"
+            style={{ backgroundColor: colors.fat }}
+          />
+          <Text className="text-xs text-text-secondary">
+            Fat {Math.round(fatCal)} cal
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -125,6 +225,18 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     date: todayDate,
     enabled: isConnected,
   });
+
+  // Get macro colors from CSS variables (theme-aware)
+  const [proteinColor, carbsColor, fatColor, fiberColor, primaryColor, primarySubtleColor] = useCSSVariable([
+    '--color-macro-protein',
+    '--color-macro-carbs',
+    '--color-macro-fat',
+    '--color-macro-fiber',
+    '--color-accent-primary',
+    '--color-accent-subtle',
+  ]) as [string, string, string, string, string, string];
+
+  const macroColors = { protein: proteinColor, carbs: carbsColor, fat: fatColor };
 
   // Determine progress ring color based on percentage
   const getProgressColor = (percent: number): string => {
@@ -154,7 +266,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
             Configure your server connection in Settings to view your daily summary.
           </Text>
           <TouchableOpacity
-            className="bg-primary rounded-xl py-3 px-6 mt-6"
+            className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
             onPress={() => navigation.navigate('Settings')}
           >
             <Text className="text-white font-semibold">Go to Settings</Text>
@@ -185,7 +297,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
             Please check your connection and try again.
           </Text>
           <TouchableOpacity
-            className="bg-primary rounded-xl py-3 px-6 mt-6"
+            className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
             onPress={() => refetch()}
           >
             <Text className="text-white font-semibold">Retry</Text>
@@ -210,7 +322,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Calories Section - Ring with flanking stats */}
-        <View className="bg-card rounded-xl p-4 mb-4">
+        <View className="bg-surface-primary rounded-xl p-4 mb-4">
           <View className="flex-row items-center justify-center">
             {/* Left: Consumed */}
             <SideStat
@@ -220,16 +332,18 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
 
             {/* Center: Progress Ring */}
             <View className="relative items-center justify-center mx-2">
-              <ProgressRing
-                progress={progressPercent}
-                size={160}
-                strokeWidth={12}
-                color={progressColor}
-                backgroundColor="#374151"
-              />
+              <View className="opacity-85">
+                <ProgressRing
+                  progress={progressPercent}
+                  size={160}
+                  strokeWidth={12}
+                  color={primaryColor}
+                  backgroundColor={primarySubtleColor}
+                />
+              </View>
               {/* Center text overlay */}
               <View className="absolute items-center justify-center">
-                <Text className="text-3xl font-bold text-text">
+                <Text className="text-3xl font-bold text-text-primary">
                   {remainingText}
                 </Text>
                 <Text className="text-text-secondary text-xs mt-1">
@@ -249,31 +363,39 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Macro Stacked Bar */}
+        <MacroStackedBar
+          protein={summary.protein.consumed}
+          carbs={summary.carbs.consumed}
+          fat={summary.fat.consumed}
+          colors={macroColors}
+        />
+
         {/* Macros Section - 2x2 grid */}
         <View className="flex-row flex-wrap justify-between">
           <MacroCard
             label="Protein"
             consumed={summary.protein.consumed}
             goal={summary.protein.goal}
-            color="#F97316"
+            color={proteinColor}
           />
           <MacroCard
             label="Carbs"
             consumed={summary.carbs.consumed}
             goal={summary.carbs.goal}
-            color="#3B82F6"
+            color={carbsColor}
           />
           <MacroCard
             label="Fat"
             consumed={summary.fat.consumed}
             goal={summary.fat.goal}
-            color="#FBBF24"
+            color={fatColor}
           />
           <MacroCard
             label="Fiber"
             consumed={summary.fiber.consumed}
             goal={summary.fiber.goal}
-            color="#22C55E"
+            color={fiberColor}
           />
         </View>
       </ScrollView>
@@ -281,10 +403,10 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
       {/* Header Bar */}
-      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border">
-        <Text className="text-2xl font-bold text-text">Daily Summary</Text>
+      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border-subtle">
+        <Text className="text-2xl font-bold text-text-primary">Daily Summary</Text>
         <Text className="text-text-secondary">Today</Text>
       </View>
 

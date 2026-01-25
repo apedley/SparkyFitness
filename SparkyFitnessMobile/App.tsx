@@ -37,9 +37,9 @@ type TabIcons = {
 function AppContent() {
   const { theme, hasAdaptiveThemes } = useUniwind();
   const [primary, textMuted, navBar] = useCSSVariable([
-    '--color-primary',
+    '--color-accent-primary',
     '--color-text-muted',
-    '--color-navbar',
+    '--color-surface-primary',
   ]) as [string, string, string];
   const [icons, setIcons] = useState<TabIcons | null>(null);
 

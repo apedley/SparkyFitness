@@ -33,8 +33,8 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   handleToggleAllMetrics,
 }) => {
   const [inputBackground, primary] = useCSSVariable([
-    '--color-input-background',
-    '--color-primary',
+    '--color-surface-secondary',
+    '--color-accent-primary',
   ]) as [string, string];
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
@@ -72,7 +72,7 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
       <View className="flex-row items-center flex-1 mr-2">
         <Image source={metric.icon} className="w-6 h-6" />
         <Text
-          className="ml-2 text-base text-text flex-1"
+          className="ml-2 text-base text-text-primary flex-1"
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -89,12 +89,12 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   );
 
   return (
-    <View className="bg-card rounded-xl p-4 mb-4">
-      <Text className="text-lg font-bold mb-3 text-text">Health Data to Sync</Text>
+    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <Text className="text-lg font-bold mb-3 text-text-primary">Health Data to Sync</Text>
       <View className="flex-row justify-between items-center mb-2">
         <View className="flex-row items-center flex-1 mr-2">
           <Text
-            className="font-bold text-base text-text flex-1"
+            className="font-bold text-base text-text-primary flex-1"
             numberOfLines={1}
             ellipsizeMode="tail"
           >

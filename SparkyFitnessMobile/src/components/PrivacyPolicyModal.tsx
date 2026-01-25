@@ -20,7 +20,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
   visible,
   onClose,
 }) => {
-  const primary = useCSSVariable('--color-primary') as string;
+  const primary = useCSSVariable('--color-accent-primary') as string;
 
   const handleOpenPrivacyPolicy = async () => {
     try {
@@ -41,27 +41,27 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
         className="flex-1 justify-center items-center p-6"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       >
-        <View className="w-full max-w-[360px] rounded-2xl p-6 bg-card">
+        <View className="w-full max-w-[360px] rounded-2xl p-6 bg-surface-primary">
           {/* Header */}
           <View className="items-center mb-5">
             <Ionicons name="shield-checkmark-outline" size={48} color={primary} />
-            <Text className="text-[22px] font-bold mt-3 text-center text-text">
+            <Text className="text-[22px] font-bold mt-3 text-center text-text-primary">
               Privacy Policy
             </Text>
           </View>
 
           {/* Content */}
           <View className="mb-6">
-            <Text className="text-base leading-6 text-center mb-4 text-text">
+            <Text className="text-base leading-6 text-center mb-4 text-text-primary">
               This app does not collect, store, or sell your personal data.
             </Text>
 
-            <Text className="text-base leading-6 text-center mb-4 text-text">
+            <Text className="text-base leading-6 text-center mb-4 text-text-primary">
               All HealthKit data stays on your device and is transmitted only to your own server.
             </Text>
 
             <TouchableOpacity onPress={handleOpenPrivacyPolicy} activeOpacity={0.7}>
-              <Text className="text-base leading-6 text-center underline text-primary">
+              <Text className="text-base leading-6 text-center underline text-accent-primary">
                 Learn more in our Privacy Policy.
               </Text>
             </TouchableOpacity>
@@ -69,7 +69,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
 
           {/* Close Button */}
           <TouchableOpacity
-            className="items-center justify-center py-3.5 rounded-[10px] bg-primary"
+            className="items-center justify-center py-3.5 rounded-[10px] bg-accent-primary"
             onPress={onClose}
             activeOpacity={0.8}
           >
