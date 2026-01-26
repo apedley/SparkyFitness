@@ -20,21 +20,26 @@
       --color-text-tertiary:     #64748B;
       --color-text-muted:        #94A3B8;
 
-      --color-accent-primary:    #4F6CF7;
-      --color-accent-muted:      #8FA2FF;
-      --color-accent-subtle:     #E6EBFF;
+      --color-accent-primary:    hsl(230, 91%, 64%);
+      --color-accent-muted:      hsl(230, 100%, 78%);
+      --color-accent-subtle:     hsl(228, 100%, 95%);
 
-      --color-macro-protein:     #5B6FD6;
-      --color-macro-carbs:       #6B7FE0;
-      --color-macro-fat:         #7C8FE8;
-      --color-macro-fiber:       #C6D0FF;
+      --color-macro-protein:     #3D4FC4;  /* Deep saturated blue */
+      --color-macro-carbs:       #2D3A7D;  /* Dark indigo/navy */
+      --color-macro-fat:         #8A9BD4;  /* Lighter desaturated */
+      --color-macro-fiber:       #B8C4F2;  /* Light periwinkle */
+      
       --color-progress-track:    #E5E9F0;
       --color-progress-fill:     #4F6CF7;
       --color-progress-overfill: #C44B4F;
-      --color-progress-track:    #E5E9F0;
-      --color-state-success:     #3F7D6B;
-      --color-state-warning:     #B7791F;
-      --color-state-danger:      #C44B4F;
+
+      --color-bg-success:     hsl(162, 64%, 88%);
+      --color-bg-warning:     hsl(35, 59%, 78%);
+      --color-bg-danger:      hsl(358, 53%, 89%);
+
+      --color-text-success:   hsl(163, 33%, 37%);
+      --color-text-warning:   hsl(36, 71%, 42%);
+      --color-text-danger:    hsl(358, 51%, 53%);
     }
       
     @variant dark {
@@ -53,22 +58,30 @@
       --color-text-tertiary:     #94A3B8;
       --color-text-muted:        #64748B;
 
-      --color-accent-primary:    #7C8CFF;
-      --color-accent-muted:      #A5B4FF;
-      --color-accent-subtle:     #1E2A52;
+      --color-accent-primary:    hsl(233, 59%, 69%);
+      --color-accent-muted:      hsl(230, 100%, 82%);
+      --color-accent-subtle:     hsl(226, 46%, 22%);
 
-      --color-macro-protein:     #8393FF;
-      --color-macro-carbs:       #93A0FF;
-      --color-macro-fat:         #A3ADFF;
-      --color-macro-fiber:       #8E97C9;
+      --color-macro-protein:     #5B72FF;  /* Bright saturated blue */
+      --color-macro-carbs:       #4A5490;  /* Dark muted indigo */
+      --color-macro-fat:         #A5B0E0;  /* Lighter desaturated */
+      --color-macro-fiber:       #C8D0FF;  /* Pale lavender */
 
       --color-progress-track:    #243042;
       --color-progress-fill:     #7C8CFF;
       --color-progress-overfill: #E06A70;
 
-      --color-state-success:     #55A38A;
-      --color-state-warning:     #D7A24A;
-      --color-state-danger:      #E06A70;
+      /* --color-bg-success:     hsl(161, 32%, 49%);
+      --color-bg-warning:     hsl(37, 64%, 57%);
+      --color-bg-danger:      hsl(357, 66%, 65%); */
+      
+      --color-bg-success:     hsl(163, 40%, 22%);
+      --color-bg-warning:     hsl(36, 72%, 65%);
+      --color-bg-danger:      hsl(358, 51%, 53%);
+
+      --color-text-success:   hsl(162, 60%, 65%);
+      --color-text-warning:   hsl(35, 59%, 78%);
+      --color-text-danger:    hsl(358, 53%, 89%);
     }
 
     @variant amoled {
@@ -91,18 +104,22 @@
       --color-accent-muted:      #B3BCFF;
       --color-accent-subtle:     #12162A;
 
-      --color-macro-protein:     #8E9CFF;
-      --color-macro-carbs:       #9BA6FF;
-      --color-macro-fat:         #ABB2FF;
-      --color-macro-fiber:       #8A90BE;
+      --color-macro-protein:     #6078FF;  /* Bright saturated */
+      --color-macro-carbs:       #505B9C;  /* Dark muted indigo */
+      --color-macro-fat:         #A8B3E8;  /* Lighter desaturated */
+      --color-macro-fiber:       #CACFFF;  /* Pale lavender */
 
       --color-progress-track:    #141A26;
       --color-progress-fill:     #8896FF;
       --color-progress-overfill: #E06A70;
 
-      --color-state-success:     #5BB79A;
-      --color-state-warning:     #E0B15A;
-      --color-state-danger:      #E06A70;
+      --color-bg-success:     hsl(163, 40%, 22%);
+      --color-bg-warning:     hsl(36, 72%, 65%);
+      --color-bg-danger:      hsl(358, 51%, 53%);
+
+      --color-text-success:   hsl(162, 60%, 65%);
+      --color-text-warning:   hsl(35, 59%, 78%);
+      --color-text-danger:    hsl(358, 53%, 89%);
     }
   }
 }

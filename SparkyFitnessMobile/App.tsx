@@ -150,6 +150,7 @@ function AppContent() {
             options={{
               headerShown: true,
               title: 'Logs',
+              headerBackTitle: 'Back',
             }}
           />
         </Stack.Navigator>

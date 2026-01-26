@@ -155,8 +155,8 @@ const LogScreen: React.FC<LogScreenProps> = () => {
   };
 
   return (
-    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
-      <View className="p-4 pb-0 z-[100]">
+    <View className="flex-1 bg-bg-primary">
+      <View className="p-4 pb-0 z-100">
         {/* Today's Summary */}
         <View className="bg-surface-primary rounded-xl p-4 py-2.5 mb-2.5">
           <Text className="text-lg font-bold mb-3 text-text-primary">

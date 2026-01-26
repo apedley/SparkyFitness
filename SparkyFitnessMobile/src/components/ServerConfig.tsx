@@ -41,8 +41,8 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
     '--color-text-muted',
     '--color-text-secondary',
     '--color-accent-primary',
-    '--color-state-success',
-    '--color-accent-subtle',
+    '--color-text-success',
+    '--color-bg-success',
   ]) as [string, string, string, string, string];
 
   const showConfigMenu = (item: ServerConfigType) => {

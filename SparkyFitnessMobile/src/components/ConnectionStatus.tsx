@@ -22,11 +22,11 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   onRefresh,
 }) => {
   const [success, successBackground, danger, warning, warningText] = useCSSVariable([
-    '--color-state-success',
-    '--color-accent-subtle',
-    '--color-state-danger',
-    '--color-state-warning',
-    '--color-state-warning',
+    '--color-text-success',
+    '--color-bg-success',
+    '--color-bg-danger',
+    '--color-bg-warning',
+    '--color-bg-warning',
   ]) as [string, string, string, string, string];
 
   const getConnectionState = (): ConnectionState => {
@@ -94,6 +94,38 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
         return 'Server configuration required.';
     }
   };
+
+  // Connected state uses pill style (matching header variant)
+  if (state === 'connected') {
+    const connectedContent = (
+      <View
+        className="flex-row items-center px-2.5 py-1 rounded-xl"
+        style={{ backgroundColor: successBackground }}
+      >
+        <View
+          className="w-2 h-2 rounded-full mr-1.5"
+          style={{ backgroundColor: success }}
+        />
+        <Text className="text-sm font-semibold" style={{ color: success }}>
+          Connected
+        </Text>
+      </View>
+    );
+
+    if (!onRefresh) {
+      return connectedContent;
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={onRefresh}
+        accessibilityLabel={getAccessibilityLabel()}
+        accessibilityRole="button"
+      >
+        {connectedContent}
+      </TouchableOpacity>
+    );
+  }
 
   const content = (
     <>
