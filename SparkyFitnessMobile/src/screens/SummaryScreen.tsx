@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -6,6 +6,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 import { useServerConnection, useDailySummary, usePreferences, useMeasurements } from '../hooks';
+import OnboardingModal, { shouldShowOnboardingModal } from '../components/OnboardingModal';
+import { getActiveServerConfig } from '../services/storage';
 
 interface SummaryScreenProps {
   navigation: { navigate: (screen: string) => void };
@@ -241,6 +243,8 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
 const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [todayDate, setTodayDate] = useState(getTodayDate);
+  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
+  const hasCheckedOnboarding = useRef(false);
 
   // Update date when screen comes into focus (handles day rollover)
   useFocusEffect(
@@ -248,6 +252,23 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
       setTodayDate(getTodayDate());
     }, [])
   );
+
+  // Check for onboarding on initial mount only
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (hasCheckedOnboarding.current) return;
+      hasCheckedOnboarding.current = true;
+
+      if (!shouldShowOnboardingModal()) return;
+
+      const activeConfig = await getActiveServerConfig();
+      if (!activeConfig) {
+        setShowOnboardingModal(true);
+      }
+    };
+
+    checkOnboarding();
+  }, []);
 
   const { isConnected, isLoading: isConnectionLoading } = useServerConnection();
   const { summary, isLoading, isError, refetch } = useDailySummary({
@@ -435,6 +456,15 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     );
   };
 
+  const handleOnboardingGoToSettings = () => {
+    setShowOnboardingModal(false);
+    navigation.navigate('Settings');
+  };
+
+  const handleOnboardingDismiss = () => {
+    setShowOnboardingModal(false);
+  };
+
   return (
     <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
       {/* Header Bar */}
@@ -444,6 +474,12 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
       </View>
 
       {renderContent()}
+
+      <OnboardingModal
+        visible={showOnboardingModal}
+        onGoToSettings={handleOnboardingGoToSettings}
+        onDismiss={handleOnboardingDismiss}
+      />
     </View>
   );
 };

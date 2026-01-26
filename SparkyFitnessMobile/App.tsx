@@ -4,8 +4,7 @@ import { StatusBar, Platform, type ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
+  type Theme,
 } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -35,16 +34,38 @@ type TabIcons = {
 };
 
 function AppContent() {
-  const { theme, hasAdaptiveThemes } = useUniwind();
-  const [primary, textMuted, navBar] = useCSSVariable([
+  const { theme } = useUniwind();
+  const [primary, textMuted, navBar, bgPrimary, textPrimary, borderSubtle] = useCSSVariable([
     '--color-accent-primary',
     '--color-text-muted',
     '--color-surface-primary',
-  ]) as [string, string, string];
+    '--color-bg-primary',
+    '--color-text-primary',
+    '--color-border-subtle',
+  ]) as [string, string, string, string, string, string];
   const [icons, setIcons] = useState<TabIcons | null>(null);
 
   // Determine if we're in dark mode based on current theme
   const isDarkMode = theme === 'dark' || theme === 'amoled';
+
+  // Create navigation theme that matches app colors
+  const navigationTheme: Theme = {
+    dark: isDarkMode,
+    colors: {
+      primary: primary,
+      background: bgPrimary,
+      card: navBar,
+      text: textPrimary,
+      border: borderSubtle,
+      notification: primary,
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' },
+      medium: { fontFamily: 'System', fontWeight: '500' },
+      bold: { fontFamily: 'System', fontWeight: '600' },
+      heavy: { fontFamily: 'System', fontWeight: '700' },
+    },
+  };
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {
@@ -83,7 +104,7 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer theme={isDarkMode ? DarkTheme : DefaultTheme}>
+    <NavigationContainer theme={navigationTheme}>
       <SafeAreaProvider>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <Stack.Navigator screenOptions={{ headerShown: false }}>

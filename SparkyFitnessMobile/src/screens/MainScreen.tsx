@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Alert, TouchableOpacity, Image, ScrollView, Linking, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetPicker from '../components/BottomSheetPicker';
 import ConnectionStatus from '../components/ConnectionStatus';
-import OnboardingModal, { shouldShowOnboardingModal } from '../components/OnboardingModal';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   initHealthConnect,
@@ -43,8 +42,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const [lastSyncedTimeLoaded, setLastSyncedTimeLoaded] = useState<boolean>(false);
   const [isHealthConnectInitialized, setIsHealthConnectInitialized] = useState<boolean>(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('3d');
-  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
-  const hasCheckedOnboarding = useRef(false);
   const isAndroid = Platform.OS === 'android';
 
   const { isConnected } = useServerConnection({ enablePolling: true });
@@ -104,22 +101,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     fetchHealthData(healthMetricStates, selectedTimeRange);
   }, [healthMetricStates, selectedTimeRange]);
 
-  // Check for onboarding on initial mount only
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      if (hasCheckedOnboarding.current) return;
-      hasCheckedOnboarding.current = true;
-
-      if (!shouldShowOnboardingModal()) return;
-
-      const activeConfig = await getActiveServerConfig();
-      if (!activeConfig) {
-        setShowOnboardingModal(true);
-      }
-    };
-
-    checkOnboarding();
-  }, []);
 
   const fetchHealthData = async (
     currentHealthMetricStates: HealthMetricStates,
@@ -556,15 +537,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     }
   };
 
-  const handleOnboardingGoToSettings = () => {
-    setShowOnboardingModal(false);
-    navigation.navigate('Settings');
-  };
-
-  const handleOnboardingDismiss = () => {
-    setShowOnboardingModal(false);
-  };
-
   return (
     <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
       {/* Header Bar */}
@@ -658,12 +630,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 
 
       </ScrollView>
-
-      <OnboardingModal
-        visible={showOnboardingModal}
-        onGoToSettings={handleOnboardingGoToSettings}
-        onDismiss={handleOnboardingDismiss}
-      />
     </View>
   );
 };
