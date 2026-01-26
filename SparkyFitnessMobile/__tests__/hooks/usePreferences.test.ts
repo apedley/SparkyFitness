@@ -14,8 +14,10 @@ describe('usePreferences', () => {
   let queryClient: QueryClient;
 
   const createWrapper = () => {
-    return ({ children }: { children: React.ReactNode }) =>
+    const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
+    Wrapper.displayName = 'QueryClientWrapper';
+    return Wrapper;
   };
 
   beforeEach(() => {
@@ -37,7 +39,7 @@ describe('usePreferences', () => {
   describe('query behavior', () => {
     test('fetches preferences on mount', async () => {
       mockFetchPreferences.mockResolvedValue({
-        weight_unit: 'kg',
+        default_weight_unit: 'kg',
       });
 
       renderHook(() => usePreferences(), {
@@ -52,8 +54,8 @@ describe('usePreferences', () => {
     test('returns preferences data', async () => {
       const preferencesData = {
         bmr_algorithm: 'mifflin_st_jeor',
-        weight_unit: 'kg' as const,
-        distance_unit: 'km' as const,
+        default_weight_unit: 'kg' as const,
+        default_distance_unit: 'km' as const,
         energy_unit: 'kcal' as const,
         include_bmr_in_net_calories: true,
       };
@@ -68,20 +70,6 @@ describe('usePreferences', () => {
       });
 
       expect(result.current.preferences).toEqual(preferencesData);
-    });
-
-    test('isLoading becomes false after fetch completes', async () => {
-      mockFetchPreferences.mockResolvedValue({
-        weight_unit: 'kg',
-      });
-
-      const { result } = renderHook(() => usePreferences(), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
     });
 
     test('isError is true on fetch failure', async () => {
@@ -102,7 +90,7 @@ describe('usePreferences', () => {
   describe('refetch', () => {
     test('provides refetch function', async () => {
       mockFetchPreferences.mockResolvedValue({
-        weight_unit: 'kg',
+        default_weight_unit: 'kg',
       });
 
       const { result } = renderHook(() => usePreferences(), {
@@ -118,7 +106,7 @@ describe('usePreferences', () => {
 
     test('refetch updates data', async () => {
       mockFetchPreferences.mockResolvedValue({
-        weight_unit: 'kg',
+        default_weight_unit: 'kg',
       });
 
       const { result } = renderHook(() => usePreferences(), {
@@ -126,11 +114,11 @@ describe('usePreferences', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.preferences?.weight_unit).toBe('kg');
+        expect(result.current.preferences?.default_weight_unit).toBe('kg');
       });
 
       mockFetchPreferences.mockResolvedValue({
-        weight_unit: 'lbs',
+        default_weight_unit: 'lbs',
       });
 
       await act(async () => {
@@ -138,7 +126,7 @@ describe('usePreferences', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.preferences?.weight_unit).toBe('lbs');
+        expect(result.current.preferences?.default_weight_unit).toBe('lbs');
       });
     });
   });

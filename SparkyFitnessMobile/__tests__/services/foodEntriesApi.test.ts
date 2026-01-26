@@ -124,30 +124,30 @@ describe('foodEntriesApi', () => {
 
     test('calculates calories with formula: (calories * quantity) / serving_size', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateCaloriesConsumed(entries)).toBe(400); // (200 * 2) / 1
     });
 
     test('handles fractional serving sizes', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 100, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 2 },
+        { id: '1', calories: 100, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 2, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateCaloriesConsumed(entries)).toBe(50); // (100 * 1) / 2
     });
 
     test('sums multiple entries', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 1 },
-        { id: '2', calories: 300, protein: 15, carbs: 30, fat: 10, dietary_fiber: 3, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
+        { id: '2', calories: 300, protein: 15, carbs: 30, fat: 10, dietary_fiber: 3, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateCaloriesConsumed(entries)).toBe(800); // 200 + 600
     });
 
     test('skips entries with serving_size of 0', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 0 },
-        { id: '2', calories: 100, protein: 5, carbs: 10, fat: 2, dietary_fiber: 1, quantity: 1, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 1, serving_size: 0, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
+        { id: '2', calories: 100, protein: 5, carbs: 10, fat: 2, dietary_fiber: 1, quantity: 1, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateCaloriesConsumed(entries)).toBe(100);
     });
@@ -160,7 +160,7 @@ describe('foodEntriesApi', () => {
 
     test('calculates protein with formula: (protein * quantity) / serving_size', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 25, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 25, carbs: 20, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateProtein(entries)).toBe(50); // (25 * 2) / 1
     });
@@ -173,7 +173,7 @@ describe('foodEntriesApi', () => {
 
     test('calculates carbs with formula: (carbs * quantity) / serving_size', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 30, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 30, fat: 5, dietary_fiber: 2, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateCarbs(entries)).toBe(60); // (30 * 2) / 1
     });
@@ -186,7 +186,7 @@ describe('foodEntriesApi', () => {
 
     test('calculates fat with formula: (fat * quantity) / serving_size', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 15, dietary_fiber: 2, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 15, dietary_fiber: 2, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateFat(entries)).toBe(30); // (15 * 2) / 1
     });
@@ -199,7 +199,7 @@ describe('foodEntriesApi', () => {
 
     test('calculates fiber with formula: (dietary_fiber * quantity) / serving_size', () => {
       const entries: FoodEntry[] = [
-        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 8, quantity: 2, serving_size: 1 },
+        { id: '1', calories: 200, protein: 10, carbs: 20, fat: 5, dietary_fiber: 8, quantity: 2, serving_size: 1, meal_type: 'lunch', unit: 'g', entry_date: '2024-06-15' },
       ];
       expect(calculateFiber(entries)).toBe(16); // (8 * 2) / 1
     });

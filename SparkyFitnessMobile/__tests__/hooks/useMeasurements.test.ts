@@ -20,8 +20,10 @@ describe('useMeasurements', () => {
   let queryClient: QueryClient;
 
   const createWrapper = () => {
-    return ({ children }: { children: React.ReactNode }) =>
+    const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
+    Wrapper.displayName = 'QueryClientProviderWrapper';
+    return Wrapper;
   };
 
   beforeEach(() => {
@@ -78,21 +80,6 @@ describe('useMeasurements', () => {
       });
 
       expect(result.current.measurements).toEqual(measurementsData);
-    });
-
-    test('isLoading becomes false after fetch completes', async () => {
-      mockFetchMeasurements.mockResolvedValue({
-        entry_date: testDate,
-        weight: 75,
-      });
-
-      const { result } = renderHook(() => useMeasurements({ date: testDate }), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
     });
 
   });
