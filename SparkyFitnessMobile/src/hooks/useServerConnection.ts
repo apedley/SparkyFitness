@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import { checkServerConnection } from '../services/healthDataApi';
-
-export const serverConnectionQueryKey = ['serverConnection'] as const;
+import { useRefetchOnFocus } from './useRefetchOnFocus';
+import { serverConnectionQueryKey } from './queryKeys';
 
 export function useServerConnection(options?: { enablePolling?: boolean }) {
   const { enablePolling = false } = options ?? {};
@@ -15,12 +13,7 @@ export function useServerConnection(options?: { enablePolling?: boolean }) {
     refetchIntervalInBackground: false,
   });
 
-  // Refetch on screen focus
-  useFocusEffect(
-    useCallback(() => {
-      query.refetch();
-    }, [query])
-  );
+  useRefetchOnFocus(query.refetch);
 
   return {
     isConnected: query.data ?? false,

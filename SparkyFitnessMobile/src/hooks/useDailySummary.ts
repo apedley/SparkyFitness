@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import { fetchDailyGoals } from '../services/goalsApi';
 import {
   fetchFoodEntries,
@@ -17,8 +15,8 @@ import {
   calculateOtherExerciseCalories,
 } from '../services/exerciseApi';
 import type { DailySummary } from '../types/dailySummary';
-
-export const dailySummaryQueryKey = (date: string) => ['dailySummary', date] as const;
+import { useRefetchOnFocus } from './useRefetchOnFocus';
+import { dailySummaryQueryKey } from './queryKeys';
 
 interface UseDailySummaryOptions {
   date: string;
@@ -73,14 +71,7 @@ export function useDailySummary({ date, enabled = true }: UseDailySummaryOptions
     enabled,
   });
 
-  // Refetch on screen focus
-  useFocusEffect(
-    useCallback(() => {
-      if (enabled) {
-        query.refetch();
-      }
-    }, [query, enabled])
-  );
+  useRefetchOnFocus(query.refetch, enabled);
 
   return {
     summary: query.data,

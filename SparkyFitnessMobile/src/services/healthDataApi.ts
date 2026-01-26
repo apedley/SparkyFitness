@@ -1,5 +1,6 @@
 import { getActiveServerConfig } from './storage';
 import { addLog } from './LogService';
+import { normalizeUrl } from './apiClient';
 
 export interface HealthDataPayloadItem {
   type: string;
@@ -18,8 +19,8 @@ export const syncHealthData = async (data: HealthDataPayload): Promise<unknown> 
     throw new Error('Server configuration not found.');
   }
 
-  let { url, apiKey } = config;
-  url = url.endsWith('/') ? url.slice(0, -1) : url; // Remove trailing slash if present
+  const { apiKey } = config;
+  const url = normalizeUrl(config.url);
 
   console.log(`[API Service] Attempting to sync to URL: ${url}/health-data`);
   console.log(`[API Service] Using API Key (first 5 chars): ${apiKey ? apiKey.substring(0, 5) + '...' : 'N/A'}`);
@@ -64,8 +65,8 @@ export const checkServerConnection = async (): Promise<boolean> => {
     return false; // No configuration, so no connection
   }
 
-  let { url, apiKey } = config;
-  url = url.endsWith('/') ? url.slice(0, -1) : url; // Ensure no trailing slash
+  const { apiKey } = config;
+  const url = normalizeUrl(config.url);
 
   try {
     const response = await fetch(`${url}/auth/user`, {

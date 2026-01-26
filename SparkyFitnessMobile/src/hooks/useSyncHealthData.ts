@@ -4,7 +4,7 @@ import { syncHealthData as healthConnectSyncData } from '../services/healthConne
 import { saveLastSyncedTime } from '../services/storage';
 import { addLog } from '../services/LogService';
 import type { TimeRange } from '../services/storage';
-import { serverConnectionQueryKey } from './useServerConnection';
+import { serverConnectionQueryKey } from './queryKeys';
 
 interface SyncHealthDataParams {
   timeRange: TimeRange;

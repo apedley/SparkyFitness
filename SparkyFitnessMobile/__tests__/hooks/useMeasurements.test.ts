@@ -1,7 +1,8 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMeasurements, measurementsQueryKey } from '../../src/hooks/useMeasurements';
+import { useMeasurements } from '../../src/hooks/useMeasurements';
+import { measurementsQueryKey } from '../../src/hooks/queryKeys';
 import { fetchMeasurements } from '../../src/services/measurementsApi';
 
 jest.mock('../../src/services/measurementsApi', () => ({

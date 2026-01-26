@@ -1,7 +1,8 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useDailySummary, dailySummaryQueryKey } from '../../src/hooks/useDailySummary';
+import { useDailySummary } from '../../src/hooks/useDailySummary';
+import { dailySummaryQueryKey } from '../../src/hooks/queryKeys';
 import { fetchDailyGoals } from '../../src/services/goalsApi';
 import { fetchFoodEntries } from '../../src/services/foodEntriesApi';
 import { fetchExerciseEntries } from '../../src/services/exerciseApi';

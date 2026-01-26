@@ -1,7 +1,8 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { usePreferences, preferencesQueryKey } from '../../src/hooks/usePreferences';
+import { usePreferences } from '../../src/hooks/usePreferences';
+import { preferencesQueryKey } from '../../src/hooks/queryKeys';
 import { fetchPreferences } from '../../src/services/preferencesApi';
 
 jest.mock('../../src/services/preferencesApi', () => ({

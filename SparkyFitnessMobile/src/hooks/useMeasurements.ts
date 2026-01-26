@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import { fetchMeasurements } from '../services/measurementsApi';
-
-export const measurementsQueryKey = (date: string) => ['measurements', date] as const;
+import { useRefetchOnFocus } from './useRefetchOnFocus';
+import { measurementsQueryKey } from './queryKeys';
 
 interface UseMeasurementsOptions {
   date: string;
@@ -17,13 +15,7 @@ export function useMeasurements({ date, enabled = true }: UseMeasurementsOptions
     enabled,
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      if (enabled) {
-        query.refetch();
-      }
-    }, [query, enabled])
-  );
+  useRefetchOnFocus(query.refetch, enabled);
 
   return {
     measurements: query.data,

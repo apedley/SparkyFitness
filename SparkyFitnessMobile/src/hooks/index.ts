@@ -1,6 +1,13 @@
 export { queryClient } from './queryClient';
-export { useServerConnection, serverConnectionQueryKey } from './useServerConnection';
+export {
+  serverConnectionQueryKey,
+  dailySummaryQueryKey,
+  measurementsQueryKey,
+  preferencesQueryKey,
+} from './queryKeys';
+export { useServerConnection } from './useServerConnection';
 export { useSyncHealthData } from './useSyncHealthData';
-export { useDailySummary, dailySummaryQueryKey } from './useDailySummary';
-export { useMeasurements, measurementsQueryKey } from './useMeasurements';
-export { usePreferences, preferencesQueryKey } from './usePreferences';
+export { useDailySummary } from './useDailySummary';
+export { useMeasurements } from './useMeasurements';
+export { usePreferences } from './usePreferences';
+export { useRefetchOnFocus } from './useRefetchOnFocus';
