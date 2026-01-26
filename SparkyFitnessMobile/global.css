@@ -24,99 +24,82 @@
       --color-accent-muted:      #8FA2FF;
       --color-accent-subtle:     #E6EBFF;
 
-      --color-macro-protein:     #5B6FD6; /* closest to accent */
+      --color-macro-protein:     #5B6FD6;
       --color-macro-carbs:       #6B7FE0;
       --color-macro-fat:         #7C8FE8;
-      --color-macro-fiber:       #A3AEDF; /* intentionally lighter */
-
+      --color-macro-fiber:       #C6D0FF;
       --color-progress-track:    #E5E9F0;
       --color-progress-fill:     #4F6CF7;
       --color-progress-overfill: #C44B4F;
-
+      --color-progress-track:    #E5E9F0;
       --color-state-success:     #3F7D6B;
       --color-state-warning:     #B7791F;
       --color-state-danger:      #C44B4F;
     }
       
     @variant dark {
-      /* Backgrounds */
-      --color-bg-primary:        #0B1220; /* deep navy */
+      --color-bg-primary:        #0B1220;
       --color-bg-secondary:      #111827;
       --color-bg-tertiary:       #1F2937;
 
-      /* Surfaces */
       --color-surface-primary:   #0F172A;
       --color-surface-secondary: #111E35;
 
-      /* Borders */
       --color-border-subtle:     #263244;
       --color-border-strong:     #334155;
 
-      /* Text */
       --color-text-primary:      #E5E7EB;
       --color-text-secondary:    #CBD5E1;
       --color-text-tertiary:     #94A3B8;
       --color-text-muted:        #64748B;
 
-      /* Accent */
       --color-accent-primary:    #7C8CFF;
       --color-accent-muted:      #A5B4FF;
       --color-accent-subtle:     #1E2A52;
 
-      /* Macros (same hue family, calm) */
       --color-macro-protein:     #8393FF;
       --color-macro-carbs:       #93A0FF;
       --color-macro-fat:         #A3ADFF;
-      --color-macro-fiber:       #8E97C9; /* intentionally more neutral */
+      --color-macro-fiber:       #8E97C9;
 
-      /* Progress */
       --color-progress-track:    #243042;
       --color-progress-fill:     #7C8CFF;
       --color-progress-overfill: #E06A70;
 
-      /* States (muted) */
       --color-state-success:     #55A38A;
       --color-state-warning:     #D7A24A;
       --color-state-danger:      #E06A70;
     }
 
     @variant amoled {
-      /* Backgrounds (true black base) */
       --color-bg-primary:        #000000;
-      --color-bg-secondary:      #05070B; /* barely off-black to avoid banding */
+      --color-bg-secondary:      #05070B;
       --color-bg-tertiary:       #0B0F17;
 
-      /* Surfaces (lifted blacks) */
       --color-surface-primary:   #0A0D14;
       --color-surface-secondary: #0F1420;
 
-      /* Borders (thin, subtle) */
       --color-border-subtle:     #151A24;
       --color-border-strong:     #1F2937;
 
-      /* Text (slightly softer than pure white) */
       --color-text-primary:      #E7EAF0;
       --color-text-secondary:    #C9D1E1;
       --color-text-tertiary:     #94A3B8;
       --color-text-muted:        #64748B;
 
-      /* Accent (slightly brighter, still not neon) */
       --color-accent-primary:    #8896FF;
       --color-accent-muted:      #B3BCFF;
       --color-accent-subtle:     #12162A;
 
-      /* Macros */
       --color-macro-protein:     #8E9CFF;
       --color-macro-carbs:       #9BA6FF;
       --color-macro-fat:         #ABB2FF;
       --color-macro-fiber:       #8A90BE;
 
-      /* Progress */
       --color-progress-track:    #141A26;
       --color-progress-fill:     #8896FF;
       --color-progress-overfill: #E06A70;
 
-      /* States */
       --color-state-success:     #5BB79A;
       --color-state-warning:     #E0B15A;
       --color-state-danger:      #E06A70;

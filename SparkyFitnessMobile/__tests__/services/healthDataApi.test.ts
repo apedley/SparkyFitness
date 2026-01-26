@@ -2,7 +2,7 @@ import {
   syncHealthData,
   checkServerConnection,
   HealthDataPayload,
-} from '../../src/services/api';
+} from '../../src/services/healthDataApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({
@@ -13,7 +13,7 @@ const mockGetActiveServerConfig = getActiveServerConfig as jest.MockedFunction<
   typeof getActiveServerConfig
 >;
 
-describe('api', () => {
+describe('healthDataApi', () => {
   const mockFetch = jest.fn();
 
   beforeEach(() => {

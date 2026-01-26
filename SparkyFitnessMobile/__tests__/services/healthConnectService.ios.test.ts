@@ -16,7 +16,7 @@ jest.mock('../../src/services/LogService', () => ({
   addLog: jest.fn(),
 }));
 
-jest.mock('../../src/services/api', () => ({
+jest.mock('../../src/services/healthDataApi', () => ({
   syncHealthData: jest.fn(),
 }));
 
@@ -33,7 +33,7 @@ const mockQueryStatisticsForQuantity = queryStatisticsForQuantity as jest.Mock;
 const mockQueryQuantitySamples = queryQuantitySamples as jest.Mock;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const api = require('../../src/services/api') as { syncHealthData: jest.Mock };
+const api = require('../../src/services/healthDataApi') as { syncHealthData: jest.Mock };
 
 describe('syncHealthData (iOS)', () => {
   beforeEach(async () => {

@@ -49,7 +49,7 @@ function AppContent() {
   useEffect(() => {
     if (Platform.OS !== 'ios') {
       Promise.all([
-        Ionicons.getImageSource('sync', 24, '#999999'),
+        Ionicons.getImageSource('sync-circle', 24, '#999999'),
         Ionicons.getImageSource('bar-chart', 24, '#999999'),
         Ionicons.getImageSource('settings', 24, '#999999'),
       ]).then(([sync, chart, settings]) => {
@@ -90,26 +90,26 @@ function AppContent() {
           <Stack.Screen name="Tabs">
             {() => (
               <Tab.Navigator
-                initialRouteName="Sync"
+                initialRouteName="Summary"
                 tabBarActiveTintColor={primary}
                 tabBarInactiveTintColor={textMuted}
                 activeIndicatorColor={isDarkMode ? '#424242' : '#E7EAEC'}
                 tabBarStyle={Platform.OS !== 'ios' ? { backgroundColor: navBar } : undefined}
               >
                 <Tab.Screen
-                  name="Sync"
-                  component={MainScreen}
-                  options={{
-                    tabBarIcon: () =>
-                      Platform.OS === 'ios' ? { sfSymbol: 'arrow.triangle.2.circlepath' } : icons!.sync,
-                  }}
-                />
-                <Tab.Screen
                   name="Summary"
                   component={SummaryScreen}
                   options={{
                     tabBarIcon: () =>
                       Platform.OS === 'ios' ? { sfSymbol: 'chart.bar.fill' } : icons!.chart,
+                  }}
+                />
+                <Tab.Screen
+                  name="Sync"
+                  component={MainScreen}
+                  options={{
+                    tabBarIcon: () =>
+                      Platform.OS === 'ios' ? { sfSymbol: 'arrow.triangle.2.circlepath' } : icons!.sync,
                   }}
                 />
                 <Tab.Screen

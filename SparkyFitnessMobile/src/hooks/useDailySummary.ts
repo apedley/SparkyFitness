@@ -1,18 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { fetchDailyGoals } from '../services/goalsApi';
 import {
-  fetchDailyGoals,
   fetchFoodEntries,
-  fetchExerciseEntries,
   calculateCaloriesConsumed,
-  calculateCaloriesBurned,
   calculateProtein,
   calculateCarbs,
   calculateFat,
   calculateFiber,
-} from '../services/summaryApi';
-import type { DailySummary } from '../types/summary';
+} from '../services/foodEntriesApi';
+import { fetchExerciseEntries, calculateCaloriesBurned } from '../services/exerciseApi';
+import type { DailySummary } from '../types/dailySummary';
 
 export const dailySummaryQueryKey = (date: string) => ['dailySummary', date] as const;
 

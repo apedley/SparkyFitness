@@ -2,9 +2,9 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useServerConnection, serverConnectionQueryKey } from '../../src/hooks/useServerConnection';
-import { checkServerConnection } from '../../src/services/api';
+import { checkServerConnection } from '../../src/services/healthDataApi';
 
-jest.mock('../../src/services/api', () => ({
+jest.mock('../../src/services/healthDataApi', () => ({
   checkServerConnection: jest.fn(),
 }));
 

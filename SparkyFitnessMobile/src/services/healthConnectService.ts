@@ -2,8 +2,8 @@ import * as HealthConnect from './healthconnect/index';
 import * as HealthConnectAggregation from './healthconnect/dataAggregation';
 import * as HealthConnectTransformation from './healthconnect/dataTransformation';
 import * as HealthConnectPreferences from './healthconnect/preferences';
-import * as api from './api';
-import { HealthDataPayload } from './api';
+import * as api from './healthDataApi';
+import { HealthDataPayload } from './healthDataApi';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
 import { addLog } from './LogService';
 import {

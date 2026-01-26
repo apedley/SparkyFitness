@@ -115,7 +115,7 @@ function BottomSheetPicker<T extends string | number>({
   return (
     <>
       <TouchableOpacity
-        className="flex-row items-center justify-between px-3 py-2.5 rounded-lg border border-border-subtle bg-surface-secondary min-h-[44px]"
+        className="flex-row items-center justify-between px-3 py-2.5 rounded-lg border border-border-subtle bg-surface-secondary min-h-11"
         style={containerStyle}
         onPress={handleOpen}
         activeOpacity={0.7}

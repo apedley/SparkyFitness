@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { checkServerConnection } from '../services/api';
+import { checkServerConnection } from '../services/healthDataApi';
 
 export const serverConnectionQueryKey = ['serverConnection'] as const;
 

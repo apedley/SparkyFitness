@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
@@ -91,26 +92,47 @@ interface MacroCardProps {
 }
 
 const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, unit = 'g' }) => {
-  const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
+  const progress = goal > 0 ? consumed / goal : 0;
+  const isOver = progress > 1;
+
+  // When over: bar fills 100%, goal marker shows where 100% was
+  // When under: bar shows progress, no marker needed
+  const barWidth = isOver ? 100 : progress * 100;
+  const goalMarkerPosition = isOver ? (1 / progress) * 100 : null;
 
   return (
-    <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 opacity-85">
+    <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 dark:opacity-85">
       <View className="flex-row justify-between items-center mb-2">
         <Text className="text-sm font-medium text-text-primary">{label}</Text>
         <Text className="text-xs text-text-secondary">
           {Math.round(consumed)}{unit} / {Math.round(goal)}{unit}
         </Text>
       </View>
-      {/* Progress bar background */}
-      <View className="h-2 bg-progress-track rounded-full overflow-hidden">
+      {/* Progress bar container */}
+      <View className="relative h-2">
+        {/* Track background */}
+        <View className="absolute left-0 right-0 top-0 bottom-0 bg-progress-track rounded-full" />
         {/* Progress bar fill */}
         <View
-          className="h-full rounded-full"
+          className="absolute left-0 top-0 h-full rounded-full"
           style={{
-            width: `${progress * 100}%`,
+            width: `${barWidth}%`,
             backgroundColor: color,
+            opacity: isOver ? 0.6 : 1,
           }}
         />
+        {/* Goal marker - vertical line showing where 100% is when over */}
+        {isOver && goalMarkerPosition && (
+          <View
+            className="absolute top-0 h-full"
+            style={{
+              left: `${goalMarkerPosition}%`,
+              width: 2,
+              backgroundColor: color,
+              marginLeft: -1,
+            }}
+          />
+        )}
       </View>
     </View>
   );
@@ -152,7 +174,7 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
       <Text className="text-sm font-medium text-text-primary mb-3">Macro Breakdown</Text>
 
       {/* Stacked bar */}
-      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row opacity-85">
+      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row dark:opacity-85">
         {proteinPct > 0 && (
           <View
             style={{
@@ -218,7 +240,14 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
 
 const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const todayDate = getTodayDate();
+  const [todayDate, setTodayDate] = useState(getTodayDate);
+
+  // Update date when screen comes into focus (handles day rollover)
+  useFocusEffect(
+    useCallback(() => {
+      setTodayDate(getTodayDate());
+    }, [])
+  );
 
   const { isConnected, isLoading: isConnectionLoading } = useServerConnection();
   const { summary, isLoading, isError, refetch } = useDailySummary({
@@ -239,18 +268,18 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   const macroColors = { protein: proteinColor, carbs: carbsColor, fat: fatColor };
 
   // Determine progress ring color based on percentage
-  const getProgressColor = (percent: number): string => {
-    if (percent >= 1) return '#EF4444'; // danger (red) - at or over goal
-    if (percent >= 0.9) return '#F59E0B'; // warning (orange/yellow) - 90-99%
-    return '#3B82F6'; // primary (blue) - under 90%
-  };
+  // const getProgressColor = (percent: number): string => {
+  //   if (percent >= 1) return '#EF4444'; // danger (red) - at or over goal
+  //   if (percent >= 0.9) return '#F59E0B'; // warning (orange/yellow) - 90-99%
+  //   return '#3B82F6'; // primary (blue) - under 90%
+  // };
 
   const progressPercent = summary
     ? summary.calorieGoal > 0
       ? summary.netCalories / summary.calorieGoal
       : 0
     : 0;
-  const progressColor = getProgressColor(progressPercent);
+  // const progressColor = getProgressColor(progressPercent);
 
   // Render content based on state
   const renderContent = () => {
@@ -314,7 +343,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     const displayRemaining = Math.round(summary.remainingCalories);
     const remainingText = displayRemaining >= 0
       ? `${displayRemaining.toLocaleString()}`
-      : `${Math.abs(displayRemaining).toLocaleString()} over`;
+      : `+${Math.abs(displayRemaining).toLocaleString()}`;
 
     return (
       <ScrollView
@@ -332,7 +361,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
 
             {/* Center: Progress Ring */}
             <View className="relative items-center justify-center mx-2">
-              <View className="opacity-85">
+              <View className="dark:opacity-85">
                 <ProgressRing
                   progress={progressPercent}
                   size={160}
@@ -343,14 +372,14 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
               </View>
               {/* Center text overlay */}
               <View className="absolute items-center justify-center">
-                <Text className="text-3xl font-bold text-text-primary">
+                <Text className="text-2xl font-bold text-text-primary">
                   {remainingText}
                 </Text>
-                <Text className="text-text-secondary text-xs mt-1">
-                  {displayRemaining >= 0 ? 'remaining' : ''}
+                <Text className="text-text-secondary text-xs">
+                  {displayRemaining >= 0 ? 'remaining' : 'over goal'}
                 </Text>
-                <Text className="text-text-muted text-xs">
-                  of {summary.calorieGoal.toLocaleString()}
+                <Text className="text-text-muted text-[10px] mt-0.5">
+                  of {summary.calorieGoal.toLocaleString()} kcal
                 </Text>
               </View>
             </View>
