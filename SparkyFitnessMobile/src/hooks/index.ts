@@ -3,3 +3,4 @@ export { useServerConnection, serverConnectionQueryKey } from './useServerConnec
 export { useSyncHealthData } from './useSyncHealthData';
 export { useDailySummary, dailySummaryQueryKey } from './useDailySummary';
 export { useMeasurements, measurementsQueryKey } from './useMeasurements';
+export { usePreferences, preferencesQueryKey } from './usePreferences';

@@ -15,7 +15,7 @@ export const fetchPreferences = async () : Promise<UserPreferences> => {
   url = url.endsWith('/') ? url.slice(0, -1) : url;
 
   try {
-    const response = await fetch(`${url}/ap/user-preferences`, {
+    const response = await fetch(`${url}/api/user-preferences`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

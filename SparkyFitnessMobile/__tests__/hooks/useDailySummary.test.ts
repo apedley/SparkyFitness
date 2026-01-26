@@ -22,6 +22,12 @@ jest.mock('../../src/services/foodEntriesApi', () => ({
 jest.mock('../../src/services/exerciseApi', () => ({
   fetchExerciseEntries: jest.fn(),
   calculateCaloriesBurned: jest.fn((entries) => entries.reduce((sum: number, e: { calories_burned: number }) => sum + e.calories_burned, 0)),
+  calculateActiveCalories: jest.fn((entries) => entries
+    .filter((e: { exercise_snapshot?: { name: string } }) => e.exercise_snapshot?.name === 'Active Calories')
+    .reduce((sum: number, e: { calories_burned: number }) => sum + e.calories_burned, 0)),
+  calculateOtherExerciseCalories: jest.fn((entries) => entries
+    .filter((e: { exercise_snapshot?: { name: string } }) => e.exercise_snapshot?.name !== 'Active Calories')
+    .reduce((sum: number, e: { calories_burned: number }) => sum + e.calories_burned, 0)),
 }));
 
 jest.mock('@react-navigation/native', () => ({

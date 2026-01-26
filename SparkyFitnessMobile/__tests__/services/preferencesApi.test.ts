@@ -42,7 +42,7 @@ describe('preferencesApi', () => {
       );
     });
 
-    test('sends GET request to /ap/user-preferences', async () => {
+    test('sends GET request to /api/user-preferences', async () => {
       mockGetActiveServerConfig.mockResolvedValue(testConfig);
       mockFetch.mockResolvedValue({
         ok: true,
@@ -52,7 +52,7 @@ describe('preferencesApi', () => {
       await fetchPreferences();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://example.com/ap/user-preferences',
+        'https://example.com/api/user-preferences',
         expect.objectContaining({
           method: 'GET',
           headers: {
@@ -75,7 +75,7 @@ describe('preferencesApi', () => {
       await fetchPreferences();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://example.com/ap/user-preferences',
+        'https://example.com/api/user-preferences',
         expect.anything()
       );
     });

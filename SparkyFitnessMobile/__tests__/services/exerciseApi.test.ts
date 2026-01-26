@@ -1,6 +1,8 @@
 import {
   fetchExerciseEntries,
   calculateCaloriesBurned,
+  calculateActiveCalories,
+  calculateOtherExerciseCalories,
 } from '../../src/services/exerciseApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 import type { ExerciseEntry } from '../../src/types/exercise';
@@ -148,6 +150,68 @@ describe('exerciseApi', () => {
         { id: '1', calories_burned: 150 },
       ];
       expect(calculateCaloriesBurned(entries)).toBe(150);
+    });
+  });
+
+  describe('calculateActiveCalories', () => {
+    test('returns 0 for empty array', () => {
+      expect(calculateActiveCalories([])).toBe(0);
+    });
+
+    test('returns 0 when no Active Calories exercises exist', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200, exercise_snapshot: { id: 'e1', name: 'Running', category: 'Cardio', calories_per_hour: 600, source: 'Manual' } },
+        { id: '2', calories_burned: 150, exercise_snapshot: { id: 'e2', name: 'Cycling', category: 'Cardio', calories_per_hour: 500, source: 'Manual' } },
+      ];
+      expect(calculateActiveCalories(entries)).toBe(0);
+    });
+
+    test('sums only Active Calories exercises', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200, exercise_snapshot: { id: 'e1', name: 'Running', category: 'Cardio', calories_per_hour: 600, source: 'Manual' } },
+        { id: '2', calories_burned: 450, exercise_snapshot: { id: 'e2', name: 'Active Calories', category: 'Tracking', calories_per_hour: 0, source: 'Watch' } },
+        { id: '3', calories_burned: 100, exercise_snapshot: { id: 'e3', name: 'Active Calories', category: 'Tracking', calories_per_hour: 0, source: 'Watch' } },
+      ];
+      expect(calculateActiveCalories(entries)).toBe(550);
+    });
+
+    test('handles entries without exercise_snapshot', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200 },
+        { id: '2', calories_burned: 300, exercise_snapshot: { id: 'e2', name: 'Active Calories', category: 'Tracking', calories_per_hour: 0, source: 'Watch' } },
+      ];
+      expect(calculateActiveCalories(entries)).toBe(300);
+    });
+  });
+
+  describe('calculateOtherExerciseCalories', () => {
+    test('returns 0 for empty array', () => {
+      expect(calculateOtherExerciseCalories([])).toBe(0);
+    });
+
+    test('returns all calories when no Active Calories exercises exist', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200, exercise_snapshot: { id: 'e1', name: 'Running', category: 'Cardio', calories_per_hour: 600, source: 'Manual' } },
+        { id: '2', calories_burned: 150, exercise_snapshot: { id: 'e2', name: 'Cycling', category: 'Cardio', calories_per_hour: 500, source: 'Manual' } },
+      ];
+      expect(calculateOtherExerciseCalories(entries)).toBe(350);
+    });
+
+    test('excludes Active Calories exercises', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200, exercise_snapshot: { id: 'e1', name: 'Running', category: 'Cardio', calories_per_hour: 600, source: 'Manual' } },
+        { id: '2', calories_burned: 450, exercise_snapshot: { id: 'e2', name: 'Active Calories', category: 'Tracking', calories_per_hour: 0, source: 'Watch' } },
+        { id: '3', calories_burned: 150, exercise_snapshot: { id: 'e3', name: 'Cycling', category: 'Cardio', calories_per_hour: 500, source: 'Manual' } },
+      ];
+      expect(calculateOtherExerciseCalories(entries)).toBe(350);
+    });
+
+    test('includes entries without exercise_snapshot', () => {
+      const entries: ExerciseEntry[] = [
+        { id: '1', calories_burned: 200 },
+        { id: '2', calories_burned: 300, exercise_snapshot: { id: 'e2', name: 'Active Calories', category: 'Tracking', calories_per_hour: 0, source: 'Watch' } },
+      ];
+      expect(calculateOtherExerciseCalories(entries)).toBe(200);
     });
   });
 });

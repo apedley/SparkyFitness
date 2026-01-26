@@ -7,7 +7,7 @@ export function usePreferences() {
   const query = useQuery({
     queryKey: preferencesQueryKey,
     queryFn: fetchPreferences,
-    staleTime: 1000 * 60 * 5, // 5 minutes - preferences rarely change
+    staleTime: 1000 * 60 * 30, // 30 minutes - preferences rarely change
   });
 
   return {

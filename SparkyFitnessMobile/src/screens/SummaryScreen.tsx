@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
-import { useServerConnection, useDailySummary } from '../hooks';
+import { useServerConnection, useDailySummary, usePreferences, useMeasurements } from '../hooks';
 
 interface SummaryScreenProps {
   navigation: { navigate: (screen: string) => void };
@@ -254,6 +254,11 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     date: todayDate,
     enabled: isConnected,
   });
+  const { preferences, isLoading: isPreferencesLoading, isError: isPreferencesError } = usePreferences();
+  const { measurements, isLoading: isMeasurementsLoading, isError: isMeasurementsError } = useMeasurements({
+    date: todayDate,
+    enabled: isConnected,
+  });
 
   // Get macro colors from CSS variables (theme-aware)
   const [proteinColor, carbsColor, fatColor, fiberColor, primaryColor, primarySubtleColor] = useCSSVariable([
@@ -266,20 +271,6 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   ]) as [string, string, string, string, string, string];
 
   const macroColors = { protein: proteinColor, carbs: carbsColor, fat: fatColor };
-
-  // Determine progress ring color based on percentage
-  // const getProgressColor = (percent: number): string => {
-  //   if (percent >= 1) return '#EF4444'; // danger (red) - at or over goal
-  //   if (percent >= 0.9) return '#F59E0B'; // warning (orange/yellow) - 90-99%
-  //   return '#3B82F6'; // primary (blue) - under 90%
-  // };
-
-  const progressPercent = summary
-    ? summary.calorieGoal > 0
-      ? summary.netCalories / summary.calorieGoal
-      : 0
-    : 0;
-  // const progressColor = getProgressColor(progressPercent);
 
   // Render content based on state
   const renderContent = () => {
@@ -305,7 +296,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     }
 
     // Loading state
-    if (isLoading || isConnectionLoading) {
+    if (isLoading || isConnectionLoading || isPreferencesLoading || isMeasurementsLoading) {
       return (
         <View className="flex-1 items-center justify-center p-8">
           <ActivityIndicator size="large" color="#3B82F6" />
@@ -315,7 +306,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     }
 
     // Error state
-    if (isError) {
+    if (isError || isPreferencesError || isMeasurementsError) {
       return (
         <View className="flex-1 items-center justify-center p-8">
           <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
@@ -336,11 +327,24 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     }
 
     // Data loaded successfully
-    if (!summary) {
+    if (!summary || !preferences) {
       return null;
     }
 
-    const displayRemaining = Math.round(summary.remainingCalories);
+    // Calculate burned calories:
+    // - If "Active Calories" exercise exists (from watch/tracker), use that instead of steps
+    // - Otherwise, convert steps to calories (steps * 0.04)
+    const steps = measurements?.steps || 0;
+    const stepsCalories = steps * 0.04;
+    const totalBurned = summary.activeCalories > 0
+      ? summary.otherExerciseCalories + summary.activeCalories
+      : summary.otherExerciseCalories + stepsCalories;
+
+    // remaining = goal - consumed + burned
+    const remainingCalories = summary.calorieGoal - summary.caloriesConsumed + totalBurned;
+    const netCalories = summary.caloriesConsumed - totalBurned;
+    const progressPercent = summary.calorieGoal > 0 ? netCalories / summary.calorieGoal : 0;
+    const displayRemaining = Math.round(remainingCalories);
     const remainingText = displayRemaining >= 0
       ? `${displayRemaining.toLocaleString()}`
       : `+${Math.abs(displayRemaining).toLocaleString()}`;
@@ -387,7 +391,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
             {/* Right: Burned */}
             <SideStat
               label="Burned"
-              value={summary.caloriesBurned}
+              value={totalBurned}
             />
           </View>
         </View>

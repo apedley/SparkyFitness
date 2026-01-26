@@ -42,3 +42,21 @@ export const fetchExerciseEntries = async (date: string): Promise<ExerciseEntry[
 export const calculateCaloriesBurned = (entries: ExerciseEntry[]): number => {
   return entries.reduce((total, entry) => total + (entry.calories_burned || 0), 0);
 };
+
+/**
+ * Calculates calories from "Active Calories" exercises (e.g., from watch/fitness tracker).
+ */
+export const calculateActiveCalories = (entries: ExerciseEntry[]): number => {
+  return entries
+    .filter(entry => entry.exercise_snapshot?.name === 'Active Calories')
+    .reduce((total, entry) => total + (entry.calories_burned || 0), 0);
+};
+
+/**
+ * Calculates calories from non-"Active Calories" exercises.
+ */
+export const calculateOtherExerciseCalories = (entries: ExerciseEntry[]): number => {
+  return entries
+    .filter(entry => entry.exercise_snapshot?.name !== 'Active Calories')
+    .reduce((total, entry) => total + (entry.calories_burned || 0), 0);
+};

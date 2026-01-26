@@ -43,7 +43,7 @@ export interface FoodEntry {
   water_ml?: number;
 
   // Snapshotted nutrient data
-  calories?: number;
+  calories: number;
   protein?: number;
   carbs?: number;
   fat?: number;
@@ -61,6 +61,6 @@ export interface FoodEntry {
   calcium?: number;
   iron?: number;
   // glycemic_index?: GlycemicIndex;
-  serving_size?: number;
+  serving_size: number;
   custom_nutrients?: Record<string, string | number>; // New field for custom nutrients
 }
