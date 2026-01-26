@@ -2,7 +2,7 @@ import {
   syncHealthData,
   checkServerConnection,
   HealthDataPayload,
-} from '../../src/services/healthDataApi';
+} from '../../src/services/api/healthDataApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({

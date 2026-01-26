@@ -1,4 +1,4 @@
-import { fetchDailyGoals } from '../../src/services/goalsApi';
+import { fetchDailyGoals } from '../../src/services/api/goalsApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({

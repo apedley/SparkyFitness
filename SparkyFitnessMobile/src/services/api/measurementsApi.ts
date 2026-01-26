@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import type { CheckInMeasurement } from '../types/measurements';
+import type { CheckInMeasurement } from '../../types/measurements';
 
 /**
  * Fetches measurements for a given date.

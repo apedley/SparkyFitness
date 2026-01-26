@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import type { ExerciseEntry } from '../types/exercise';
+import type { ExerciseEntry } from '../../types/exercise';
 
 /**
  * Fetches exercise entries for a given date.

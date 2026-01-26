@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchPreferences } from '../services/preferencesApi';
+import { fetchPreferences } from '../services/api/preferencesApi';
 import { preferencesQueryKey } from './queryKeys';
 
 export function usePreferences() {

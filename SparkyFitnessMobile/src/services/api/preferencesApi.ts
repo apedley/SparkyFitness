@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import { UserPreferences } from '../types/preferences';
+import { UserPreferences } from '../../types/preferences';
 
 /**
  * Fetches user preferences.

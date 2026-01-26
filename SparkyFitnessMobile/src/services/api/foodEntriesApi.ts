@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import type { FoodEntry } from '../types/foodEntries';
+import type { FoodEntry } from '../../types/foodEntries';
 
 /**
  * Fetches food entries for a given date.

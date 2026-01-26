@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { checkServerConnection } from '../services/healthDataApi';
+import { checkServerConnection } from '../services/api/healthDataApi';
 import { useRefetchOnFocus } from './useRefetchOnFocus';
 import { serverConnectionQueryKey } from './queryKeys';
 

@@ -3,15 +3,15 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useDailySummary } from '../../src/hooks/useDailySummary';
 import { dailySummaryQueryKey } from '../../src/hooks/queryKeys';
-import { fetchDailyGoals } from '../../src/services/goalsApi';
-import { fetchFoodEntries } from '../../src/services/foodEntriesApi';
-import { fetchExerciseEntries } from '../../src/services/exerciseApi';
+import { fetchDailyGoals } from '../../src/services/api/goalsApi';
+import { fetchFoodEntries } from '../../src/services/api/foodEntriesApi';
+import { fetchExerciseEntries } from '../../src/services/api/exerciseApi';
 
-jest.mock('../../src/services/goalsApi', () => ({
+jest.mock('../../src/services/api/goalsApi', () => ({
   fetchDailyGoals: jest.fn(),
 }));
 
-jest.mock('../../src/services/foodEntriesApi', () => ({
+jest.mock('../../src/services/api/foodEntriesApi', () => ({
   fetchFoodEntries: jest.fn(),
   calculateCaloriesConsumed: jest.fn((entries) => entries.reduce((sum: number, e: { calories: number }) => sum + e.calories, 0)),
   calculateProtein: jest.fn((entries) => entries.reduce((sum: number, e: { protein: number }) => sum + e.protein, 0)),
@@ -20,7 +20,7 @@ jest.mock('../../src/services/foodEntriesApi', () => ({
   calculateFiber: jest.fn((entries) => entries.reduce((sum: number, e: { dietary_fiber: number }) => sum + e.dietary_fiber, 0)),
 }));
 
-jest.mock('../../src/services/exerciseApi', () => ({
+jest.mock('../../src/services/api/exerciseApi', () => ({
   fetchExerciseEntries: jest.fn(),
   calculateCaloriesBurned: jest.fn((entries) => entries.reduce((sum: number, e: { calories_burned: number }) => sum + e.calories_burned, 0)),
   calculateActiveCalories: jest.fn((entries) => entries

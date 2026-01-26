@@ -1,5 +1,5 @@
 import BackgroundFetch, { HeadlessEvent } from 'react-native-background-fetch';
-import { syncHealthData, HealthDataPayload } from './healthDataApi';
+import { syncHealthData, HealthDataPayload } from './api/healthDataApi';
 import { addLog } from './LogService';
 import {
   loadHealthPreference,

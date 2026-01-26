@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchDailyGoals } from '../services/goalsApi';
+import { fetchDailyGoals } from '../services/api/goalsApi';
 import {
   fetchFoodEntries,
   calculateCaloriesConsumed,
@@ -7,13 +7,13 @@ import {
   calculateCarbs,
   calculateFat,
   calculateFiber,
-} from '../services/foodEntriesApi';
+} from '../services/api/foodEntriesApi';
 import {
   fetchExerciseEntries,
   calculateCaloriesBurned,
   calculateActiveCalories,
   calculateOtherExerciseCalories,
-} from '../services/exerciseApi';
+} from '../services/api/exerciseApi';
 import type { DailySummary } from '../types/dailySummary';
 import { useRefetchOnFocus } from './useRefetchOnFocus';
 import { dailySummaryQueryKey } from './queryKeys';

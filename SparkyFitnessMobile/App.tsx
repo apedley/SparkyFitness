@@ -70,7 +70,7 @@ function AppContent() {
   useEffect(() => {
     if (Platform.OS !== 'ios') {
       Promise.all([
-        Ionicons.getImageSource('sync-circle', 24, '#999999'),
+        Ionicons.getImageSource('sync', 24, '#999999'),
         Ionicons.getImageSource('bar-chart', 24, '#999999'),
         Ionicons.getImageSource('settings', 24, '#999999'),
       ]).then(([sync, chart, settings]) => {

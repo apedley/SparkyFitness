@@ -5,3 +5,5 @@ export const dailySummaryQueryKey = (date: string) => ['dailySummary', date] as 
 export const measurementsQueryKey = (date: string) => ['measurements', date] as const;
 
 export const preferencesQueryKey = ['userPreferences'] as const;
+
+export const profileQueryKey = ['userProfile'] as const;

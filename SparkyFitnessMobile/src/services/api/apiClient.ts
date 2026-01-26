@@ -1,5 +1,5 @@
-import { getActiveServerConfig } from './storage';
-import { addLog } from './LogService';
+import { getActiveServerConfig } from '../storage';
+import { addLog } from '../LogService';
 
 export const normalizeUrl = (url: string): string => {
   return url.endsWith('/') ? url.slice(0, -1) : url;

@@ -1,4 +1,4 @@
-import { fetchPreferences } from '../../src/services/api/preferencesApi';
+import { fetchProfile } from '../../src/services/api/profileApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({
@@ -13,7 +13,7 @@ const mockGetActiveServerConfig = getActiveServerConfig as jest.MockedFunction<
   typeof getActiveServerConfig
 >;
 
-describe('preferencesApi', () => {
+describe('profileApi', () => {
   const mockFetch = jest.fn();
 
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('preferencesApi', () => {
     jest.restoreAllMocks();
   });
 
-  describe('fetchPreferences', () => {
+  describe('fetchProfile', () => {
     const testConfig: ServerConfig = {
       id: 'test-id',
       url: 'https://example.com',
@@ -37,22 +37,22 @@ describe('preferencesApi', () => {
     test('throws error when no server config exists', async () => {
       mockGetActiveServerConfig.mockResolvedValue(null);
 
-      await expect(fetchPreferences()).rejects.toThrow(
+      await expect(fetchProfile()).rejects.toThrow(
         'Server configuration not found.'
       );
     });
 
-    test('sends GET request to /api/user-preferences', async () => {
+    test('sends GET request to /api/auth/profiles', async () => {
       mockGetActiveServerConfig.mockResolvedValue(testConfig);
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ weight_unit: 'kg' }),
+        json: () => Promise.resolve({ id: '123', gender: 'male' }),
       });
 
-      await fetchPreferences();
+      await fetchProfile();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://example.com/api/user-preferences',
+        'https://example.com/api/auth/profiles',
         expect.objectContaining({
           method: 'GET',
           headers: {
@@ -69,24 +69,26 @@ describe('preferencesApi', () => {
       });
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ weight_unit: 'kg' }),
+        json: () => Promise.resolve({ id: '123', gender: 'male' }),
       });
 
-      await fetchPreferences();
+      await fetchProfile();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://example.com/api/user-preferences',
+        'https://example.com/api/auth/profiles',
         expect.anything()
       );
     });
 
     test('returns parsed JSON response on success', async () => {
       const responseData = {
-        bmr_algorithm: 'mifflin_st_jeor',
-        weight_unit: 'kg',
-        distance_unit: 'km',
-        energy_unit: 'kcal',
-        include_bmr_in_net_calories: true,
+        id: '1adfcf00-032e-4331-a826-299d7b4b52fe',
+        full_name: 'Andrew',
+        phone_number: null,
+        date_of_birth: '2016-01-01',
+        bio: null,
+        avatar_url: null,
+        gender: 'male',
       };
       mockGetActiveServerConfig.mockResolvedValue(testConfig);
       mockFetch.mockResolvedValue({
@@ -94,7 +96,7 @@ describe('preferencesApi', () => {
         json: () => Promise.resolve(responseData),
       });
 
-      const result = await fetchPreferences();
+      const result = await fetchProfile();
 
       expect(result).toEqual(responseData);
     });
@@ -107,7 +109,7 @@ describe('preferencesApi', () => {
         text: () => Promise.resolve('Unauthorized'),
       });
 
-      await expect(fetchPreferences()).rejects.toThrow(
+      await expect(fetchProfile()).rejects.toThrow(
         'Server error: 401 - Unauthorized'
       );
     });
@@ -116,7 +118,7 @@ describe('preferencesApi', () => {
       mockGetActiveServerConfig.mockResolvedValue(testConfig);
       mockFetch.mockRejectedValue(new Error('Network request failed'));
 
-      await expect(fetchPreferences()).rejects.toThrow(
+      await expect(fetchProfile()).rejects.toThrow(
         'Network request failed'
       );
     });

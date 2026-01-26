@@ -14,7 +14,7 @@ jest.mock('../../src/services/LogService', () => ({
 }));
 
 const mockApiSyncHealthData = jest.fn();
-jest.mock('../../src/services/healthDataApi', () => ({
+jest.mock('../../src/services/api/healthDataApi', () => ({
   syncHealthData: (...args: unknown[]) => mockApiSyncHealthData(...args),
 }));
 

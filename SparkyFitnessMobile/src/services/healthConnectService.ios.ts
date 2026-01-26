@@ -2,8 +2,8 @@ import * as HealthKit from './healthkit/index';
 import * as HealthKitAggregation from './healthkit/dataAggregation';
 import * as HealthKitTransformation from './healthkit/dataTransformation';
 import * as HealthKitPreferences from './healthkit/preferences';
-import * as api from './healthDataApi';
-import { HealthDataPayload } from './healthDataApi';
+import * as api from './api/healthDataApi';
+import { HealthDataPayload } from './api/healthDataApi';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
 import { addLog } from './LogService';
 import {

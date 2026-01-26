@@ -8,6 +8,7 @@ import { useCSSVariable } from 'uniwind';
 import { useServerConnection, useDailySummary, usePreferences, useMeasurements } from '../hooks';
 import OnboardingModal, { shouldShowOnboardingModal } from '../components/OnboardingModal';
 import { getActiveServerConfig } from '../services/storage';
+import { calculateEffectiveBurned, calculateCalorieBalance } from '../services/calculations';
 
 interface SummaryScreenProps {
   navigation: { navigate: (screen: string) => void };
@@ -352,18 +353,17 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
       return null;
     }
 
-    // Calculate burned calories:
-    // - If "Active Calories" exercise exists (from watch/tracker), use that instead of steps
-    // - Otherwise, convert steps to calories (steps * 0.04)
-    const steps = measurements?.steps || 0;
-    const stepsCalories = steps * 0.04;
-    const totalBurned = summary.activeCalories > 0
-      ? summary.otherExerciseCalories + summary.activeCalories
-      : summary.otherExerciseCalories + stepsCalories;
+    const totalBurned = calculateEffectiveBurned({
+      activeCalories: summary.activeCalories,
+      otherExerciseCalories: summary.otherExerciseCalories,
+      steps: measurements?.steps || 0,
+    });
 
-    // remaining = goal - consumed + burned
-    const remainingCalories = summary.calorieGoal - summary.caloriesConsumed + totalBurned;
-    const netCalories = summary.caloriesConsumed - totalBurned;
+    const { netCalories, remainingCalories } = calculateCalorieBalance({
+      calorieGoal: summary.calorieGoal,
+      caloriesConsumed: summary.caloriesConsumed,
+      caloriesBurned: totalBurned,
+    });
     const progressPercent = summary.calorieGoal > 0 ? netCalories / summary.calorieGoal : 0;
     const displayRemaining = Math.round(remainingCalories);
     const remainingText = displayRemaining >= 0

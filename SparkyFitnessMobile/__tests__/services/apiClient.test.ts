@@ -1,4 +1,4 @@
-import { normalizeUrl, apiFetch } from '../../src/services/apiClient';
+import { normalizeUrl, apiFetch } from '../../src/services/api/apiClient';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({

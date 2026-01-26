@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import type { DailyGoals } from '../types/goals';
+import type { DailyGoals } from '../../types/goals';
 
 /**
  * Fetches daily goals for a given date.

@@ -5,7 +5,7 @@ import {
   calculateCarbs,
   calculateFat,
   calculateFiber,
-} from '../../src/services/foodEntriesApi';
+} from '../../src/services/api/foodEntriesApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 import type { FoodEntry } from '../../src/types/foodEntries';
 

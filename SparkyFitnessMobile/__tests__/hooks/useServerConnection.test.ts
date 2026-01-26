@@ -3,9 +3,9 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useServerConnection } from '../../src/hooks/useServerConnection';
 import { serverConnectionQueryKey } from '../../src/hooks/queryKeys';
-import { checkServerConnection } from '../../src/services/healthDataApi';
+import { checkServerConnection } from '../../src/services/api/healthDataApi';
 
-jest.mock('../../src/services/healthDataApi', () => ({
+jest.mock('../../src/services/api/healthDataApi', () => ({
   checkServerConnection: jest.fn(),
 }));
 

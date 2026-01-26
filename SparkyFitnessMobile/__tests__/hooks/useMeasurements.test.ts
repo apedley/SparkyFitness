@@ -3,9 +3,9 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useMeasurements } from '../../src/hooks/useMeasurements';
 import { measurementsQueryKey } from '../../src/hooks/queryKeys';
-import { fetchMeasurements } from '../../src/services/measurementsApi';
+import { fetchMeasurements } from '../../src/services/api/measurementsApi';
 
-jest.mock('../../src/services/measurementsApi', () => ({
+jest.mock('../../src/services/api/measurementsApi', () => ({
   fetchMeasurements: jest.fn(),
 }));
 

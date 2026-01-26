@@ -1,5 +1,5 @@
-import { getActiveServerConfig } from './storage';
-import { addLog } from './LogService';
+import { getActiveServerConfig } from '../storage';
+import { addLog } from '../LogService';
 import { normalizeUrl } from './apiClient';
 
 export interface HealthDataPayloadItem {

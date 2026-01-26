@@ -3,9 +3,9 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePreferences } from '../../src/hooks/usePreferences';
 import { preferencesQueryKey } from '../../src/hooks/queryKeys';
-import { fetchPreferences } from '../../src/services/preferencesApi';
+import { fetchPreferences } from '../../src/services/api/preferencesApi';
 
-jest.mock('../../src/services/preferencesApi', () => ({
+jest.mock('../../src/services/api/preferencesApi', () => ({
   fetchPreferences: jest.fn(),
 }));
 

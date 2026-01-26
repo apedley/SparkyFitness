@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchMeasurements } from '../services/measurementsApi';
+import { fetchMeasurements } from '../services/api/measurementsApi';
 import { useRefetchOnFocus } from './useRefetchOnFocus';
 import { measurementsQueryKey } from './queryKeys';
 

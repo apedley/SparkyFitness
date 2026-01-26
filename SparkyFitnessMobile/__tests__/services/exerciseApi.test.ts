@@ -3,7 +3,7 @@ import {
   calculateCaloriesBurned,
   calculateActiveCalories,
   calculateOtherExerciseCalories,
-} from '../../src/services/exerciseApi';
+} from '../../src/services/api/exerciseApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 import type { ExerciseEntry } from '../../src/types/exercise';
 

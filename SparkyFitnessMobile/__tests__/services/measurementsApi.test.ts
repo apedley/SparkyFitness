@@ -1,4 +1,4 @@
-import { fetchMeasurements } from '../../src/services/measurementsApi';
+import { fetchMeasurements } from '../../src/services/api/measurementsApi';
 import { getActiveServerConfig, ServerConfig } from '../../src/services/storage';
 
 jest.mock('../../src/services/storage', () => ({
