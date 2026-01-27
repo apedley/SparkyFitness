@@ -2,7 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import Svg, { Circle } from 'react-native-svg';
+import { Canvas, Path, Circle as SkiaCircle, Rect, RoundedRect, Group, Skia, rect, rrect } from '@shopify/react-native-skia';
+import { useSharedValue, useDerivedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useCSSVariable } from 'uniwind';
 import Icon from '../components/Icon';
 import { useServerConnection, useDailySummary, usePreferences, useMeasurements } from '../hooks';
@@ -40,35 +41,54 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
   backgroundColor,
 }) => {
   const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
   const progressCapped = Math.min(Math.max(progress, 0), 1);
-  const strokeDashoffset = circumference * (1 - progressCapped);
+
+  const animatedProgress = useSharedValue(0);
+
+  useEffect(() => {
+    animatedProgress.value = withTiming(progressCapped, {
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progressCapped, animatedProgress]);
+
+  const progressPath = useDerivedValue(() => {
+    const path = Skia.Path.Make();
+    const sweepAngle = animatedProgress.value * 360;
+    if (sweepAngle > 0) {
+      const startAngle = -90; // Start from top
+      const oval = {
+        x: center - radius,
+        y: center - radius,
+        width: radius * 2,
+        height: radius * 2,
+      };
+      path.addArc(oval, startAngle, sweepAngle);
+    }
+    return path;
+  });
 
   return (
-    <Svg width={size} height={size}>
+    <Canvas style={{ width: size, height: size }}>
       {/* Background circle */}
-      <Circle
-        cx={size / 2}
-        cy={size / 2}
+      <SkiaCircle
+        cx={center}
+        cy={center}
         r={radius}
-        stroke={backgroundColor}
+        style="stroke"
         strokeWidth={strokeWidth}
-        fill="none"
+        color={backgroundColor}
       />
-      {/* Progress circle */}
-      <Circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        stroke={color}
+      {/* Progress arc */}
+      <Path
+        path={progressPath}
+        style="stroke"
         strokeWidth={strokeWidth}
-        fill="none"
-        strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        color={color}
+        strokeCap="round"
       />
-    </Svg>
+    </Canvas>
   );
 };
 
@@ -97,13 +117,16 @@ interface MacroCardProps {
 }
 
 const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, overfillColor, unit = 'g' }) => {
+  const [barWidth, setBarWidth] = useState(0);
   const progress = goal > 0 ? consumed / goal : 0;
   const isOver = progress > 1;
+  const barHeight = 8;
+  const borderRadius = 4;
+  const trackColor = useCSSVariable('--color-progress-track') as string;
 
   // When over: solid fill to goal point, reduced opacity for overage
-  // When under: solid fill to progress point
-  const solidWidth = isOver ? (1 / progress) * 100 : progress * 100;
-  const overflowWidth = isOver ? 100 - solidWidth : 0;
+  const solidFillWidth = isOver ? barWidth / progress : barWidth * Math.min(progress, 1);
+  const overflowWidth = isOver ? barWidth - solidFillWidth - 2 : 0; // 2px gap
 
   return (
     <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 light:shadow-sm">
@@ -114,31 +137,60 @@ const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, ove
         </Text>
       </View>
       {/* Progress bar container */}
-      <View className="relative h-2">
-        {/* Track background */}
-        <View className="absolute left-0 right-0 top-0 bottom-0 bg-progress-track rounded-full" />
-        {/* Solid fill portion */}
-        <View
-          className="absolute left-0 top-0 h-full rounded-l-full"
-          style={{
-            width: `${solidWidth}%`,
-            backgroundColor: color,
-            borderTopRightRadius: isOver ? 0 : 9999,
-            borderBottomRightRadius: isOver ? 0 : 9999,
-          }}
-        />
-        {/* Overflow portion with reduced opacity */}
-        {isOver && overflowWidth > 0 && (
-          <View
-            className="absolute top-0 h-full rounded-r-full"
-            style={{
-              left: `${solidWidth}%`,
-              width: `${overflowWidth}%`,
-              backgroundColor: color,
-              opacity: 0.65,
-              marginLeft: 2,
-            }}
-          />
+      <View
+        className="h-2"
+        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+      >
+        {barWidth > 0 && (
+          <Canvas style={{ width: barWidth, height: barHeight }}>
+            {/* Track background */}
+            <RoundedRect
+              x={0}
+              y={0}
+              width={barWidth}
+              height={barHeight}
+              r={borderRadius}
+              color={trackColor}
+            />
+            {/* Solid fill portion */}
+            {solidFillWidth > 0 && (
+              <Group
+                clip={rrect(
+                  rect(0, 0, solidFillWidth, barHeight),
+                  borderRadius,
+                  isOver ? 0 : borderRadius
+                )}
+              >
+                <Rect
+                  x={0}
+                  y={0}
+                  width={solidFillWidth}
+                  height={barHeight}
+                  color={color}
+                />
+              </Group>
+            )}
+            {/* Overflow portion with reduced opacity */}
+            {isOver && overflowWidth > 0 && (
+              <Group opacity={0.65}>
+                <Group
+                  clip={rrect(
+                    rect(solidFillWidth + 2, 0, overflowWidth, barHeight),
+                    0,
+                    borderRadius
+                  )}
+                >
+                  <Rect
+                    x={solidFillWidth + 2}
+                    y={0}
+                    width={overflowWidth}
+                    height={barHeight}
+                    color={color}
+                  />
+                </Group>
+              </Group>
+            )}
+          </Canvas>
         )}
       </View>
     </View>
@@ -164,6 +216,11 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
   fat,
   colors,
 }) => {
+  const [barWidth, setBarWidth] = useState(0);
+  const barHeight = 24;
+  const borderRadius = 12;
+  const gap = 2;
+
   // Convert grams to calories
   const proteinCal = protein * 4;
   const carbsCal = carbs * 4;
@@ -172,42 +229,74 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
   const macroCals = proteinCal + carbsCal + fatCal;
 
   // Calculate percentages of the bar
-  const proteinPct = macroCals > 0 ? (proteinCal / macroCals) * 100 : 0;
-  const carbsPct = macroCals > 0 ? (carbsCal / macroCals) * 100 : 0;
-  const fatPct = macroCals > 0 ? (fatCal / macroCals) * 100 : 0;
+  const proteinPct = macroCals > 0 ? proteinCal / macroCals : 0;
+  const carbsPct = macroCals > 0 ? carbsCal / macroCals : 0;
+  const fatPct = macroCals > 0 ? fatCal / macroCals : 0;
+
+  // Calculate widths accounting for gaps
+  const totalGaps = [proteinPct, carbsPct, fatPct].filter(p => p > 0).length - 1;
+  const availableWidth = barWidth - (totalGaps > 0 ? totalGaps * gap : 0);
+  const proteinWidth = availableWidth * proteinPct;
+  const carbsWidth = availableWidth * carbsPct;
+  const fatWidth = availableWidth * fatPct;
+
+  // Calculate x positions
+  let currentX = 0;
+  const proteinX = currentX;
+  currentX += proteinWidth + (proteinPct > 0 && carbsPct > 0 ? gap : 0);
+  const carbsX = currentX;
+  currentX += carbsWidth + (carbsPct > 0 && fatPct > 0 ? gap : 0);
+  const fatX = currentX;
+
+  const progressTrackColor = useCSSVariable('--color-progress-track') as string;
 
   return (
     <View className="bg-surface-primary rounded-xl p-4 mb-4 light:shadow-sm">
       <Text className="text-sm font-medium text-text-primary mb-3">Macro Breakdown</Text>
 
       {/* Stacked bar */}
-      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row gap-0.5">
-        {proteinPct > 0 && (
-          <View
-            style={{
-              width: `${proteinPct}%`,
-              backgroundColor: colors.protein,
-            }}
-            className="h-full"
-          />
-        )}
-        {carbsPct > 0 && (
-          <View
-            style={{
-              width: `${carbsPct}%`,
-              backgroundColor: colors.carbs,
-            }}
-            className="h-full"
-          />
-        )}
-        {fatPct > 0 && (
-          <View
-            style={{
-              width: `${fatPct}%`,
-              backgroundColor: colors.fat,
-            }}
-            className="h-full"
-          />
+      <View
+        className="h-6"
+        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+      >
+        {barWidth > 0 && (
+          <Canvas style={{ width: barWidth, height: barHeight }}>
+            {/* Clip group for rounded edges */}
+            <Group clip={rrect(rect(0, 0, barWidth, barHeight), borderRadius, borderRadius)}>
+              {/* Track background */}
+              <Rect x={0} y={0} width={barWidth} height={barHeight} color={progressTrackColor} />
+              {/* Protein segment */}
+              {proteinPct > 0 && (
+                <Rect
+                  x={proteinX}
+                  y={0}
+                  width={proteinWidth}
+                  height={barHeight}
+                  color={colors.protein}
+                />
+              )}
+              {/* Carbs segment */}
+              {carbsPct > 0 && (
+                <Rect
+                  x={carbsX}
+                  y={0}
+                  width={carbsWidth}
+                  height={barHeight}
+                  color={colors.carbs}
+                />
+              )}
+              {/* Fat segment */}
+              {fatPct > 0 && (
+                <Rect
+                  x={fatX}
+                  y={0}
+                  width={fatWidth}
+                  height={barHeight}
+                  color={colors.fat}
+                />
+              )}
+            </Group>
+          </Canvas>
         )}
       </View>
 

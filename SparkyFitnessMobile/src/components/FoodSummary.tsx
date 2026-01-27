@@ -66,9 +66,12 @@ interface MealSectionProps {
 
 const MealSection: React.FC<MealSectionProps> = ({ mealType, entries }) => {
   const config = MEAL_CONFIG[mealType] || { label: mealType, icon: 'meal-snack' as IconName };
-  const textSecondary = useCSSVariable('--color-text-secondary') as string;
-  const textPrimary = useCSSVariable('--color-text-primary') as string;
-  const textAccent = useCSSVariable('--color-accent-primary') as string;
+  const [textSecondary, proteinColor, carbsColor, fatColor] = useCSSVariable([
+    '--color-text-secondary',
+    '--color-macro-protein',
+    '--color-macro-carbs',
+    '--color-macro-fat',
+  ]) as [string, string, string, string];
 
   return (
     <View>
@@ -83,13 +86,26 @@ const MealSection: React.FC<MealSectionProps> = ({ mealType, entries }) => {
           const nutrition = calculateEntryNutrition(entry);
           const name = entry.food_name || 'Unknown food';
           return (
-            <View key={entry.id || index} className="py-1.5 flex flex-row justify-between items-center">
-              <Text className="text-base text-text-primary flex-1 mr-2" numberOfLines={1}>
-                {name}
-              </Text>
-              <Text className="text-sm text-text-muted">
-                {nutrition.calories} cal · {nutrition.protein}p · {nutrition.carbs}c · {nutrition.fat}f
-              </Text>
+            <View key={entry.id || index} className="py-1.5">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-base text-text-primary flex-1 mr-2" numberOfLines={1}>
+                  {name}
+                </Text>
+                <Text className="text-sm text-text-muted">
+                  {nutrition.calories} cal
+                </Text>
+              </View>
+              <View className="flex-row justify-end mt-0.5">
+                <Text className="text-xs w-10 text-right" style={{ color: proteinColor }}>
+                  {nutrition.protein}p
+                </Text>
+                <Text className="text-xs w-10 text-right" style={{ color: carbsColor }}>
+                  {nutrition.carbs}c
+                </Text>
+                <Text className="text-xs w-10 text-right" style={{ color: fatColor }}>
+                  {nutrition.fat}f
+                </Text>
+              </View>
             </View>
           );
         })

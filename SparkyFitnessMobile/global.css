@@ -47,11 +47,11 @@
     }
       
     @variant dark {
-      --color-bg-primary:        hsl(222, 56%, 4%);
+      --color-bg-primary:        hsl(222, 76%, 6%);
       --color-bg-secondary:      hsl(221, 39%, 11%);
       --color-bg-tertiary:       hsl(215, 28%, 17%);
 
-      --color-surface-primary:   hsl(223, 44%, 12%);
+      --color-surface-primary:   hsl(223, 28%, 12%);
       --color-surface-secondary: hsl(218, 51%, 14%);
 
       --color-border-subtle:     hsl(216, 28%, 21%);
@@ -76,7 +76,7 @@
       --color-macro-fiber:       hsl(152, 55%, 54%);
       
       
-      --color-progress-track:    hsl(226, 46%, 18%);
+      --color-progress-track:    hsl(226, 41%, 23%);
       --color-progress-fill:     hsl(233, 100%, 74%);
       --color-progress-overfill: hsl(357, 66%, 65%);
       
