@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+import Icon from './Icon';
 
 // Module-level flag - resets when app is fully killed and relaunched
 let hasShownThisSession = false;
@@ -80,7 +80,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
             {/* Privacy Section */}
             <View className="flex-row p-4 rounded-xl bg-bg-primary">
-              <Ionicons name="shield-checkmark-outline" size={24} color={primary} className="mr-3 mt-0.5" />
+              <Icon name="shield-checkmark" size={24} color={primary} style={{ marginRight: 12, marginTop: 2 }} />
               <View className="flex-1">
                 <Text className="text-[15px] font-semibold mb-1 text-text-primary">
                   Your Privacy Matters
@@ -99,7 +99,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
               onPress={handleGoToSettings}
               activeOpacity={0.8}
             >
-              <Ionicons name="settings-outline" size={20} color="#fff" className="mr-2" />
+              <Icon name="settings" size={20} color="#fff" style={{ marginRight: 8 }} />
               <Text className="text-white text-[17px] font-semibold">Go to Settings</Text>
             </TouchableOpacity>
 

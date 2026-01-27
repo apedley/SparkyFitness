@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, TextInput, Text, TouchableOpacity, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useCSSVariable } from 'uniwind';
 import { ServerConfig as ServerConfigType } from '../services/storage';
 import ConnectionStatus from './ConnectionStatus';
+import Icon from './Icon';
 
 interface ServerConfigProps {
   url: string;
@@ -89,7 +89,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
               accessibilityLabel="Copy URL to clipboard"
               accessibilityRole="button"
             >
-              <Ionicons name="copy-outline" size={20} color={textSecondary} />
+              <Icon name="copy" size={20} color={textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
               className="p-2"
@@ -97,7 +97,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
               accessibilityLabel="Paste URL from clipboard"
               accessibilityRole="button"
             >
-              <Ionicons name="clipboard-outline" size={20} color={textSecondary} />
+              <Icon name="paste" size={20} color={textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -118,7 +118,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
               accessibilityLabel="Copy API key to clipboard"
               accessibilityRole="button"
             >
-              <Ionicons name="copy-outline" size={20} color={textSecondary} />
+              <Icon name="copy" size={20} color={textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
               className="p-2"
@@ -126,7 +126,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
               accessibilityLabel="Paste API key from clipboard"
               accessibilityRole="button"
             >
-              <Ionicons name="clipboard-outline" size={20} color={textSecondary} />
+              <Icon name="paste" size={20} color={textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -148,7 +148,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
             accessibilityRole="button"
             className="w-11 h-11 justify-center items-center"
           >
-            <Ionicons name="add-circle-outline" size={28} color={primary} />
+            <Icon name="add-circle" size={28} color={primary} />
           </TouchableOpacity>
         </View>
         {serverConfigs.map((item) => (

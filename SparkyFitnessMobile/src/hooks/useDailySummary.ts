@@ -66,6 +66,7 @@ export function useDailySummary({ date, enabled = true }: UseDailySummaryOptions
           consumed: calculateFiber(foodEntries),
           goal: goals.dietary_fiber || 0,
         },
+        foodEntries,
       };
     },
     enabled,

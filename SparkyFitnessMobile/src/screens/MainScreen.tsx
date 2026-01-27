@@ -21,8 +21,8 @@ import type { TimeRange } from '../services/storage';
 import { addLog } from '../services/LogService';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
 import * as WebBrowser from 'expo-web-browser';
-import { Ionicons } from '@expo/vector-icons';
 import type { HealthMetricStates, HealthDataDisplayState } from '../types/healthRecords';
+import Icon from '../components/Icon';
 import { useServerConnection, useSyncHealthData } from '../hooks';
 
 interface MainScreenProps {
@@ -551,7 +551,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
           className="bg-[#3D4654] rounded-xl py-3.5 px-4 flex-row items-center mb-3"
           onPress={openWebDashboard}
         >
-          <Ionicons name="globe-outline" size={24} color="#fff" className="mr-3" />
+          <Icon name="globe" size={24} color="#fff" style={{ marginRight: 12 }} />
           <View className="flex-1">
             <Text className="text-white text-lg font-semibold">Open Web Dashboard</Text>
             <Text className="text-white/80 text-sm mt-0.5">View your full fitness dashboard</Text>

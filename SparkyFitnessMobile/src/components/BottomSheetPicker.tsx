@@ -14,8 +14,8 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
 import { useUniwind, useCSSVariable } from 'uniwind';
+import Icon from './Icon';
 
 export interface PickerOption<T> {
   label: string;
@@ -106,7 +106,7 @@ function BottomSheetPicker<T extends string | number>({
           {item.label}
         </Text>
         {isSelected && (
-          <Ionicons name="checkmark" size={20} color={primary} />
+          <Icon name="checkmark" size={20} color={primary} />
         )}
       </TouchableOpacity>
     );
@@ -126,7 +126,7 @@ function BottomSheetPicker<T extends string | number>({
         <Text className="text-base flex-1 text-text-primary">
           {displayText}
         </Text>
-        <Ionicons name="chevron-down" size={16} color={textMuted} />
+        <Icon name="chevron-down" size={16} color={textMuted} />
       </TouchableOpacity>
 
       <BottomSheetModal

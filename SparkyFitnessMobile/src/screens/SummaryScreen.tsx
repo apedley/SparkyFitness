@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+import Icon from '../components/Icon';
 import { useServerConnection, useDailySummary, usePreferences, useMeasurements } from '../hooks';
 import OnboardingModal, { shouldShowOnboardingModal } from '../components/OnboardingModal';
+import FoodSummary from '../components/FoodSummary';
 import { getActiveServerConfig } from '../services/storage';
 import { calculateEffectiveBurned, calculateCalorieBalance } from '../services/calculations';
 
@@ -276,7 +277,9 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     date: todayDate,
     enabled: isConnected,
   });
-  const { preferences, isLoading: isPreferencesLoading, isError: isPreferencesError } = usePreferences();
+  const { preferences, isLoading: isPreferencesLoading, isError: isPreferencesError } = usePreferences({
+    enabled: isConnected,
+  });
   const { measurements, isLoading: isMeasurementsLoading, isError: isMeasurementsError } = useMeasurements({
     date: todayDate,
     enabled: isConnected,
@@ -300,7 +303,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     if (!isConnectionLoading && !isConnected) {
       return (
         <View className="flex-1 items-center justify-center p-8">
-          <Ionicons name="cloud-offline-outline" size={64} color="#9CA3AF" />
+          <Icon name="cloud-offline" size={64} color="#9CA3AF" />
           <Text className="text-text-muted text-lg text-center mt-4">
             No server configured
           </Text>
@@ -331,7 +334,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     if (isError || isPreferencesError || isMeasurementsError) {
       return (
         <View className="flex-1 items-center justify-center p-8">
-          <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+          <Icon name="alert-circle" size={64} color="#EF4444" />
           <Text className="text-text-muted text-lg text-center mt-4">
             Failed to load summary
           </Text>
@@ -452,6 +455,9 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
             color={fiberColor}
           />
         </View>
+
+        {/* Food Summary */}
+        <FoodSummary foodEntries={summary.foodEntries} />
       </ScrollView>
     );
   };

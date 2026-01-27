@@ -16,7 +16,7 @@ import AppearanceSettings from '../components/AppearanceSettings';
 import DevTools from '../components/DevTools';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import * as Application from 'expo-application';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import type { HealthMetricStates } from '../types/healthRecords';
 import Constants from 'expo-constants';
 interface SettingsScreenProps {
@@ -317,7 +317,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             activeOpacity={0.7}
           >
             <Text className="text-base font-semibold text-text-primary">View Logs</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
+            <Icon name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
           <View className="items-center z-[100]">

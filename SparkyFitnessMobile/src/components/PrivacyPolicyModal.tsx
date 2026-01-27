@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+import Icon from './Icon';
 
 const PRIVACY_POLICY_URL = 'https://codewithcj.github.io/SparkyFitness/privacy_policy';
 
@@ -44,7 +44,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
         <View className="w-full max-w-[360px] rounded-2xl p-6 bg-surface-primary">
           {/* Header */}
           <View className="items-center mb-5">
-            <Ionicons name="shield-checkmark-outline" size={48} color={primary} />
+            <Icon name="shield-checkmark" size={48} color={primary} />
             <Text className="text-[22px] font-bold mt-3 text-center text-text-primary">
               Privacy Policy
             </Text>

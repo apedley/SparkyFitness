@@ -118,6 +118,8 @@ describe('useDailySummary', () => {
       expect(result.current.summary).toBeDefined();
       expect(result.current.summary?.date).toBe(testDate);
       expect(result.current.summary?.calorieGoal).toBe(2000);
+      expect(result.current.summary?.foodEntries).toHaveLength(1);
+      expect(result.current.summary?.foodEntries[0].id).toBe('1');
     });
 
     test('calculates net and remaining calories correctly', async () => {

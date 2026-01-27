@@ -7,8 +7,8 @@ import {
   LayoutAnimation,
   Animated,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+import Icon from './Icon';
 
 
 interface CollapsibleSectionProps {
@@ -60,7 +60,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       >
         <View className="flex-row items-center gap-2">
           <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-            <Ionicons name="chevron-down" size={20} color={textSecondary} />
+            <Icon name="chevron-down" size={20} color={textSecondary} />
           </Animated.View>
           <Text className="text-base font-semibold text-text-primary">{title}</Text>
         </View>
