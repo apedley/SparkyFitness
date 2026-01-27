@@ -35,14 +35,15 @@ type TabIcons = {
 
 function AppContent() {
   const { theme } = useUniwind();
-  const [primary, textMuted, navBar, bgPrimary, textPrimary, borderSubtle] = useCSSVariable([
+  const [primary, navBar, bgPrimary, textPrimary, borderSubtle, tabActive, tabInactive] = useCSSVariable([
     '--color-accent-primary',
-    '--color-text-muted',
     '--color-surface-primary',
     '--color-bg-primary',
     '--color-text-primary',
     '--color-border-subtle',
-  ]) as [string, string, string, string, string, string];
+    '--color-tab-active',
+    '--color-tab-inactive',
+  ]) as [string, string, string, string, string, string, string];
   const [icons, setIcons] = useState<TabIcons | null>(null);
 
   // Determine if we're in dark mode based on current theme
@@ -112,8 +113,8 @@ function AppContent() {
             {() => (
               <Tab.Navigator
                 initialRouteName="Summary"
-                tabBarActiveTintColor={primary}
-                tabBarInactiveTintColor={textMuted}
+                tabBarActiveTintColor={tabActive}
+                tabBarInactiveTintColor={tabInactive}
                 activeIndicatorColor={isDarkMode ? '#424242' : '#E7EAEC'}
                 tabBarStyle={Platform.OS !== 'ios' ? { backgroundColor: navBar } : undefined}
               >

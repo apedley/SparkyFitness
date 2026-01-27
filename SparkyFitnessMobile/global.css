@@ -24,6 +24,9 @@
       --color-accent-muted:      hsl(230, 100%, 78%);
       --color-accent-subtle:     hsl(228, 100%, 95%);
 
+      --color-tab-active:        hsl(230, 91%, 54%);
+      --color-tab-inactive:      hsl(215, 16%, 47%);
+
       --color-macro-protein: hsl(231, 86%, 58%);
       --color-macro-carbs:   hsl(195, 86%, 45%);
       --color-macro-fat:     hsl(35, 92%, 55%);
@@ -62,6 +65,9 @@
       --color-accent-primary:    hsl(233, 89%, 69%);
       --color-accent-muted:      hsl(233, 100%, 82%);
       --color-accent-subtle:     hsl(226, 46%, 22%);
+
+      --color-tab-active:        hsl(233, 100%, 78%);
+      --color-tab-inactive:      hsl(215, 20%, 62%);
 
       --color-macro-protein:     hsl(233, 82%, 70%);
       --color-macro-carbs:       hsl(190, 85%, 62%);
@@ -104,6 +110,8 @@
       --color-accent-muted:      hsl(233, 100%, 85%);
       --color-accent-subtle:     hsl(230, 40%, 12%);
 
+      --color-tab-active:        hsl(233, 100%, 82%);
+      --color-tab-inactive:      hsl(215, 20%, 62%);
 
       --color-macro-protein:     hsl(233, 82%, 70%);
       --color-macro-carbs:       hsl(190, 85%, 62%);
