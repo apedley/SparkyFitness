@@ -28,10 +28,10 @@ const ICON_MAP = {
   'globe': { sf: 'globe', ion: 'globe-outline' },
 
   // Meals
-  'meal-breakfast': { sf: 'sunrise.fill', ion: 'sunny-outline' },
-  'meal-lunch': { sf: 'sun.max.fill', ion: 'partly-sunny-outline' },
-  'meal-dinner': { sf: 'moon.stars.fill', ion: 'moon-outline' },
-  'meal-snack': { sf: 'leaf.fill', ion: 'leaf-outline' },
+  'meal-breakfast': { sf: 'sunrise.fill', ion: 'sunny' },
+  'meal-lunch': { sf: 'sun.max.fill', ion: 'partly-sunny' },
+  'meal-dinner': { sf: 'moon.stars.fill', ion: 'moon' },
+  'meal-snack': { sf: 'clock.fill', ion: 'time' },
 
   // Charts/Data
   'chart-bar': { sf: 'chart.bar.fill', ion: 'bar-chart' },

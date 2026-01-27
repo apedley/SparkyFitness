@@ -5,33 +5,34 @@
 @layer theme {
   :root {
     @variant light {
-      --color-bg-primary:        #F0F2F5;
-      --color-bg-secondary:      #F7F8FA;
-      --color-bg-tertiary:       #EEF1F4;
+      --color-bg-primary:        hsl(216, 20%, 95%);
+      --color-bg-secondary:      hsl(220, 23%, 97%);
+      --color-bg-tertiary:       hsl(210, 21%, 95%);
 
-      --color-surface-primary:   #FFFFFF;
-      --color-surface-secondary: #F2F4F7;
+      --color-surface-primary:   hsl(0, 0%, 100%);
+      --color-surface-secondary: hsl(216, 24%, 96%);
 
-      --color-border-subtle:     #E1E5EA;
-      --color-border-strong:     #CBD2DA;
+      --color-border-subtle:     hsl(213, 16%, 90%);
+      --color-border-strong:     hsl(212, 18%, 83%);
 
-      --color-text-primary:      #0F172A;
-      --color-text-secondary:    #475569;
-      --color-text-tertiary:     #64748B;
-      --color-text-muted:        #94A3B8;
+      --color-text-primary:      hsl(222, 47%, 11%);
+      --color-text-secondary:    hsl(215, 19%, 40%);
+      --color-text-tertiary:     hsl(215, 16%, 49%);
+      --color-text-muted:        hsl(215, 20%, 65%);
 
       --color-accent-primary:    hsl(230, 91%, 64%);
       --color-accent-muted:      hsl(230, 100%, 78%);
       --color-accent-subtle:     hsl(228, 100%, 95%);
 
-      --color-macro-protein:     #3D4FC4;  /* Deep saturated blue */
-      --color-macro-carbs:       #2D3A7D;  /* Dark indigo/navy */
-      --color-macro-fat:         #8A9BD4;  /* Lighter desaturated */
-      --color-macro-fiber:       #B8C4F2;  /* Light periwinkle */
+      --color-macro-protein: hsl(231, 86%, 58%);
+      --color-macro-carbs:   hsl(195, 86%, 45%);
+      --color-macro-fat:     hsl(35, 92%, 55%);
+      --color-macro-fiber:   hsl(152, 60%, 40%);
       
-      --color-progress-track:    #E5E9F0;
-      --color-progress-fill:     #4F6CF7;
-      --color-progress-overfill: #C44B4F;
+      --color-progress-track:    hsl(218, 29%, 92%);
+      --color-progress-fill:     hsl(230, 91%, 64%);
+      /* --color-progress-overfill: hsl(358, 51%, 53%); */
+      --color-progress-overfill: hsl(215, 28%, 17%);
 
       --color-bg-success:     hsl(162, 64%, 88%);
       --color-bg-warning:     hsl(35, 59%, 78%);
@@ -43,83 +44,85 @@
     }
       
     @variant dark {
-      --color-bg-primary:        #0B1220;
-      --color-bg-secondary:      #111827;
-      --color-bg-tertiary:       #1F2937;
+      --color-bg-primary:        hsl(222, 56%, 4%);
+      --color-bg-secondary:      hsl(221, 39%, 11%);
+      --color-bg-tertiary:       hsl(215, 28%, 17%);
 
-      --color-surface-primary:   #0F172A;
-      --color-surface-secondary: #111E35;
+      --color-surface-primary:   hsl(223, 44%, 12%);
+      --color-surface-secondary: hsl(218, 51%, 14%);
 
-      --color-border-subtle:     #263244;
-      --color-border-strong:     #334155;
+      --color-border-subtle:     hsl(216, 28%, 21%);
+      --color-border-strong:     hsl(215, 25%, 27%);
 
-      --color-text-primary:      #E5E7EB;
-      --color-text-secondary:    #CBD5E1;
-      --color-text-tertiary:     #94A3B8;
-      --color-text-muted:        #64748B;
+      --color-text-primary:      hsl(220, 13%, 91%);
+      --color-text-secondary:    hsl(213, 27%, 74%);
+      --color-text-tertiary:     hsl(215, 20%, 65%);
+      --color-text-muted:        hsl(215, 16%, 47%);
 
-      --color-accent-primary:    hsl(233, 59%, 69%);
-      --color-accent-muted:      hsl(230, 100%, 82%);
+      --color-accent-primary:    hsl(233, 89%, 69%);
+      --color-accent-muted:      hsl(233, 100%, 82%);
       --color-accent-subtle:     hsl(226, 46%, 22%);
 
-      --color-macro-protein:     #5B72FF;  /* Bright saturated blue */
-      --color-macro-carbs:       #4A5490;  /* Dark muted indigo */
-      --color-macro-fat:         #A5B0E0;  /* Lighter desaturated */
-      --color-macro-fiber:       #C8D0FF;  /* Pale lavender */
-
-      --color-progress-track:    #243042;
-      --color-progress-fill:     #7C8CFF;
-      --color-progress-overfill: #E06A70;
-
-      /* --color-bg-success:     hsl(161, 32%, 49%);
-      --color-bg-warning:     hsl(37, 64%, 57%);
-      --color-bg-danger:      hsl(357, 66%, 65%); */
+      --color-macro-protein:     hsl(233, 82%, 70%);
+      --color-macro-carbs:       hsl(190, 85%, 62%);
+      --color-macro-fat:         hsl(36, 100%, 71%);
+      /* --color-macro-fat:         hsl(278, 55%, 72%); */
+      --color-macro-fiber:       hsl(152, 55%, 54%);
       
-      --color-bg-success:     hsl(163, 40%, 22%);
-      --color-bg-warning:     hsl(36, 72%, 65%);
-      --color-bg-danger:      hsl(358, 51%, 53%);
-
-      --color-text-success:   hsl(162, 60%, 65%);
-      --color-text-warning:   hsl(35, 59%, 78%);
-      --color-text-danger:    hsl(358, 53%, 89%);
+      
+      --color-progress-track:    hsl(226, 46%, 18%);
+      --color-progress-fill:     hsl(233, 100%, 74%);
+      --color-progress-overfill: hsl(357, 66%, 65%);
+      
+      --color-bg-success:        hsl(163, 40%, 22%);
+      --color-bg-warning:        hsl(36, 72%, 65%);
+      --color-bg-danger:         hsl(358, 51%, 53%);
+   
+      --color-text-success:      hsl(162, 60%, 65%);
+      --color-text-warning:      hsl(35, 59%, 78%);
+      --color-text-danger:       hsl(358, 53%, 89%);
     }
 
+    /* TODO Update AMOLED variant colors to be more distinct from dark mode */
     @variant amoled {
-      --color-bg-primary:        #000000;
-      --color-bg-secondary:      #05070B;
-      --color-bg-tertiary:       #0B0F17;
+      --color-bg-primary:        hsl(0, 0%, 0%);
+      --color-bg-secondary:      hsl(220, 38%, 3%);
+      --color-bg-tertiary:       hsl(220, 35%, 7%);
 
-      --color-surface-primary:   #0A0D14;
-      --color-surface-secondary: #0F1420;
+      --color-surface-primary:   hsl(222, 33%, 0%);
+      --color-surface-secondary: hsl(222, 36%, 9%);
 
-      --color-border-subtle:     #151A24;
-      --color-border-strong:     #1F2937;
+      --color-border-subtle:     hsl(220, 26%, 11%);
+      --color-border-strong:     hsl(215, 28%, 17%);
 
-      --color-text-primary:      #E7EAF0;
-      --color-text-secondary:    #C9D1E1;
-      --color-text-tertiary:     #94A3B8;
-      --color-text-muted:        #64748B;
+      --color-text-primary:      hsl(220, 23%, 92%);
+      --color-text-secondary:    hsl(220, 32%, 84%);
+      --color-text-tertiary:     hsl(215, 20%, 65%);
+      --color-text-muted:        hsl(215, 16%, 47%);
 
-      --color-accent-primary:    #8896FF;
-      --color-accent-muted:      #B3BCFF;
-      --color-accent-subtle:     #12162A;
+      --color-accent-primary:    hsl(233, 100%, 77%);
+      --color-accent-muted:      hsl(233, 100%, 85%);
+      --color-accent-subtle:     hsl(230, 40%, 12%);
 
-      --color-macro-protein:     #6078FF;  /* Bright saturated */
-      --color-macro-carbs:       #505B9C;  /* Dark muted indigo */
-      --color-macro-fat:         #A8B3E8;  /* Lighter desaturated */
-      --color-macro-fiber:       #CACFFF;  /* Pale lavender */
 
-      --color-progress-track:    #141A26;
-      --color-progress-fill:     #8896FF;
-      --color-progress-overfill: #E06A70;
-
-      --color-bg-success:     hsl(163, 40%, 22%);
-      --color-bg-warning:     hsl(36, 72%, 65%);
-      --color-bg-danger:      hsl(358, 51%, 53%);
-
-      --color-text-success:   hsl(162, 60%, 65%);
-      --color-text-warning:   hsl(35, 59%, 78%);
-      --color-text-danger:    hsl(358, 53%, 89%);
+      --color-macro-protein:     hsl(233, 82%, 70%);
+      --color-macro-carbs:       hsl(190, 85%, 62%);
+      --color-macro-fat:         hsl(36, 100%, 71%);
+      /* --color-macro-fat:         hsl(278, 55%, 72%); */
+      --color-macro-fiber:       hsl(152, 55%, 54%);
+      
+      
+      --color-progress-track:    hsl(226, 46%, 18%);
+      --color-progress-fill:     hsl(233, 100%, 74%);
+      --color-progress-overfill: hsl(357, 66%, 65%);
+      
+      --color-bg-success:        hsl(163, 40%, 22%);
+      --color-bg-warning:        hsl(36, 72%, 65%);
+      --color-bg-danger:         hsl(358, 51%, 53%);
+   
+      --color-text-success:      hsl(162, 60%, 65%);
+      --color-text-warning:      hsl(35, 59%, 78%);
+      --color-text-danger:       hsl(358, 53%, 89%);
     }
   }
 }

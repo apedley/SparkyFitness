@@ -67,12 +67,14 @@ interface MealSectionProps {
 const MealSection: React.FC<MealSectionProps> = ({ mealType, entries }) => {
   const config = MEAL_CONFIG[mealType] || { label: mealType, icon: 'meal-snack' as IconName };
   const textSecondary = useCSSVariable('--color-text-secondary') as string;
+  const textPrimary = useCSSVariable('--color-text-primary') as string;
+  const textAccent = useCSSVariable('--color-accent-primary') as string;
 
   return (
-    <View className="mb-3">
+    <View>
       <View className="flex-row items-center gap-2 mb-2">
         <Icon name={config.icon} size={18} color={textSecondary} />
-        <Text className="text-base font-semibold text-text-primary">{config.label}</Text>
+        <Text className="text-base font-semibold text-text-secondary">{config.label}</Text>
       </View>
       {entries.length === 0 ? (
         <Text className="text-sm text-text-muted pl-7">No entries</Text>
@@ -81,8 +83,8 @@ const MealSection: React.FC<MealSectionProps> = ({ mealType, entries }) => {
           const nutrition = calculateEntryNutrition(entry);
           const name = entry.food_name || 'Unknown food';
           return (
-            <View key={entry.id || index} className="py-1.5 pl-7 flex flex-row justify-between items-center">
-              <Text className="text-base text-text-secondary flex-1 mr-2" numberOfLines={1}>
+            <View key={entry.id || index} className="py-1.5 flex flex-row justify-between items-center">
+              <Text className="text-base text-text-primary flex-1 mr-2" numberOfLines={1}>
                 {name}
               </Text>
               <Text className="text-sm text-text-muted">
@@ -100,7 +102,7 @@ const FoodSummary: React.FC<FoodSummaryProps> = ({ foodEntries }) => {
   const grouped = groupByMealType(foodEntries);
 
   return (
-    <View className="bg-surface-primary rounded-xl p-4 mt-4">
+    <View className="bg-surface-primary rounded-xl p-4 mt-2 gap-3 light:shadow-sm">
       {MEAL_TYPES.map((mealType) => (
         <MealSection key={mealType} mealType={mealType} entries={grouped[mealType]} />
       ))}

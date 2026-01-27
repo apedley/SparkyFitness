@@ -92,20 +92,21 @@ interface MacroCardProps {
   consumed: number;
   goal: number;
   color: string;
+  overfillColor: string;
   unit?: string;
 }
 
-const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, unit = 'g' }) => {
+const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, overfillColor, unit = 'g' }) => {
   const progress = goal > 0 ? consumed / goal : 0;
   const isOver = progress > 1;
 
-  // When over: bar fills 100%, goal marker shows where 100% was
-  // When under: bar shows progress, no marker needed
-  const barWidth = isOver ? 100 : progress * 100;
-  const goalMarkerPosition = isOver ? (1 / progress) * 100 : null;
+  // When over: solid fill to goal point, reduced opacity for overage
+  // When under: solid fill to progress point
+  const solidWidth = isOver ? (1 / progress) * 100 : progress * 100;
+  const overflowWidth = isOver ? 100 - solidWidth : 0;
 
   return (
-    <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 dark:opacity-85">
+    <View className="w-[48%] bg-surface-primary rounded-xl p-3 mb-3 light:shadow-sm">
       <View className="flex-row justify-between items-center mb-2">
         <Text className="text-sm font-medium text-text-primary">{label}</Text>
         <Text className="text-xs text-text-secondary">
@@ -116,24 +117,26 @@ const MacroCard: React.FC<MacroCardProps> = ({ label, consumed, goal, color, uni
       <View className="relative h-2">
         {/* Track background */}
         <View className="absolute left-0 right-0 top-0 bottom-0 bg-progress-track rounded-full" />
-        {/* Progress bar fill */}
+        {/* Solid fill portion */}
         <View
-          className="absolute left-0 top-0 h-full rounded-full"
+          className="absolute left-0 top-0 h-full rounded-l-full"
           style={{
-            width: `${barWidth}%`,
+            width: `${solidWidth}%`,
             backgroundColor: color,
-            opacity: isOver ? 0.6 : 1,
+            borderTopRightRadius: isOver ? 0 : 9999,
+            borderBottomRightRadius: isOver ? 0 : 9999,
           }}
         />
-        {/* Goal marker - vertical line showing where 100% is when over */}
-        {isOver && goalMarkerPosition && (
+        {/* Overflow portion with reduced opacity */}
+        {isOver && overflowWidth > 0 && (
           <View
-            className="absolute top-0 h-full"
+            className="absolute top-0 h-full rounded-r-full"
             style={{
-              left: `${goalMarkerPosition}%`,
-              width: 2,
+              left: `${solidWidth}%`,
+              width: `${overflowWidth}%`,
               backgroundColor: color,
-              marginLeft: -1,
+              opacity: 0.65,
+              marginLeft: 2,
             }}
           />
         )}
@@ -174,11 +177,11 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
   const fatPct = macroCals > 0 ? (fatCal / macroCals) * 100 : 0;
 
   return (
-    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+    <View className="bg-surface-primary rounded-xl p-4 mb-4 light:shadow-sm">
       <Text className="text-sm font-medium text-text-primary mb-3">Macro Breakdown</Text>
 
       {/* Stacked bar */}
-      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row dark:opacity-85">
+      <View className="h-6 bg-progress-track rounded-full overflow-hidden flex-row gap-0.5">
         {proteinPct > 0 && (
           <View
             style={{
@@ -212,7 +215,7 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
       <View className="flex-row mt-3 justify-between">
         <View className="flex-row items-center">
           <View
-            className="w-3 h-3 rounded-full mr-1"
+            className="w-3 h-3 rounded-full mr-1 light:opacity-45"
             style={{ backgroundColor: colors.protein }}
           />
           <Text className="text-xs text-text-secondary">
@@ -221,7 +224,7 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
         </View>
         <View className="flex-row items-center">
           <View
-            className="w-3 h-3 rounded-full mr-1"
+            className="w-3 h-3 rounded-full mr-1 light:opacity-45"
             style={{ backgroundColor: colors.carbs }}
           />
           <Text className="text-xs text-text-secondary">
@@ -230,7 +233,7 @@ const MacroStackedBar: React.FC<MacroStackedBarProps> = ({
         </View>
         <View className="flex-row items-center">
           <View
-            className="w-3 h-3 rounded-full mr-1"
+            className="w-3 h-3 rounded-full mr-1 light:opacity-45"
             style={{ backgroundColor: colors.fat }}
           />
           <Text className="text-xs text-text-secondary">
@@ -286,14 +289,17 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
   });
 
   // Get macro colors from CSS variables (theme-aware)
-  const [proteinColor, carbsColor, fatColor, fiberColor, primaryColor, primarySubtleColor] = useCSSVariable([
+  const [proteinColor, carbsColor, fatColor, fiberColor, primaryColor, primarySubtleColor, progressTrackColor, progressFillColor, progressTrackOverfillColor] = useCSSVariable([
     '--color-macro-protein',
     '--color-macro-carbs',
     '--color-macro-fat',
     '--color-macro-fiber',
     '--color-accent-primary',
     '--color-accent-subtle',
-  ]) as [string, string, string, string, string, string];
+    '--color-progress-track',
+    '--color-progress-fill',
+    '--color-progress-overfill',
+  ]) as [string, string, string, string, string, string, string, string, string];
 
   const macroColors = { protein: proteinColor, carbs: carbsColor, fat: fatColor };
 
@@ -302,7 +308,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     // No server configured
     if (!isConnectionLoading && !isConnected) {
       return (
-        <View className="flex-1 items-center justify-center p-8">
+        <View className="flex-1 items-center justify-center p-8 light:shadow-sm">
           <Icon name="cloud-offline" size={64} color="#9CA3AF" />
           <Text className="text-text-muted text-lg text-center mt-4">
             No server configured
@@ -323,7 +329,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     // Loading state
     if (isLoading || isConnectionLoading || isPreferencesLoading || isMeasurementsLoading) {
       return (
-        <View className="flex-1 items-center justify-center p-8">
+        <View className="flex-1 items-center justify-center p-8 light:shadow-sm">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="text-text-muted text-base mt-4">Loading summary...</Text>
         </View>
@@ -333,7 +339,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
     // Error state
     if (isError || isPreferencesError || isMeasurementsError) {
       return (
-        <View className="flex-1 items-center justify-center p-8">
+        <View className="flex-1 items-center justify-center p-8 light:shadow-sm">
           <Icon name="alert-circle" size={64} color="#EF4444" />
           <Text className="text-text-muted text-lg text-center mt-4">
             Failed to load summary
@@ -379,7 +385,7 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Calories Section - Ring with flanking stats */}
-        <View className="bg-surface-primary rounded-xl p-4 mb-4">
+        <View className="bg-surface-primary rounded-xl p-4 mb-4 light:shadow-sm">
           <View className="flex-row items-center justify-center">
             {/* Left: Consumed */}
             <SideStat
@@ -389,13 +395,13 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
 
             {/* Center: Progress Ring */}
             <View className="relative items-center justify-center mx-2">
-              <View className="dark:opacity-85">
+              <View>
                 <ProgressRing
                   progress={progressPercent}
                   size={160}
                   strokeWidth={12}
-                  color={primaryColor}
-                  backgroundColor={primarySubtleColor}
+                  color={progressFillColor}
+                  backgroundColor={progressTrackColor}
                 />
               </View>
               {/* Center text overlay */}
@@ -435,24 +441,28 @@ const SummaryScreen: React.FC<SummaryScreenProps> = ({ navigation }) => {
             consumed={summary.protein.consumed}
             goal={summary.protein.goal}
             color={proteinColor}
+            overfillColor={progressTrackOverfillColor}
           />
           <MacroCard
             label="Carbs"
             consumed={summary.carbs.consumed}
             goal={summary.carbs.goal}
             color={carbsColor}
+            overfillColor={progressTrackOverfillColor}
           />
           <MacroCard
             label="Fat"
             consumed={summary.fat.consumed}
             goal={summary.fat.goal}
             color={fatColor}
+            overfillColor={progressTrackOverfillColor}
           />
           <MacroCard
             label="Fiber"
             consumed={summary.fiber.consumed}
             goal={summary.fiber.goal}
             color={fiberColor}
+            overfillColor={progressTrackOverfillColor}
           />
         </View>
 
