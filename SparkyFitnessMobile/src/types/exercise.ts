@@ -10,4 +10,5 @@ export interface ExerciseEntry {
   id: string;
   calories_burned: number;
   exercise_snapshot?: ExerciseSnapshot;
+  duration_minutes?: number;
 }

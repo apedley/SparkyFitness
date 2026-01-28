@@ -26,7 +26,6 @@ interface LogScreenProps {
 }
 
 const LogScreen: React.FC<LogScreenProps> = () => {
-  const insets = useSafeAreaInsets();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -155,10 +154,10 @@ const LogScreen: React.FC<LogScreenProps> = () => {
   };
 
   return (
-    <View className="flex-1 bg-bg-primary">
+    <View className="flex-1 bg-canvas">
       <View className="p-4 pb-0 z-100">
         {/* Today's Summary */}
-        <View className="bg-surface-primary rounded-xl p-4 py-2.5 mb-2.5">
+        <View className="bg-section rounded-xl p-4 py-2.5 mb-2.5 shadow-sm">
           <Text className="text-lg font-bold mb-3 text-text-primary">
             {"Today's Summary"}
           </Text>
@@ -197,7 +196,7 @@ const LogScreen: React.FC<LogScreenProps> = () => {
         </View>
 
         {/* Log Filter Settings */}
-        <View className="bg-surface-primary rounded-xl p-4 mb-4">
+        <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
           <Text className="text-lg font-bold mb-3 text-text-primary">Log Filter</Text>
           <View className="flex-row justify-between items-center">
             <BottomSheetPicker
@@ -209,7 +208,7 @@ const LogScreen: React.FC<LogScreenProps> = () => {
             />
             {/* Clear Logs Button */}
             <TouchableOpacity
-              className="bg-state-danger rounded-lg py-3 px-6 self-center"
+              className="bg-bg-danger rounded-lg py-3 px-6 self-center"
               onPress={handleClearLogs}
             >
               <Text className="text-white text-base font-bold">Clear All Logs</Text>
@@ -222,7 +221,7 @@ const LogScreen: React.FC<LogScreenProps> = () => {
         data={logs}
         renderItem={({ item }: { item: LogEntry }) => (
           <TouchableOpacity
-            className="bg-surface-primary rounded-xl p-4 mb-3 flex-row items-center w-full"
+            className="bg-section rounded-xl p-4 mb-3 flex-row items-center w-full shadow-sm"
             onPress={() => handleCopyLogToClipboard(item)}
             activeOpacity={0.7}
           >
@@ -249,7 +248,7 @@ const LogScreen: React.FC<LogScreenProps> = () => {
               <View className="flex-row flex-wrap mb-1">
                 {item.details &&
                   item.details.map((detail, index) => (
-                    <Text key={index} className="bg-bg-tertiary rounded px-2 py-1 mr-2 mb-1 text-sm text-text-primary">
+                    <Text key={index} className="bg-card rounded px-2 py-1 mr-2 mb-1 text-sm text-text-primary">
                       {detail}
                     </Text>
                   ))}

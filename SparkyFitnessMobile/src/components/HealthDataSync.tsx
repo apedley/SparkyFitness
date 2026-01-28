@@ -32,8 +32,8 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   isAllMetricsEnabled,
   handleToggleAllMetrics,
 }) => {
-  const [inputBackground, primary] = useCSSVariable([
-    '--color-surface-secondary',
+  const [switchTrack, primary] = useCSSVariable([
+    '--color-progress-track',
     '--color-accent-primary',
   ]) as [string, string];
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -82,14 +82,14 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
       <Switch
         onValueChange={(newValue) => handleToggleHealthMetric(metric, newValue)}
         value={healthMetricStates[metric.stateKey]}
-        trackColor={{ false: inputBackground, true: primary }}
+        trackColor={{ false: switchTrack, true: primary }}
         thumbColor="#FFFFFF"
       />
     </View>
   );
 
   return (
-    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+    <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
       <Text className="text-lg font-bold mb-3 text-text-primary">Health Data to Sync</Text>
       <View className="flex-row justify-between items-center mb-2">
         <View className="flex-row items-center flex-1 mr-2">
@@ -104,7 +104,7 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
         <Switch
           onValueChange={handleToggleAllMetrics}
           value={isAllMetricsEnabled}
-          trackColor={{ false: inputBackground, true: primary }}
+          trackColor={{ false: switchTrack, true: primary }}
           thumbColor="#FFFFFF"
         />
       </View>

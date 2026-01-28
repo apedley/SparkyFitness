@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Platform } from 'react-native';
+import { View, Text } from 'react-native';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 import { saveSyncDuration, saveStringPreference } from '../services/healthConnectService';
 import type { SyncInterval } from '../services/healthconnect/preferences';
@@ -26,12 +26,11 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   dailySyncTime,
   setDailySyncTime,
 }) => {
-  const [inputBackground, tagBackground, primary, textSecondary] = useCSSVariable([
-    '--color-surface-secondary',
-    '--color-bg-tertiary',
+  const [inputBackground, primary, textSecondary] = useCSSVariable([
+    '--color-card',
     '--color-accent-primary',
     '--color-text-secondary',
-  ]) as [string, string, string, string];
+  ]) as [string, string, string];
 
   const fourHourTimeItems = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'].map(time => ({ label: time, value: time }));
 
@@ -49,7 +48,7 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
   };
 
   return (
-    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+    <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
       <Text className="text-lg font-bold mb-3 text-text-primary">Background Sync Frequency</Text>
 
       <View className="mb-3">
@@ -58,7 +57,7 @@ const SyncFrequency: React.FC<SyncFrequencyProps> = ({
           values={SYNC_INTERVAL_LABELS}
           selectedIndex={selectedSyncIndex}
           onChange={(event) => handleSyncIntervalChange(event.nativeEvent.selectedSegmentIndex)}
-          backgroundColor={Platform.OS === 'ios' ? inputBackground : tagBackground}
+          backgroundColor={inputBackground}
           tintColor={primary}
           fontStyle={{ color: textSecondary }}
           activeFontStyle={{ color: '#FFFFFF' }}

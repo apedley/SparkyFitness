@@ -6,6 +6,7 @@ import { dailySummaryQueryKey } from '../../src/hooks/queryKeys';
 import { fetchDailyGoals } from '../../src/services/api/goalsApi';
 import { fetchFoodEntries } from '../../src/services/api/foodEntriesApi';
 import { fetchExerciseEntries } from '../../src/services/api/exerciseApi';
+import { fetchWaterIntake } from '../../src/services/api/measurementsApi';
 
 jest.mock('../../src/services/api/goalsApi', () => ({
   fetchDailyGoals: jest.fn(),
@@ -31,6 +32,10 @@ jest.mock('../../src/services/api/exerciseApi', () => ({
     .reduce((sum: number, e: { calories_burned: number }) => sum + e.calories_burned, 0)),
 }));
 
+jest.mock('../../src/services/api/measurementsApi', () => ({
+  fetchWaterIntake: jest.fn(),
+}));
+
 jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn((callback) => {
     callback();
@@ -40,6 +45,7 @@ jest.mock('@react-navigation/native', () => ({
 const mockFetchDailyGoals = fetchDailyGoals as jest.MockedFunction<typeof fetchDailyGoals>;
 const mockFetchFoodEntries = fetchFoodEntries as jest.MockedFunction<typeof fetchFoodEntries>;
 const mockFetchExerciseEntries = fetchExerciseEntries as jest.MockedFunction<typeof fetchExerciseEntries>;
+const mockFetchWaterIntake = fetchWaterIntake as jest.MockedFunction<typeof fetchWaterIntake>;
 
 describe('useDailySummary', () => {
   let queryClient: QueryClient;
@@ -53,6 +59,7 @@ describe('useDailySummary', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetchWaterIntake.mockResolvedValue({ water_ml: 0 });
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -120,6 +127,79 @@ describe('useDailySummary', () => {
       expect(result.current.summary?.calorieGoal).toBe(2000);
       expect(result.current.summary?.foodEntries).toHaveLength(1);
       expect(result.current.summary?.foodEntries[0].id).toBe('1');
+    });
+
+    test('includes water intake from API', async () => {
+      mockFetchDailyGoals.mockResolvedValue({
+        calories: 2000,
+        protein: 150,
+        carbs: 200,
+        fat: 65,
+        dietary_fiber: 30,
+        water_goal_ml: 3000,
+      });
+      mockFetchFoodEntries.mockResolvedValue([]);
+      mockFetchExerciseEntries.mockResolvedValue([]);
+      mockFetchWaterIntake.mockResolvedValue({ water_ml: 1500 });
+
+      const { result } = renderHook(() => useDailySummary({ date: testDate }), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.summary?.waterConsumed).toBe(1500);
+      expect(result.current.summary?.waterGoal).toBe(3000);
+    });
+
+    test('defaults water goal to 2500 when not set in goals', async () => {
+      mockFetchDailyGoals.mockResolvedValue({
+        calories: 2000,
+        protein: 150,
+        carbs: 200,
+        fat: 65,
+        dietary_fiber: 30,
+      });
+      mockFetchFoodEntries.mockResolvedValue([]);
+      mockFetchExerciseEntries.mockResolvedValue([]);
+      mockFetchWaterIntake.mockResolvedValue({ water_ml: 750 });
+
+      const { result } = renderHook(() => useDailySummary({ date: testDate }), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.summary?.waterConsumed).toBe(750);
+      expect(result.current.summary?.waterGoal).toBe(2500);
+    });
+
+    test('gracefully handles water intake API failure', async () => {
+      mockFetchDailyGoals.mockResolvedValue({
+        calories: 2000,
+        protein: 150,
+        carbs: 200,
+        fat: 65,
+        dietary_fiber: 30,
+      });
+      mockFetchFoodEntries.mockResolvedValue([]);
+      mockFetchExerciseEntries.mockResolvedValue([]);
+      mockFetchWaterIntake.mockRejectedValue(new Error('Not Found'));
+
+      const { result } = renderHook(() => useDailySummary({ date: testDate }), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.summary?.waterConsumed).toBe(0);
+      expect(result.current.summary?.waterGoal).toBe(2500);
     });
 
     test('calculates net and remaining calories correctly', async () => {

@@ -268,8 +268,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
+    <View className="flex-1 bg-canvas">
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 130 }}>
         <View className="flex-1 p-4 pb-20">
           <ServerConfigComponent
             url={url}
@@ -296,7 +296,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             setDailySyncTime={setDailySyncTime}
           />
 
-          <AppearanceSettings />
 
           <HealthDataSync
             healthMetricStates={healthMetricStates}
@@ -304,6 +303,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             isAllMetricsEnabled={isAllMetricsEnabled}
             handleToggleAllMetrics={handleToggleAllMetrics}
           />
+          <AppearanceSettings />
 
           {__DEV__ &&
             (Constants.expoConfig?.extra?.APP_VARIANT === 'development' ||
@@ -312,7 +312,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           )}
 
           <TouchableOpacity
-            className="bg-surface-primary rounded-xl p-4 mb-4 flex-row items-center justify-between"
+            className="bg-section rounded-xl p-4 mb-4 flex-row items-center justify-between shadow-sm"
             onPress={() => navigation.navigate('Logs')}
             activeOpacity={0.7}
           >
@@ -320,7 +320,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <Icon name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
-          <View className="items-center z-[100]">
+          <View className="items-center z-100">
             <TouchableOpacity onPress={() => setShowPrivacyModal(true)} activeOpacity={0.7}>
               <Text className="text-accent-primary mb-2">Privacy Policy</Text>
             </TouchableOpacity>

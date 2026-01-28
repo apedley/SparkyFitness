@@ -30,9 +30,9 @@ const AppNavigator = () => {
 };
 
 describe('<MainScreen />', () => {
-  test('renders Open Web Dashboard button', async () => {
+  test('renders Sync Now button', async () => {
     render(<AppNavigator />);
-    expect(screen.getByText('Open Web Dashboard')).toBeVisible();
+    expect(screen.getByText('Sync Now')).toBeVisible();
     
   });
 });

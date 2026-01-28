@@ -62,7 +62,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
   return (
     <View>
       {/* Server Configuration */}
-      <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-lg font-bold text-text-primary">Server Setup</Text>
           <ConnectionStatus
@@ -73,7 +73,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
         </View>
         <View className="mb-3">
           <Text className="text-sm mb-2 text-text-secondary">Server URL</Text>
-          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-surface-secondary">
+          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-card">
             <TextInput
               className="flex-1 p-2.5 text-base text-text-primary"
               placeholder="https://your-server-url.com"
@@ -103,7 +103,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
         </View>
         <View className="mb-3">
           <Text className="text-sm mb-2 text-text-secondary">API Key</Text>
-          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-surface-secondary">
+          <View className="flex-row items-center border border-border-subtle rounded-lg pr-2.5 bg-card">
             <TextInput
               className="flex-1 p-2.5 text-base text-text-primary"
               placeholder="Enter your API key"
@@ -139,7 +139,7 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
       </View>
 
       {/* Display existing configurations */}
-      <View className="bg-surface-primary rounded-xl p-4 mb-4">
+      <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-lg font-bold text-text-primary">Manage Configurations</Text>
           <TouchableOpacity

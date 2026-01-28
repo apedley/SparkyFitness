@@ -7,3 +7,5 @@ export const measurementsQueryKey = (date: string) => ['measurements', date] as 
 export const preferencesQueryKey = ['userPreferences'] as const;
 
 export const profileQueryKey = ['userProfile'] as const;
+
+export const waterContainersQueryKey = ['waterContainers'] as const;

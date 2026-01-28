@@ -14,6 +14,7 @@ import {
   calculateActiveCalories,
   calculateOtherExerciseCalories,
 } from '../services/api/exerciseApi';
+import { fetchWaterIntake } from '../services/api/measurementsApi';
 import type { DailySummary } from '../types/dailySummary';
 import { useRefetchOnFocus } from './useRefetchOnFocus';
 import { dailySummaryQueryKey } from './queryKeys';
@@ -27,10 +28,11 @@ export function useDailySummary({ date, enabled = true }: UseDailySummaryOptions
   const query = useQuery({
     queryKey: dailySummaryQueryKey(date),
     queryFn: async (): Promise<DailySummary> => {
-      const [goals, foodEntries, exerciseEntries] = await Promise.all([
+      const [goals, foodEntries, exerciseEntries, waterIntake] = await Promise.all([
         fetchDailyGoals(date),
         fetchFoodEntries(date),
         fetchExerciseEntries(date),
+        fetchWaterIntake(date).catch(() => ({ water_ml: 0 })),
       ]);
 
       const calorieGoal = goals.calories || 0;
@@ -66,7 +68,10 @@ export function useDailySummary({ date, enabled = true }: UseDailySummaryOptions
           consumed: calculateFiber(foodEntries),
           goal: goals.dietary_fiber || 0,
         },
+        waterConsumed: waterIntake.water_ml || 0,
+        waterGoal: goals.water_goal_ml ?? 2500,
         foodEntries,
+        exerciseEntries,
       };
     },
     enabled,

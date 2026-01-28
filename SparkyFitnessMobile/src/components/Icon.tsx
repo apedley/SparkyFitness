@@ -18,6 +18,7 @@ const ICON_MAP = {
   'copy': { sf: 'doc.on.doc', ion: 'copy-outline' },
   'paste': { sf: 'doc.on.clipboard', ion: 'clipboard-outline' },
   'add-circle': { sf: 'plus.circle', ion: 'add-circle-outline' },
+  'remove-circle': { sf: 'minus.circle', ion: 'remove-circle-outline' },
   'checkmark': { sf: 'checkmark', ion: 'checkmark' },
   'settings': { sf: 'gearshape', ion: 'settings-outline' },
 
@@ -32,6 +33,9 @@ const ICON_MAP = {
   'meal-lunch': { sf: 'sun.max.fill', ion: 'partly-sunny' },
   'meal-dinner': { sf: 'moon.stars.fill', ion: 'moon' },
   'meal-snack': { sf: 'clock.fill', ion: 'time' },
+
+  // Exercise
+  'exercise': { sf: 'flame.fill', ion: 'flame' },
 
   // Charts/Data
   'chart-bar': { sf: 'chart.bar.fill', ion: 'bar-chart' },

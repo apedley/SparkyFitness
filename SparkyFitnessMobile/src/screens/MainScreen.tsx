@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Alert, TouchableOpacity, Image, ScrollView, Linking, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetPicker from '../components/BottomSheetPicker';
 import ConnectionStatus from '../components/ConnectionStatus';
@@ -16,13 +16,12 @@ import {
   getAggregatedDistanceByDate,
   getAggregatedFloorsClimbedByDate,
 } from '../services/healthConnectService';
-import { saveTimeRange, loadTimeRange, loadLastSyncedTime, getActiveServerConfig } from '../services/storage';
+import { saveTimeRange, loadTimeRange, loadLastSyncedTime } from '../services/storage';
 import type { TimeRange } from '../services/storage';
 import { addLog } from '../services/LogService';
 import { HEALTH_METRICS } from '../constants/HealthMetrics';
-import * as WebBrowser from 'expo-web-browser';
+// import * as WebBrowser from 'expo-web-browser';
 import type { HealthMetricStates, HealthDataDisplayState } from '../types/healthRecords';
-import Icon from '../components/Icon';
 import { useServerConnection, useSyncHealthData } from '../hooks';
 
 interface MainScreenProps {
@@ -506,48 +505,48 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     syncMutation.mutate({ timeRange: selectedTimeRange, healthMetricStates });
   };
 
-  const openWebDashboard = async (): Promise<void> => {
-    try {
-      const activeConfig = await getActiveServerConfig();
+  // const openWebDashboard = async (): Promise<void> => {
+  //   try {
+  //     const activeConfig = await getActiveServerConfig();
 
-      if (!activeConfig || !activeConfig.url) {
-        Alert.alert(
-          'No Server Configured',
-          'Please configure your server URL in Settings first.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Go to Settings', onPress: () => navigation.navigate('Settings') }
-          ]
-        );
-        return;
-      }
+  //     if (!activeConfig || !activeConfig.url) {
+  //       Alert.alert(
+  //         'No Server Configured',
+  //         'Please configure your server URL in Settings first.',
+  //         [
+  //           { text: 'Cancel', style: 'cancel' },
+  //           { text: 'Go to Settings', onPress: () => navigation.navigate('Settings') }
+  //         ]
+  //       );
+  //       return;
+  //     }
 
-      const serverUrl = activeConfig.url.endsWith('/') ? activeConfig.url.slice(0, -1) : activeConfig.url;
+  //     const serverUrl = activeConfig.url.endsWith('/') ? activeConfig.url.slice(0, -1) : activeConfig.url;
 
-      try {
-        await WebBrowser.openBrowserAsync(serverUrl);
-      } catch (inAppError) {
-        addLog(`In-app browser failed, falling back to Linking: ${inAppError}`, 'ERROR');
-        await Linking.openURL(serverUrl);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      addLog(`Error opening web dashboard: ${errorMessage}`, 'ERROR');
-      Alert.alert('Error', `Could not open web dashboard: ${errorMessage}`);
-    }
-  };
+  //     try {
+  //       await WebBrowser.openBrowserAsync(serverUrl);
+  //     } catch (inAppError) {
+  //       addLog(`In-app browser failed, falling back to Linking: ${inAppError}`, 'ERROR');
+  //       await Linking.openURL(serverUrl);
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : String(error);
+  //     addLog(`Error opening web dashboard: ${errorMessage}`, 'ERROR');
+  //     Alert.alert('Error', `Could not open web dashboard: ${errorMessage}`);
+  //   }
+  // };
 
   return (
-    <View className="flex-1 bg-bg-primary" style={{ paddingTop: insets.top }}>
-      {/* Header Bar */}
-      <View className="flex-row justify-between items-center px-4 py-3 border-b border-border-subtle">
-        <Text className="text-2xl font-bold text-text-primary">SparkyFitness</Text>
-        <ConnectionStatus isConnected={isConnected} variant="header" />
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+    <View className="flex-1 bg-canvas">
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 80 }}>
+        {/* Header */}
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-2xl font-bold text-text-primary">Sync</Text>
+          <ConnectionStatus isConnected={isConnected} variant="header" />
+        </View>
         {/* Open Web Dashboard Button */}
-        <TouchableOpacity
+        
+        {/* <TouchableOpacity
           className="bg-[#3D4654] rounded-xl py-3.5 px-4 flex-row items-center mb-3"
           onPress={openWebDashboard}
         >
@@ -556,7 +555,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
             <Text className="text-white text-lg font-semibold">Open Web Dashboard</Text>
             <Text className="text-white/80 text-sm mt-0.5">View your full fitness dashboard</Text>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Sync Now Button */}
         <TouchableOpacity
@@ -594,7 +593,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Time Range */}
-        <View className="bg-surface-primary rounded-xl p-4 py-3 mb-4 flex-row items-center justify-between">
+        <View className="bg-section rounded-xl p-4 py-3 mb-4 flex-row items-center justify-between shadow-sm">
           <Text className="text-base font-semibold text-text-primary">Time Range</Text>
           <BottomSheetPicker
             value={selectedTimeRange}
@@ -610,13 +609,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Health Overview */}
-        <View className="bg-surface-primary rounded-xl p-4 mb-4">
+        <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
           <Text className="text-lg font-bold mb-3 text-text-primary">Health Overview ({timeRangeOptions.find(o => o.value === selectedTimeRange)?.label || '...'})</Text>
           <View className="flex-row flex-wrap justify-between">
             {HEALTH_METRICS.map(metric => healthMetricStates[metric.stateKey] && (
               <View
                 key={metric.id}
-                className="w-[48%] bg-surface-secondary rounded-lg p-3 mb-3 items-start flex-row border-b border-border-subtle"
+                className="w-[48%] bg-card rounded-lg p-2 mb-2 items-start flex-row shadow-sm"
               >
                 <Image source={metric.icon} className="w-6 h-6 mr-2" />
                 <View>

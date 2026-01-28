@@ -43,7 +43,7 @@ const DevTools: React.FC = () => {
   };
 
   return (
-    <View className="bg-surface-primary rounded-xl p-4 mb-4">
+    <View className="bg-section rounded-xl p-4 mb-4 shadow-sm">
       <Text className="text-lg font-bold mb-3 text-text-primary">Dev Tools</Text>
       <Text className="text-text-muted mb-3 text-[13px]">
         These tools are only visible in development builds.
@@ -54,9 +54,9 @@ const DevTools: React.FC = () => {
         Insert sample health data for testing.
       </Text>
 
-      <View className="flex-row gap-2 flex-wrap">
+      <View className="flex-row gap-2 flex-wrap justify-between">
         <TouchableOpacity
-          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-2 px-4 rounded-lg my-1 items-center self-center min-w-20"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(7)}
           disabled={isSeeding}
@@ -69,7 +69,7 @@ const DevTools: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-2 px-4 rounded-lg my-1 items-center self-center min-w-20"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(14)}
           disabled={isSeeding}
@@ -78,7 +78,7 @@ const DevTools: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[80px]"
+          className="bg-accent-primary py-2 px-4 rounded-lg my-1 items-center self-center min-w-20"
           style={{ opacity: isSeeding ? 0.6 : 1 }}
           onPress={() => handleSeedData(30)}
           disabled={isSeeding}
@@ -93,7 +93,7 @@ const DevTools: React.FC = () => {
           Manually trigger the background sync process.
         </Text>
         <TouchableOpacity
-          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[120px]"
+          className="bg-accent-primary py-2 px-4 rounded-lg my-1 items-center self-center min-w-30"
           style={{ opacity: isSyncing ? 0.6 : 1 }}
           onPress={handleTriggerSync}
           disabled={isSyncing}
@@ -112,7 +112,7 @@ const DevTools: React.FC = () => {
           Preview the onboarding modal shown to new users.
         </Text>
         <TouchableOpacity
-          className="bg-accent-primary py-3 px-6 rounded-lg my-1 items-center self-center min-w-[120px]"
+          className="bg-accent-primary py-2 px-4 rounded-lg my-1 items-center self-center min-w-30"
           onPress={() => setShowOnboarding(true)}
         >
           <Text className="text-white text-base font-bold">View Onboarding</Text>

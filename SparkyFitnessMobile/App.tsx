@@ -35,12 +35,12 @@ type TabIcons = {
 
 function AppContent() {
   const { theme } = useUniwind();
-  const [primary, navBar, bgPrimary, textPrimary, borderSubtle, tabActive, tabInactive] = useCSSVariable([
+  const [primary, navBar, navBarBorder, bgPrimary, textPrimary, tabActive, tabInactive] = useCSSVariable([
     '--color-accent-primary',
-    '--color-surface-primary',
-    '--color-bg-primary',
+    '--color-nav-bar',
+    '--color-nav-bar-border',
+    '--color-canvas',
     '--color-text-primary',
-    '--color-border-subtle',
     '--color-tab-active',
     '--color-tab-inactive',
   ]) as [string, string, string, string, string, string, string];
@@ -57,7 +57,7 @@ function AppContent() {
       background: bgPrimary,
       card: navBar,
       text: textPrimary,
-      border: borderSubtle,
+      border: navBarBorder,
       notification: primary,
     },
     fonts: {

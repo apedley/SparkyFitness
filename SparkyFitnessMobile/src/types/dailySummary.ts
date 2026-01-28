@@ -1,3 +1,4 @@
+import { ExerciseEntry } from './exercise';
 import type { FoodEntry } from './foodEntries';
 
 export interface MacroSummary {
@@ -18,5 +19,8 @@ export interface DailySummary {
   carbs: MacroSummary;
   fat: MacroSummary;
   fiber: MacroSummary;
+  waterConsumed: number;
+  waterGoal: number;
   foodEntries: FoodEntry[];
+  exerciseEntries: ExerciseEntry[];
 }
