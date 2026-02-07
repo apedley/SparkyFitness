@@ -590,6 +590,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
               ? formatRelativeTime(lastSyncedTime ? new Date(lastSyncedTime) : null)
               : ' '}
           </Text>
+          {Platform.OS === 'ios' && (
+            <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 12, marginBottom: 16 }}>
+              Source: Apple Health (HealthKit)
+            </Text>
+          )}
+          {Platform.OS === 'android' && (
+            <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 12, marginBottom: 16 }}>
+              Source: Health Connect
+            </Text>
+          )}
         </View>
 
         {/* Time Range */}

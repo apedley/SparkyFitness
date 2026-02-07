@@ -38,6 +38,8 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   ]) as [string, string];
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showHealthKitDetails, setShowHealthKitDetails] = useState(false);
+  const [showHealthConnectDetails, setShowHealthConnectDetails] = useState(false);
 
   useEffect(() => {
     loadCollapsedCategories()

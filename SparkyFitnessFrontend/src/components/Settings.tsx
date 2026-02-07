@@ -26,9 +26,10 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar as CalendarIcon } from "lucide-react"; // Import CalendarIcon
 import { Calendar } from "@/components/ui/calendar"; // Import Calendar component
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
-import { Save, Upload, User, Settings as SettingsIcon, Lock, Camera, ClipboardCopy, Copy, Eye, EyeOff, KeyRound, Trash2, Droplet, ListChecks, Users, Tag, Cloud, Sparkles, QrCode, Mail, BookOpen, UtensilsCrossed } from "lucide-react";
+import { Save, Upload, User, Settings as SettingsIcon, Lock, Camera, ClipboardCopy, Copy, Eye, EyeOff, KeyRound, Trash2, Droplet, ListChecks, Users, Tag, Cloud, Sparkles, QrCode, Mail, BookOpen, UtensilsCrossed, X, Target, Flame } from "lucide-react";
 import { apiCall } from '@/services/api'; // Assuming a common API utility
 import { useAuth } from "@/hooks/useAuth";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "@/hooks/use-toast";
 import FamilyAccessManager from "./FamilyAccessManager";
 import AIServiceSettings from "./AIServiceSettings";
@@ -51,6 +52,7 @@ import CalculationSettings from "@/pages/CalculationSettings";
 import TooltipWarning from "./TooltipWarning";
 import MFASettings from "./MFASettings"; // Import MFASettings component
 import CustomNutrientsSettings from "@/pages/CustomNutrientsSettings";
+import PasskeySettings from "./PasskeySettings";
 
 interface Profile {
   id: string;
@@ -99,8 +101,6 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
     setWaterDisplayUnit,
     language,
     setLanguage,
-    calorieGoalAdjustmentMode,
-    setCalorieGoalAdjustmentMode, // Add new preference
   } = usePreferences();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarObjectURL, setAvatarObjectURL] = useState<string | null>(null); // State to hold the object URL for the avatar
@@ -128,8 +128,11 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
   // State for API Key Management
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [showApiKey, setShowApiKey] = useState<string | null>(null); // Stores the ID of the key to show
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null); // New state to show secret key once
   const [newApiKeyDescription, setNewApiKeyDescription] = useState<string>("");
+  const [newApiKeyExpiresIn, setNewApiKeyExpiresIn] = useState<number | null>(null);
   const [generatingApiKey, setGeneratingApiKey] = useState(false);
+  const [cleaningUpKeys, setCleaningUpKeys] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -200,9 +203,8 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
   const loadApiKeys = async () => {
     if (!user) return;
     try {
-      const data = await apiCall(`/auth/user-api-keys`, {
-        method: "GET",
-      });
+      const { data, error } = await authClient.apiKey.list();
+      if (error) throw error;
       setApiKeys(data || []);
     } catch (error: any) {
       console.error("Error loading API keys:", error);
@@ -217,18 +219,24 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
   const handleGenerateApiKey = async () => {
     if (!user) return;
     setGeneratingApiKey(true);
+    setNewlyCreatedKey(null);
     try {
-      const data = await apiCall("/auth/user/generate-api-key", {
-        method: "POST",
-        body: JSON.stringify({ description: newApiKeyDescription || null }),
+      const { data, error } = await authClient.apiKey.create({
+        name: newApiKeyDescription || "New API Key",
+        expiresIn: newApiKeyExpiresIn || undefined,
       });
+      if (error) throw error;
+
+      if (data) {
+        setNewlyCreatedKey(data.key);
+      }
 
       toast({
         title: "Success",
-        description: "New API key generated successfully!",
+        description: "New API key generated successfully! Please copy it now as it won't be shown again.",
       });
       setNewApiKeyDescription("");
-      loadApiKeys(); // Reload keys to show the new one
+      loadApiKeys(); // Reload keys to show the new one in the list
     } catch (error: any) {
       console.error("Error generating API key:", error);
       toast({
@@ -252,10 +260,10 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
     }
     setLoading(true); // Use general loading for this
     try {
-      await apiCall(`/auth/user/api-key/${apiKeyId}`, {
-        method: "DELETE",
-        body: JSON.stringify({}), // Send userId in body for DELETE
+      const { error } = await authClient.apiKey.delete({
+        keyId: apiKeyId,
       });
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -274,11 +282,62 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
     }
   };
 
+  const handleToggleApiKey = async (apiKeyId: string, enabled: boolean) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { error } = await authClient.apiKey.update({
+        keyId: apiKeyId,
+        enabled: enabled,
+      });
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `API key ${enabled ? "enabled" : "disabled"} successfully!`,
+      });
+      loadApiKeys();
+    } catch (error: any) {
+      console.error("Error toggling API key:", error);
+      toast({
+        title: "Error",
+        description: `Failed to update API key: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCleanupExpiredKeys = async () => {
+    if (!user) return;
+    setCleaningUpKeys(true);
+    try {
+      const { error } = await (authClient.apiKey as any).deleteAllExpiredApiKeys({});
+      if (error) throw error;
+
+      toast({
+        title: "Cleanup Complete",
+        description: "All expired API keys have been removed.",
+      });
+      loadApiKeys();
+    } catch (error: any) {
+      console.error("Error cleaning up API keys:", error);
+      toast({
+        title: "Error",
+        description: `Failed to cleanup keys: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setCleaningUpKeys(false);
+    }
+  };
+
   const loadProfile = async () => {
     if (!user) return;
 
     try {
-      const data = await apiCall(`/auth/profiles`, {
+      const data = await apiCall(`/identity/profiles`, {
         method: "GET",
       });
       setProfile(data);
@@ -304,7 +363,7 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
 
     setLoading(true);
     try {
-      await apiCall(`/auth/profiles`, {
+      await apiCall(`/identity/profiles`, {
         method: "PUT", // Or PATCH, depending on backend implementation
         body: JSON.stringify({
           full_name: profileForm.full_name,
@@ -375,13 +434,12 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
 
     setLoading(true);
     try {
-      await apiCall("/auth/update-password", {
-        method: "POST",
-        body: JSON.stringify({
-          currentPassword: passwordForm.current_password, // If needed for verification
-          newPassword: passwordForm.new_password,
-        }),
+      const { error } = await authClient.changePassword({
+        newPassword: passwordForm.new_password,
+        currentPassword: passwordForm.current_password,
+        revokeOtherSessions: true,
       });
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -396,7 +454,7 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
       console.error("Error updating password:", error);
       toast({
         title: "Error",
-        description: `Failed to update password: ${error.message}`,
+        description: `Failed to update password: ${error.message || (error.error && error.error.message) || "Unknown error"}`,
         variant: "destructive",
       });
     } finally {
@@ -416,12 +474,10 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
 
     setLoading(true);
     try {
-      await apiCall("/auth/update-email", {
-        method: "POST",
-        body: JSON.stringify({
-          newEmail: newEmail,
-        }),
+      const { error } = await authClient.changeEmail({
+        newEmail: newEmail,
       });
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -432,7 +488,7 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
       console.error("Error updating email:", error);
       toast({
         title: "Error",
-        description: `Failed to update email: ${error.message}`,
+        description: `Failed to update email: ${error.message || (error.error && error.error.message) || "Unknown error"}`,
         variant: "destructive",
       });
     } finally {
@@ -473,7 +529,7 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
     formData.append("avatar", file);
 
     try {
-      const response = await apiCall("/auth/profiles/avatar", {
+      const response = await apiCall("/identity/profiles/avatar", {
         method: "POST",
         body: formData,
         isFormData: true, // Indicate that the body is FormData
@@ -1088,57 +1144,6 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
           </AccordionTrigger>
           <AccordionContent className="p-4 pt-0 space-y-4">
             <CalculationSettings />
-
-            {/* Calorie Goal Adjustment Mode */}
-            <Separator className="my-6" />
-            <h3 className="text-lg font-semibold mb-2">
-              {t(
-                "settings.calorieGoalAdjustment.title",
-                "Calorie Goal Adjustment"
-              )}
-            </h3>
-            <div className="flex flex-col space-y-2">
-              <RadioGroup
-                value={calorieGoalAdjustmentMode}
-                onValueChange={(value: "dynamic" | "fixed") =>
-                  setCalorieGoalAdjustmentMode(value)
-                }
-                className="flex flex-col space-y-1"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="dynamic" id="dynamic-goal" />
-                  <Label htmlFor="dynamic-goal">
-                    <span className="font-medium">
-                      {t(
-                        "settings.calorieGoalAdjustment.dynamicGoal",
-                        "Dynamic Goal"
-                      )}
-                      :
-                    </span>{" "}
-                    {t(
-                      "settings.calorieGoalAdjustment.dynamicGoalDescription",
-                      "Your calorie goal will dynamically adjust based on your daily activity level (e.g., exercise, steps). This is ideal for active individuals or those whose activity levels vary daily."
-                    )}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fixed" id="fixed-goal" />
-                  <Label htmlFor="fixed-goal">
-                    <span className="font-medium">
-                      {t(
-                        "settings.calorieGoalAdjustment.fixedGoal",
-                        "Fixed Goal"
-                      )}
-                      :
-                    </span>{" "}
-                    {t(
-                      "settings.calorieGoalAdjustment.fixedGoalDescription",
-                      "Your calorie goal will remain fixed, regardless of your daily activity. This is suitable for individuals with consistent activity levels or those who prefer a stable target."
-                    )}
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -1276,35 +1281,118 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
               )}
               color="blue"
             />
+            {newlyCreatedKey && (
+              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-md mb-4">
+                <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200 mb-1">
+                  {t("settings.apiKeyManagement.newKeyGenerated", "New API Key Generated!")}
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
+                  {t("settings.apiKeyManagement.copyWarning", "Copy this key now. For security, it will NOT be shown again.")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={newlyCreatedKey}
+                    className="font-mono text-xs bg-background"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(newlyCreatedKey);
+                      toast({
+                        title: t("settings.apiKeyManagement.copied", "Copied!"),
+                        description: t("settings.apiKeyManagement.apiKeyCopied", "API key copied to clipboard."),
+                      });
+                    }}
+                  >
+                    <ClipboardCopy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setNewlyCreatedKey(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder={t(
-                  "settings.apiKeyManagement.descriptionPlaceholder",
-                  "Description (e.g., 'iPhone Health Shortcut')"
-                )}
-                value={newApiKeyDescription}
-                onChange={(e) => setNewApiKeyDescription(e.target.value)}
-                className="flex-grow"
-              />
-              <Button
-                onClick={handleGenerateApiKey}
-                disabled={generatingApiKey}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {generatingApiKey
-                  ? t("settings.apiKeyManagement.generating", "Generating...")
-                  : t(
-                    "settings.apiKeyManagement.generateNewKey",
-                    "Generate New Key"
-                  )}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-grow space-y-2 w-full">
+                  <Label htmlFor="api-key-description">
+                    {t(
+                      "settings.apiKeyManagement.descriptionLabel",
+                      "Description (e.g., 'iPhone Health Shortcut')"
+                    )}
+                  </Label>
+                  <Input
+                    id="api-key-description"
+                    value={newApiKeyDescription}
+                    onChange={(e) => setNewApiKeyDescription(e.target.value)}
+                    placeholder={t(
+                      "settings.apiKeyManagement.placeholder",
+                      "Description (e.g., 'iPhone Health Shortcut')"
+                    )}
+                  />
+                </div>
+                <div className="space-y-2 w-full sm:w-48">
+                  <Label htmlFor="api-key-expiry">
+                    {t("settings.apiKeyManagement.expiresIn", "Expires In")}
+                  </Label>
+                  <Select
+                    value={newApiKeyExpiresIn?.toString() || "null"}
+                    onValueChange={(val) => setNewApiKeyExpiresIn(val === "null" ? null : parseInt(val))}
+                  >
+                    <SelectTrigger id="api-key-expiry">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="null">{t("settings.apiKeyManagement.never", "Never")}</SelectItem>
+                      <SelectItem value={(60 * 60 * 24 * 7).toString()}>{t("settings.apiKeyManagement.7days", "7 Days")}</SelectItem>
+                      <SelectItem value={(60 * 60 * 24 * 30).toString()}>{t("settings.apiKeyManagement.30days", "30 Days")}</SelectItem>
+                      <SelectItem value={(60 * 60 * 24 * 90).toString()}>{t("settings.apiKeyManagement.90days", "90 Days")}</SelectItem>
+                      <SelectItem value={(60 * 60 * 24 * 365).toString()}>{t("settings.apiKeyManagement.1year", "1 Year")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleGenerateApiKey}
+                  disabled={generatingApiKey}
+                  className="w-full sm:w-auto"
+                >
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  {generatingApiKey
+                    ? t(
+                      "settings.apiKeyManagement.generating",
+                      "Generating..."
+                    )
+                    : t(
+                      "settings.apiKeyManagement.generate",
+                      "Generate New Key"
+                    )}
+                </Button>
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={handleCleanupExpiredKeys}
+                  disabled={cleaningUpKeys}
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  {cleaningUpKeys ? t("common.processing", "Processing...") : t("settings.apiKeyManagement.cleanupExpired", "Cleanup Expired Keys")}
+                </Button>
+              </div>
             </div>
 
-            <Separator />
-
-            <div className="space-y-3">
+            {/* API Key List */}
+            <div className="space-y-4">
               {apiKeys.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-center text-sm text-muted-foreground py-4">
                   {t(
                     "settings.apiKeyManagement.noApiKeys",
                     "No API keys generated yet."
@@ -1314,78 +1402,68 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
                 apiKeys.map((key) => (
                   <div
                     key={key.id}
-                    className="flex items-center space-x-2 p-2 border rounded-md"
+                    className={`flex items-center space-x-4 p-3 border rounded-md ${!key.enabled ? 'bg-muted/50 opacity-80' : ''}`}
                   >
-                    <div className="flex-grow">
-                      <p className="font-medium">
-                        {key.description ||
-                          t(
-                            "settings.apiKeyManagement.noDescription",
-                            "No Description"
-                          )}
-                      </p>
+                    <div className="flex-grow space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {key.name ||
+                            t(
+                              "settings.apiKeyManagement.noDescription",
+                              "No Description"
+                            )}
+                        </p>
+                        {!key.enabled && (
+                          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded border uppercase font-bold">
+                            {t("settings.apiKeyManagement.disabled", "Disabled")}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span className="font-mono text-xs">
-                          {showApiKey === key.id
-                            ? key.api_key
-                            : "********************"}
+                          {key.id}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setShowApiKey(showApiKey === key.id ? null : key.id)
-                          }
-                          className="h-auto p-1"
-                        >
-                          {showApiKey === key.id ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(key.api_key);
-                            toast({
-                              title: t(
-                                "settings.apiKeyManagement.copied",
-                                "Copied!"
-                              ),
-                              description: t(
-                                "settings.apiKeyManagement.apiKeyCopied",
-                                "API key copied to clipboard."
-                              ),
-                            });
-                          }}
-                          className="h-auto p-1"
-                        >
-                          <ClipboardCopy className="h-4 w-4" />
-                        </Button>
+                        <TooltipWarning
+                          warningMsg={t("settings.apiKeyManagement.idOnlyInfo", "Only the Key ID is shown for security.")}
+                          color="blue"
+                        />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("settings.apiKeyManagement.created", "Created:")}{" "}
-                        {new Date(key.created_at).toLocaleDateString()}
-                        {key.last_used_at &&
-                          ` | ${t(
-                            "settings.apiKeyManagement.lastUsed",
-                            "Last Used:"
-                          )} ${new Date(
-                            key.last_used_at
-                          ).toLocaleDateString()}`}
-                        {/* Removed Inactive status as per user request */}
-                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <p>
+                          {t("settings.apiKeyManagement.created", "Created:")}{" "}
+                          {key.createdAt ? new Date(key.createdAt).toLocaleDateString() : 'N/A'}
+                        </p>
+                        {key.expiresAt && (
+                          <p className={new Date(key.expiresAt) < new Date() ? 'text-destructive font-semibold' : ''}>
+                            {t("settings.apiKeyManagement.expires", "Expires:")}{" "}
+                            {new Date(key.expiresAt).toLocaleDateString()}
+                          </p>
+                        )}
+                        {key.lastUsedAt && (
+                          <p>
+                            {t("settings.apiKeyManagement.lastUsed", "Last Used:")}{" "}
+                            {new Date(key.lastUsedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDeleteApiKey(key.id)}
-                      disabled={loading}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={key.enabled}
+                        onCheckedChange={(checked) => handleToggleApiKey(key.id, checked)}
+                        disabled={loading}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteApiKey(key.id)}
+                        disabled={loading}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}
@@ -1410,12 +1488,12 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
                 </p>
                 <div className="flex gap-4 mt-2">
                   <Button variant="outline" asChild>
-                    <a href="/api-docs/swagger" target="_blank" rel="noopener noreferrer">
+                    <a href="/api/api-docs/swagger" target="_blank" rel="noopener noreferrer">
                       Swagger UI (Interactive)
                     </a>
                   </Button>
                   <Button variant="outline" asChild>
-                    <a href="/api-docs/redoc" target="_blank" rel="noopener noreferrer">
+                    <a href="/api/api-docs/redoc" target="_blank" rel="noopener noreferrer">
                       Redoc (Read-only)
                     </a>
                   </Button>
@@ -1561,6 +1639,8 @@ const Settings: React.FC<SettingsProps> = ({ onShowAboutDialog }) => {
                   )}
               </Button>
             </form>
+            <Separator />
+            <PasskeySettings />
             <Separator />
             <MFASettings />
           </AccordionContent>
