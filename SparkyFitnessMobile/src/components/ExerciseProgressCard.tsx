@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Canvas, Rect, Path, Group, Skia, rect, rrect } from '@shopify/react-native-skia';
 import { useSharedValue, useDerivedValue, withTiming, Easing } from 'react-native-reanimated';
@@ -15,10 +15,12 @@ interface ProgressBarProps {
   opacity?: number;
 }
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, goal, unit, color, trackColor, opacity = 1 }) => {
+const BAR_HEIGHT = 8;
+const BORDER_RADIUS = 4;
+const emptyPath = Skia.Path.Make();
+
+const ProgressBar: React.FC<ProgressBarProps> = React.memo(({ label, current, goal, unit, color, trackColor, opacity = 1 }) => {
   const [barWidth, setBarWidth] = useState(0);
-  const barHeight = 8;
-  const borderRadius = 4;
   const progress = goal > 0 ? current / goal : 0;
 
   const animatedProgress = useSharedValue(0);
@@ -30,31 +32,42 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, goal, unit, c
         duration: 700,
         easing: Easing.out(Easing.cubic),
       });
-    }, [progress, animatedProgress])
+    }, [progress]) // animatedProgress is a stable ref from useSharedValue
   );
+
+  const clipRect = useMemo(
+    () => barWidth > 0 ? rrect(rect(0, 0, barWidth, BAR_HEIGHT), BORDER_RADIUS, BORDER_RADIUS) : null,
+    [barWidth]
+  );
+
+  const canvasStyle = useMemo(() => ({ width: barWidth, height: BAR_HEIGHT }), [barWidth]);
 
   const fillPath = useDerivedValue(() => {
     const p = animatedProgress.value;
-    if (p <= 0 || barWidth <= 0) return Skia.Path.Make();
+    if (p <= 0 || barWidth <= 0) return emptyPath;
     const w = p > 1 ? barWidth / p : barWidth * p;
     const path = Skia.Path.Make();
-    path.addRect(Skia.XYWHRect(0, 0, w, barHeight));
+    path.addRect(Skia.XYWHRect(0, 0, w, BAR_HEIGHT));
     return path;
   }, [barWidth]);
 
   const overflowPath = useDerivedValue(() => {
     const p = animatedProgress.value;
-    if (p <= 1 || barWidth <= 0) return Skia.Path.Make();
+    if (p <= 1 || barWidth <= 0) return emptyPath;
     const solidW = barWidth / p;
     const gapStart = solidW + 2;
     const w = barWidth - gapStart;
-    if (w <= 0) return Skia.Path.Make();
+    if (w <= 0) return emptyPath;
     const path = Skia.Path.Make();
-    path.addRect(Skia.XYWHRect(gapStart, 0, w, barHeight));
+    path.addRect(Skia.XYWHRect(gapStart, 0, w, BAR_HEIGHT));
     return path;
   }, [barWidth]);
 
   const hasGoal = goal > 0;
+
+  const onLayout = useCallback((e: { nativeEvent: { layout: { width: number } } }) => {
+    setBarWidth(e.nativeEvent.layout.width);
+  }, []);
 
   return (
     <View>
@@ -65,14 +78,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, goal, unit, c
         </Text>
       </View>
       {hasGoal && (
-        <View
-          className="h-3"
-          onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
-        >
-          {barWidth > 0 && (
-            <Canvas style={{ width: barWidth, height: barHeight }}>
-              <Group clip={rrect(rect(0, 0, barWidth, barHeight), borderRadius, borderRadius)} opacity={opacity}>
-                <Rect x={0} y={0} width={barWidth} height={barHeight} color={trackColor} />
+        <View className="h-3" onLayout={onLayout}>
+          {barWidth > 0 && clipRect && (
+            <Canvas style={canvasStyle}>
+              <Group clip={clipRect} opacity={opacity}>
+                <Rect x={0} y={0} width={barWidth} height={BAR_HEIGHT} color={trackColor} />
                 <Path path={fillPath} color={color} />
                 <Group opacity={0.65}>
                   <Path path={overflowPath} color={color} />
@@ -84,7 +94,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, goal, unit, c
       )}
     </View>
   );
-};
+});
 
 interface ExerciseProgressCardProps {
   exerciseMinutes: number;
@@ -137,4 +147,4 @@ const ExerciseProgressCard: React.FC<ExerciseProgressCardProps> = ({
   );
 };
 
-export default ExerciseProgressCard;
+export default React.memo(ExerciseProgressCard);

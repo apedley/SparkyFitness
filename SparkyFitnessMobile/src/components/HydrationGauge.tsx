@@ -1,7 +1,8 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Canvas, Group, Path, Rect, Skia } from '@shopify/react-native-skia';
 import { useSharedValue, useDerivedValue, withTiming, Easing } from 'react-native-reanimated';
+import { useFocusEffect } from '@react-navigation/native';
 import { useCSSVariable } from 'uniwind';
 import Icon from './Icon';
 
@@ -36,6 +37,9 @@ const FILL_TOP = 28;
 const FILL_BOTTOM = 124;
 const FILL_HEIGHT = FILL_BOTTOM - FILL_TOP;
 
+const canvasStyle = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT } as const;
+const disabledStyle = { opacity: 0.3 } as const;
+
 const HydrationGauge: React.FC<HydrationGaugeProps> = ({ consumed, goal, unit = 'ml', onIncrement, onDecrement, disableDecrement }) => {
   const hydrationColor = useCSSVariable('--color-hydration') as string;
   const trackColor = useCSSVariable('--color-progress-track') as string;
@@ -45,12 +49,15 @@ const HydrationGauge: React.FC<HydrationGaugeProps> = ({ consumed, goal, unit = 
 
   const animatedProgress = useSharedValue(0);
 
-  useEffect(() => {
-    animatedProgress.value = withTiming(progress, {
-      duration: 800,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [progress, animatedProgress]);
+  // Use useFocusEffect for consistency: only animate when screen is visible
+  useFocusEffect(
+    useCallback(() => {
+      animatedProgress.value = withTiming(progress, {
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+      });
+    }, [progress]) // animatedProgress is a stable ref from useSharedValue
+  );
 
   const bottlePath = useMemo(() => {
     const p = Skia.Path.Make();
@@ -91,8 +98,10 @@ const HydrationGauge: React.FC<HydrationGaugeProps> = ({ consumed, goal, unit = 
   }, []);
 
   const fillPath = useDerivedValue(() => {
+    const val = animatedProgress.value;
+    if (val <= 0) return Skia.Path.Make();
     const p = Skia.Path.Make();
-    const y = FILL_BOTTOM - FILL_HEIGHT * animatedProgress.value;
+    const y = FILL_BOTTOM - FILL_HEIGHT * val;
     p.addRect(Skia.XYWHRect(0, y, CANVAS_WIDTH, CANVAS_HEIGHT - y));
     return p;
   });
@@ -108,20 +117,19 @@ const HydrationGauge: React.FC<HydrationGaugeProps> = ({ consumed, goal, unit = 
 
   return (
     <View className="bg-section rounded-xl p-4 my-2 shadow-sm">
-      {/* <Text className="text-md font-bold text-text-primary mb-3">Water</Text> */}
       <View className="flex-row items-center">
         <View className="flex-row items-center mr-4">
           {showButtons && (
             <TouchableOpacity
               onPress={onDecrement}
               disabled={disableDecrement}
-              style={disableDecrement ? { opacity: 0.3 } : undefined}
+              style={disableDecrement ? disabledStyle : undefined}
               className="p-2"
             >
               <Icon name="remove-circle" size={28} color={hydrationColor} />
             </TouchableOpacity>
           )}
-          <Canvas style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}>
+          <Canvas style={canvasStyle}>
             {/* Fill clipped to bottle shape */}
             <Group clip={bottlePath}>
               <Rect x={0} y={0} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} color={trackColor} />
@@ -149,4 +157,4 @@ const HydrationGauge: React.FC<HydrationGaugeProps> = ({ consumed, goal, unit = 
   );
 };
 
-export default HydrationGauge;
+export default React.memo(HydrationGauge);

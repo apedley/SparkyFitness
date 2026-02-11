@@ -8,14 +8,14 @@ interface SideStatProps {
   value: number;
 }
 
-const SideStat: React.FC<SideStatProps> = ({ label, value }) => (
+const SideStat: React.FC<SideStatProps> = React.memo(({ label, value }) => (
   <View className="items-center justify-center flex-1">
     <Text className="text-xl font-bold text-text-primary">
       {Math.round(value).toLocaleString()}
     </Text>
     <Text className="text-text-secondary text-sm mt-1">{label}</Text>
   </View>
-);
+));
 
 interface CalorieRingCardProps {
   caloriesConsumed: number;
@@ -76,4 +76,4 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
   );
 };
 
-export default CalorieRingCard;
+export default React.memo(CalorieRingCard);
