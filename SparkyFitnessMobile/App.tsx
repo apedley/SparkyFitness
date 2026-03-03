@@ -18,7 +18,7 @@ import { createStackNavigator, type StackNavigationProp } from '@react-navigatio
 import SyncScreen from './src/screens/SyncScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import DiaryScreen from './src/screens/DiaryScreen';
+import DiaryScreen, { diarySelectedDateRef } from './src/screens/DiaryScreen';
 import LogScreen from './src/screens/LogScreen';
 import FoodSearchScreen from './src/screens/FoodSearchScreen';
 import FoodEntryAddScreen from './src/screens/FoodEntryAddScreen';
@@ -167,11 +167,11 @@ function AppContent() {
                       // preventsDefault skips the tab switch, so state.index still points to the previously active tab
                       const state = navigation.getState();
                       const activeRoute = state.routes[state.index];
-                      const diaryParams =
-                        activeRoute.name === 'Diary'
-                          ? (activeRoute.params as { selectedDate?: string } | undefined)
-                          : undefined;
-                      const date = diaryParams?.selectedDate;
+                      // Read the diary date from a module-scoped ref instead of route
+                      // params to avoid the double-render caused by setParams.
+                      const date = activeRoute.name === 'Diary'
+                        ? diarySelectedDateRef.current || undefined
+                        : undefined;
                       navigation.getParent<StackNavigationProp<RootStackParamList>>()?.navigate('FoodSearch', { date });
                     },
                   })}

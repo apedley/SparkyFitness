@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import { Gesture, GestureDetector, Directions } from 'react-native-gesture-handler';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,6 +16,13 @@ import type { StackScreenProps } from '@react-navigation/stack';
 import type { NativeBottomTabScreenProps } from '@bottom-tabs/react-navigation';
 import type { RootStackParamList, TabParamList } from '../types/navigation';
 
+/**
+ * Module-scoped ref so the Add tab listener can read the diary's selected date
+ * without forcing a navigation state update via setParams (which caused a
+ * double-render on every date change).
+ */
+export const diarySelectedDateRef = { current: '' };
+
 type DiaryScreenProps = CompositeScreenProps<
   NativeBottomTabScreenProps<TabParamList, 'Diary'>,
   StackScreenProps<RootStackParamList>
@@ -26,6 +33,9 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
   const lastKnownToday = useRef(getTodayDate());
   const calendarRef = useRef<CalendarSheetRef>(null);
 
+  // Keep module-scoped ref in sync so the Add tab listener can read it
+  diarySelectedDateRef.current = selectedDate;
+
   useFocusEffect(
     useCallback(() => {
       const today = getTodayDate();
@@ -35,10 +45,6 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
       }
     }, [])
   );
-
-  useEffect(() => {
-    navigation.setParams({ selectedDate });
-  }, [selectedDate, navigation]);
 
   const goToPreviousDay = () => setSelectedDate(prev => addDays(prev, -1));
   const goToNextDay = () => setSelectedDate(prev => {

@@ -78,7 +78,14 @@ const SyncScreen: React.FC<SyncScreenProps> = () => {
     }
 
     setSelectedTimeRange(initialTimeRange);
-    setHealthMetricStates(newHealthMetricStates);
+    // Only update state if values actually changed to avoid triggering
+    // the fetchHealthData useEffect with a new object reference.
+    setHealthMetricStates(prev => {
+      const changed = HEALTH_METRICS.some(
+        metric => prev[metric.stateKey] !== newHealthMetricStates[metric.stateKey]
+      );
+      return changed ? newHealthMetricStates : prev;
+    });
 
     const loadedSyncTime = await loadLastSyncedTime();
     setLastSyncedTime(loadedSyncTime);
