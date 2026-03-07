@@ -1,3 +1,5 @@
+export * from "./api/foodEntries";
+export * from "./api/mealTypes";
 export * from "./schemas/Account.zod";
 export * from "./schemas/AdminActivityLogs.zod";
 export * from "./schemas/AiServiceSettings.zod";

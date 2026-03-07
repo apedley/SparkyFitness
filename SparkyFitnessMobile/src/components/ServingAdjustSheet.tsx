@@ -34,8 +34,8 @@ const ServingAdjustSheet = forwardRef<ServingAdjustSheetRef, ServingAdjustSheetP
   const isDarkMode = theme === 'dark' || theme === 'amoled';
 
   const quantity = parseFloat(quantityText) || 0;
-  const totalCalories = entry && entry.serving_size > 0
-    ? Math.round(entry.calories * quantity / entry.serving_size)
+  const totalCalories = entry && entry.serving_size && entry.serving_size > 0
+    ? Math.round((entry.calories ?? 0) * quantity / entry.serving_size)
     : 0;
 
   const { updateEntry, isPending, invalidateCache } = useUpdateFoodEntry({

@@ -1,36 +1,18 @@
 import { apiFetch } from './apiClient';
-import type { FoodEntry } from '../../types/foodEntries';
+import type {
+  FoodEntryResponse,
+  CreateFoodEntryRequest,
+  UpdateFoodEntryRequest,
+} from '@workspace/shared';
 
-export interface CreateFoodEntryPayload {
-  meal_type_id: string;
-  quantity: number;
-  unit: string;
-  entry_date: string;
-  // Linked food entry
-  food_id?: string;
-  variant_id?: string;
-  // Standalone entry
-  food_name?: string;
-  brand_name?: string;
-  serving_size?: number;
-  serving_unit?: string;
-  calories?: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  saturated_fat?: number;
-  sodium?: number;
-  dietary_fiber?: number;
-  sugars?: number;
-  // Meal entry
-  meal_id?: string;
-}
+export type CreateFoodEntryPayload = CreateFoodEntryRequest;
+export type UpdateFoodEntryPayload = UpdateFoodEntryRequest;
 
 /**
  * Creates a food entry.
  */
-export const createFoodEntry = async (payload: CreateFoodEntryPayload): Promise<FoodEntry> => {
-  return apiFetch<FoodEntry>({
+export const createFoodEntry = async (payload: CreateFoodEntryRequest): Promise<FoodEntryResponse> => {
+  return apiFetch<FoodEntryResponse>({
     endpoint: '/api/food-entries/',
     serviceName: 'Food Entries API',
     operation: 'create food entry',
@@ -39,32 +21,11 @@ export const createFoodEntry = async (payload: CreateFoodEntryPayload): Promise<
   });
 };
 
-export interface UpdateFoodEntryPayload {
-  quantity?: number;
-  unit?: string;
-  meal_type_id?: string;
-  variant_id?: string;
-  entry_date?: string;
-  // Nutrition snapshot overrides (server applies to entry snapshot)
-  food_name?: string;
-  brand_name?: string;
-  serving_size?: number;
-  serving_unit?: string;
-  calories?: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  saturated_fat?: number;
-  sodium?: number;
-  dietary_fiber?: number;
-  sugars?: number;
-}
-
 /**
  * Updates a food entry by ID.
  */
-export const updateFoodEntry = async (id: string, payload: UpdateFoodEntryPayload): Promise<FoodEntry> => {
-  return apiFetch<FoodEntry>({
+export const updateFoodEntry = async (id: string, payload: UpdateFoodEntryRequest): Promise<FoodEntryResponse> => {
+  return apiFetch<FoodEntryResponse>({
     endpoint: `/api/food-entries/${id}`,
     serviceName: 'Food Entries API',
     operation: 'update food entry',
@@ -88,8 +49,8 @@ export const deleteFoodEntry = async (id: string): Promise<void> => {
 /**
  * Fetches food entries for a given date.
  */
-export const fetchFoodEntries = async (date: string): Promise<FoodEntry[]> => {
-  return apiFetch<FoodEntry[]>({
+export const fetchFoodEntries = async (date: string): Promise<FoodEntryResponse[]> => {
+  return apiFetch<FoodEntryResponse[]>({
     endpoint: `/api/food-entries/by-date/${date}`,
     serviceName: 'Food Entries API',
     operation: 'fetch food entries',
@@ -100,9 +61,9 @@ export const fetchFoodEntries = async (date: string): Promise<FoodEntry[]> => {
  * Calculates total calories consumed from food entries.
  * Formula: sum((entry.calories * quantity) / serving_size)
  */
-export const calculateCaloriesConsumed = (entries: FoodEntry[]): number => {
+export const calculateCaloriesConsumed = (entries: FoodEntryResponse[]): number => {
   return entries.reduce((total, entry) => {
-    if (entry.serving_size === 0) {
+    if (!entry.serving_size || !entry.calories) {
       return total;
     }
     return total + (entry.calories * entry.quantity) / entry.serving_size;
@@ -113,9 +74,9 @@ export const calculateCaloriesConsumed = (entries: FoodEntry[]): number => {
  * Calculates a macro nutrient total from food entries.
  * Uses same formula as calories: (value * quantity) / serving_size
  */
-const calculateMacro = (entries: FoodEntry[], field: keyof FoodEntry): number => {
+const calculateMacro = (entries: FoodEntryResponse[], field: keyof FoodEntryResponse): number => {
   return entries.reduce((total, entry) => {
-    if (entry.serving_size === 0) {
+    if (!entry.serving_size) {
       return total;
     }
     const value = entry[field];
@@ -126,7 +87,7 @@ const calculateMacro = (entries: FoodEntry[], field: keyof FoodEntry): number =>
   }, 0);
 };
 
-export const calculateProtein = (entries: FoodEntry[]): number => calculateMacro(entries, 'protein');
-export const calculateCarbs = (entries: FoodEntry[]): number => calculateMacro(entries, 'carbs');
-export const calculateFat = (entries: FoodEntry[]): number => calculateMacro(entries, 'fat');
-export const calculateFiber = (entries: FoodEntry[]): number => calculateMacro(entries, 'dietary_fiber');
+export const calculateProtein = (entries: FoodEntryResponse[]): number => calculateMacro(entries, 'protein');
+export const calculateCarbs = (entries: FoodEntryResponse[]): number => calculateMacro(entries, 'carbs');
+export const calculateFat = (entries: FoodEntryResponse[]): number => calculateMacro(entries, 'fat');
+export const calculateFiber = (entries: FoodEntryResponse[]): number => calculateMacro(entries, 'dietary_fiber');

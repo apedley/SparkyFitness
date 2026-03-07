@@ -14,7 +14,7 @@ export function useMealTypes(options?: { enabled?: boolean }) {
     select: (data) => {
       const mealTypes = data
         .filter((mt) => mt.is_visible)
-        .sort((a, b) => a.sort_order - b.sort_order);
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       return {
         mealTypes,
         defaultMealTypeId: getDefaultMealTypeId(mealTypes),

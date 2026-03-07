@@ -1,5 +1,5 @@
 import type { IconName } from '../components/Icon';
-import type { MealType } from '../types/mealTypes';
+import type { MealTypeResponse as MealType } from '@workspace/shared';
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snacks'] as const;
 

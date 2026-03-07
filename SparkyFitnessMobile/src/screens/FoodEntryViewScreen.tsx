@@ -38,7 +38,7 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
     isEditing: boolean;
     selectedDate: string;
     selectedMealId: string | undefined;
-    selectedVariantId: string | undefined;
+    selectedVariantId: string | null | undefined;
     quantityText: string;
     adjustedValues: FoodFormData | null;
   }
@@ -113,7 +113,7 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
   }, [adjustedValues, activeVariant]);
 
   const quantity = parseFloat(quantityText) || 0;
-  const editServings = displayValues.servingSize > 0 ? quantity / displayValues.servingSize : 0;
+  const editServings = displayValues.servingSize && displayValues.servingSize > 0 ? quantity / displayValues.servingSize : 0;
   const scaled = (value: number) => value * editServings;
   const servingSizeRef = useRef(displayValues.servingSize);
 
@@ -162,13 +162,13 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
 
  const clampQuantity = () => {
     if (quantity <= 0) {
-      const minQuantity = (displayValues.servingSize * 0.5) || 1;
+      const minQuantity = ((displayValues.servingSize ?? 0) * 0.5) || 1;
       updateEdit({ quantityText: String(minQuantity) });
     }
   };
 
   const adjustQuantity = (delta: number) => {
-    const step = displayValues.servingSize;
+    const step = displayValues.servingSize ?? 0;
     const increment = step * 0.5 || 1;
     const boundary =
       delta > 0
@@ -443,7 +443,7 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
           <Animated.View layout={LinearTransition.duration(300)} className="flex-row items-center">
             <View className="flex-1 items-center pr-10">
               <Text className="text-text-primary text-3xl font-medium">
-                {isEditing ? Math.round(scaled(displayValues.calories)) : viewCalories}
+                {isEditing ? Math.round(scaled(displayValues.calories ?? 0)) : viewCalories}
               </Text>
               <Text className="text-text-secondary text-base mt-1">calories</Text>
             </View>
