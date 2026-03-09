@@ -1,5 +1,5 @@
 import './global.css'
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBar, Platform, type ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -26,7 +26,8 @@ import FoodEntryViewScreen from './src/screens/FoodEntryViewScreen';
 import FoodFormScreen from './src/screens/FoodFormScreen';
 import FoodScanScreen from './src/screens/FoodScanScreen';
 import { useAuth } from './src/hooks/useAuth';
-import { loadBackgroundSyncEnabled } from './src/services/storage';
+import { loadBackgroundSyncEnabled, loadOnboardingComplete, saveOnboardingComplete, getAllServerConfigs } from './src/services/storage';
+import OnboardingNavigator from './src/screens/onboarding/OnboardingNavigator';
 import { configureBackgroundSync, performBackgroundSync } from './src/services/backgroundSyncService';
 import { startObservers, stopObservers } from './src/services/healthConnectService';
 import { initializeTheme } from './src/services/themeService';
@@ -50,7 +51,40 @@ type TabIcons = {
 
 function AppContent() {
   const { theme } = useUniwind();
-  useAuth(navigationRef);
+
+  const [isReady, setIsReady] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      const completed = await loadOnboardingComplete();
+      if (!completed) {
+        const configs = await getAllServerConfigs();
+        // Only treat configs with actual credentials as completed onboarding.
+        // WelcomeScreen saves a placeholder config (empty apiKey, no session)
+        // before auth, so a bare config doesn't mean onboarding finished.
+        const hasAuthenticatedConfig = configs.some(c => c.apiKey || c.sessionToken);
+        if (hasAuthenticatedConfig) {
+          await saveOnboardingComplete();
+          setShowOnboarding(false);
+        } else {
+          setShowOnboarding(true);
+        }
+      }
+      setIsReady(true);
+    };
+    init();
+  }, []);
+
+  useAuth(navigationRef, !showOnboarding);
+
+  // When navigation resets to Tabs (onboarding exit), flip showOnboarding
+  // so useAuth re-enables for 401 handling in the same session.
+  const handleNavigationStateChange = useCallback((state: { routes: { name: string }[]; index: number } | undefined) => {
+    if (showOnboarding && state?.routes[state.index]?.name === 'Tabs') {
+      setShowOnboarding(false);
+    }
+  }, [showOnboarding]);
 
   const [primary, chrome, chromeBorder, bgPrimary, textPrimary, tabActive, tabInactive] = useCSSVariable([
     '--color-accent-primary',
@@ -144,15 +178,25 @@ function AppContent() {
     }
   }, []);
 
-  if (Platform.OS !== 'ios' && !icons) {
+  if (!isReady || (Platform.OS !== 'ios' && !icons)) {
     return null;
   }
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} onStateChange={handleNavigationStateChange}>
       <SafeAreaProvider>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator
+          screenOptions={{ headerShown: false }}
+          initialRouteName={showOnboarding ? 'Onboarding' : 'Tabs'}
+        >
+          {showOnboarding && (
+            <Stack.Screen
+              name="Onboarding"
+              component={OnboardingNavigator}
+              options={{ gestureEnabled: false }}
+            />
+          )}
           <Stack.Screen name="Tabs" options={{ gestureEnabled: false }}>
             {() => (
               <Tab.Navigator

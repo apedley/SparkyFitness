@@ -4,8 +4,10 @@ import { setOnSessionExpired, setOnNoConfigs, suppressSessionExpired } from '../
 import { clearServerConfigCache } from '../services/storage';
 import type { RootStackParamList } from '../types/navigation';
 
-export function useAuth(navigationRef: NavigationContainerRefWithCurrent<RootStackParamList>) {
+export function useAuth(navigationRef: NavigationContainerRefWithCurrent<RootStackParamList>, enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
+
     setOnSessionExpired((configId) => {
       clearServerConfigCache();
       suppressSessionExpired(true);
@@ -28,6 +30,6 @@ export function useAuth(navigationRef: NavigationContainerRefWithCurrent<RootSta
         });
       }
     });
-  }, [navigationRef]);
+  }, [navigationRef, enabled]);
 
 }

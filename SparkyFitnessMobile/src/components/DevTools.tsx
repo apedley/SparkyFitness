@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { seedHealthData, seedHistoricalSteps } from '../services/seedHealthData';
 import { triggerManualSync } from '../services/backgroundSyncService';
 import { openHealthConnectSettings, openHealthConnectDataManagement, getGrantedPermissions } from 'react-native-health-connect';
@@ -173,6 +174,23 @@ const DevTools: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
+      </View>
+
+      <View className="mt-5">
+        <Text className="text-sm text-text-primary">Onboarding</Text>
+        <Text className="text-text-muted mb-3 text-[13px]">
+          Reset the onboarding flag to show the welcome flow on next launch.
+        </Text>
+        <TouchableOpacity
+          className="bg-accent-muted py-2 px-4 rounded-lg items-center self-start"
+          onPress={() => {
+            AsyncStorage.removeItem('onboardingComplete').then(() => {
+              Alert.alert('Done', 'Onboarding flag cleared. Restart the app to see the welcome screen.');
+            });
+          }}
+        >
+          <Text className="text-white text-base font-bold">Reset Onboarding</Text>
+        </TouchableOpacity>
       </View>
 
     </View>

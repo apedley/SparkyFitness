@@ -34,6 +34,7 @@ const ACTIVE_SERVER_CONFIG_ID_KEY = 'activeServerConfigId';
 const TIME_RANGE_KEY = 'timeRange';
 const LAST_SYNCED_TIME_KEY = 'lastSyncedTime';
 const BACKGROUND_SYNC_ENABLED_KEY = 'backgroundSyncEnabled';
+const ONBOARDING_COMPLETE_KEY = 'onboardingComplete';
 
 const secureStoreKey = (configId: string) => `apiKey_${configId}`;
 const sessionTokenSecureStoreKey = (configId: string) => `sessionToken_${configId}`;
@@ -335,6 +336,24 @@ export const loadCollapsedCategories = async (): Promise<string[]> => {
   }
   // Default: all categories except Common are collapsed
   return CATEGORY_ORDER.filter(c => c !== 'Common');
+};
+
+export const loadOnboardingComplete = async (): Promise<boolean> => {
+  try {
+    const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
+    return value === 'true';
+  } catch (error) {
+    console.error('Failed to load onboarding complete flag.', error);
+    return false;
+  }
+};
+
+export const saveOnboardingComplete = async (): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+  } catch (error) {
+    console.error('Failed to save onboarding complete flag.', error);
+  }
 };
 
 export const clearSessionToken = async (configId: string): Promise<void> => {

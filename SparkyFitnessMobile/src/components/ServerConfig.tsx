@@ -16,7 +16,7 @@ function getStatusText(config: ServerConfigType, isActive: boolean): string {
   const parts: string[] = [];
   if (isActive) parts.push('Active');
   if (config.authType === 'session' && config.sessionToken) {
-    parts.push(config.email ? `Signed in as ${config.email}` : 'Signed in');
+    parts.push('Signed in');
   } else if (config.authType === 'apiKey' && config.apiKey) {
     parts.push('API key');
   } else {
