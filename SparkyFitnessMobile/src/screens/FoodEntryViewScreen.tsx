@@ -116,6 +116,7 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
   const editServings = displayValues.servingSize > 0 ? quantity / displayValues.servingSize : 0;
   const scaled = (value: number) => value * editServings;
   const servingSizeRef = useRef(displayValues.servingSize);
+  servingSizeRef.current = displayValues.servingSize;
 
   // Variant picker options
   const variantPickerOptions = useMemo(() => {
@@ -128,10 +129,6 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({ navigation, r
 
   // Watch for adjusted values returned from FoodForm
   const adjustedFromNav = route.params?.adjustedValues;
-  useEffect(() => {
-    servingSizeRef.current = displayValues.servingSize;
-  }, [displayValues.servingSize]);
-
   useEffect(() => {
     if (adjustedFromNav) {
       const previousServingSize = servingSizeRef.current;

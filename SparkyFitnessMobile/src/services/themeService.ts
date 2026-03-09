@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Uniwind, useUniwind } from 'uniwind';
 
@@ -59,18 +58,5 @@ export async function setThemePreference(preference: ThemePreference): Promise<v
  */
 export function useThemePreference(): ThemePreference {
   const { theme, hasAdaptiveThemes } = useUniwind();
-  const [preference, setPreference] = useState<ThemePreference>('System');
-
-  useEffect(() => {
-    // Load saved preference to get accurate user selection
-    AsyncStorage.getItem(THEME_KEY).then((saved) => {
-      if (saved) {
-        setPreference(saved as ThemePreference);
-      } else {
-        setPreference(fromUniwindTheme(theme, hasAdaptiveThemes));
-      }
-    });
-  }, [theme, hasAdaptiveThemes]);
-
-  return preference;
+  return fromUniwindTheme(theme, hasAdaptiveThemes);
 }

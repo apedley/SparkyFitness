@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -78,9 +78,18 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     enabled: isConnected && activeTab === 'online',
   });
 
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
-  const hasUserSelectedProvider = useRef(false);
+  const [userSelectedProvider, setUserSelectedProvider] = useState<string | null>(null);
   const [loadingFoodId, setLoadingFoodId] = useState<string | null>(null);
+
+  const selectedProvider = useMemo(() => {
+    if (userSelectedProvider && providers.some((p) => p.id === userSelectedProvider)) {
+      return userSelectedProvider;
+    }
+    if (providers.length === 0) return null;
+    const defaultId = preferences?.default_food_data_provider_id;
+    const defaultProvider = defaultId ? providers.find((p) => p.id === defaultId) : undefined;
+    return defaultProvider?.id ?? providers[0].id;
+  }, [providers, userSelectedProvider, preferences?.default_food_data_provider_id]);
 
   const selectedProviderType = useMemo(
     () => providers.find((p) => p.id === selectedProvider)?.provider_type ?? '',
@@ -102,14 +111,6 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     providerId: selectedProvider ?? undefined,
   });
 
-  useEffect(() => {
-    if (providers.length === 0) return;
-    if (hasUserSelectedProvider.current && providers.some((p) => p.id === selectedProvider)) return;
-
-    const defaultId = preferences?.default_food_data_provider_id;
-    const defaultProvider = defaultId ? providers.find((p) => p.id === defaultId) : undefined;
-    setSelectedProvider(defaultProvider?.id ?? providers[0].id);
-  }, [providers, selectedProvider, preferences?.default_food_data_provider_id]);
 
   const showFoodInfo = (item: FoodInfoItem) => {
     navigation.navigate('FoodEntryAdd', { item, date });
@@ -599,10 +600,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
             return (
               <TouchableOpacity
                 key={provider.id}
-                onPress={() => {
-                  hasUserSelectedProvider.current = true;
-                  setSelectedProvider(provider.id);
-                }}
+                onPress={() => setUserSelectedProvider(provider.id)}
                 activeOpacity={0.7}
                 className={`flex-row items-center rounded-full px-3 py-1 border ${
                   isActive

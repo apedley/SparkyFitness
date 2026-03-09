@@ -130,12 +130,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({ navigation, rou
   const quantity = parseFloat(quantityText) || 0;
   const servings = displayValues.servingSize > 0 ? quantity / displayValues.servingSize : 0;
   const servingSizeRef = useRef(displayValues.servingSize);
+  servingSizeRef.current = displayValues.servingSize;
 
   const adjustedFromNav = route.params?.adjustedValues;
-  useEffect(() => {
-    servingSizeRef.current = displayValues.servingSize;
-  }, [displayValues.servingSize]);
-
   useEffect(() => {
     if (adjustedFromNav) {
       const previousServingSize = servingSizeRef.current;
