@@ -72,7 +72,7 @@ function BottomSheetPicker<T extends string | number>({
     bottomSheetRef.current?.present();
   }, []);
 
-  // Cleanup on unmount (handles conditional rendering in SyncFrequency)
+  // Cleanup on unmount (handles conditional rendering)
   useEffect(() => {
     const sheetRef = bottomSheetRef.current;
     return () => {

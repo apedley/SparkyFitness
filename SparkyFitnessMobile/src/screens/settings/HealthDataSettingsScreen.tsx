@@ -2,14 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Alert, ScrollView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenHeader from '../../components/ScreenHeader';
-import { loadBackgroundSyncEnabled, saveBackgroundSyncEnabled } from '../../services/storage';
 import { addLog } from '../../services/LogService';
-import { initHealthConnect, requestHealthPermissions, saveHealthPreference, loadHealthPreference, enableBackgroundDeliveryForMetric, disableBackgroundDeliveryForMetric, setupBackgroundDeliveryForEnabledMetrics, disableAllBackgroundDelivery, cleanupAllSubscriptions, refreshSubscriptions, startObservers, stopObservers } from '../../services/healthConnectService';
-import { configureBackgroundSync, stopBackgroundSync, performBackgroundSync } from '../../services/backgroundSyncService';
+import { initHealthConnect, requestHealthPermissions, saveHealthPreference, loadHealthPreference, enableBackgroundDeliveryForMetric, disableBackgroundDeliveryForMetric, setupBackgroundDeliveryForEnabledMetrics, disableAllBackgroundDelivery, cleanupAllSubscriptions, refreshSubscriptions } from '../../services/healthConnectService';
 import { HEALTH_METRICS } from '../../HealthMetrics';
 import type { HealthMetric } from '../../HealthMetrics';
 import HealthDataSync from '../../components/HealthDataSync';
-import SyncFrequency from '../../components/SyncFrequency';
 import type { HealthMetricStates } from '../../types/healthRecords';
 
 const HealthDataSettingsScreen: React.FC = () => {
@@ -22,8 +19,6 @@ const HealthDataSettingsScreen: React.FC = () => {
     [healthMetricStates]
   );
 
-  const [isBackgroundSyncEnabled, setIsBackgroundSyncEnabled] = useState<boolean>(false);
-
   const healthSettingsName = Platform.OS === 'android' ? 'Health Connect settings' : 'Health app settings';
 
   useEffect(() => {
@@ -34,9 +29,6 @@ const HealthDataSettingsScreen: React.FC = () => {
         newHealthMetricStates[metric.stateKey] = enabled === true;
       }
       setHealthMetricStates(newHealthMetricStates);
-
-      const bgSyncEnabled = await loadBackgroundSyncEnabled();
-      setIsBackgroundSyncEnabled(bgSyncEnabled);
 
       await initHealthConnect();
     };
@@ -153,47 +145,6 @@ const HealthDataSettingsScreen: React.FC = () => {
       <ScreenHeader title="Health Sync" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="p-4">
-          <SyncFrequency
-          isEnabled={isBackgroundSyncEnabled}
-          onToggle={async (newValue) => {
-            if (newValue && Platform.OS === 'android') {
-              try {
-                const granted = await requestHealthPermissions([
-                  { accessType: 'read', recordType: 'BackgroundAccessPermission' },
-                ]);
-                if (!granted) {
-                  Alert.alert(
-                    'Permission Required',
-                    'Background access permission is required for background sync. Please grant the permission in Health Connect settings.'
-                  );
-                  return;
-                }
-              } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                Alert.alert('Permission Error', `Failed to request background access permission: ${errorMessage}`);
-                addLog(`[HealthDataSettings] Background access permission error: ${errorMessage}`, 'ERROR');
-                return;
-              }
-            }
-            setIsBackgroundSyncEnabled(newValue);
-            await saveBackgroundSyncEnabled(newValue);
-            if (newValue) {
-              await configureBackgroundSync();
-              if (Platform.OS === 'ios') {
-                startObservers(() => {
-                  performBackgroundSync('healthkit-observer').catch(error => {
-                    console.error('[HealthDataSettings] Observer-triggered sync failed:', error);
-                  });
-                });
-              }
-            } else {
-              await stopBackgroundSync();
-              if (Platform.OS === 'ios') {
-                stopObservers();
-              }
-            }
-          }}
-        />
         <HealthDataSync
           healthMetricStates={healthMetricStates}
           handleToggleHealthMetric={handleToggleHealthMetric}

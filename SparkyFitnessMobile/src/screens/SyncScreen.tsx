@@ -609,24 +609,39 @@ const SyncScreen: React.FC<SyncScreenProps> = ({ navigation }) => {
             <Text className="font-semibold">Not medical advice.</Text> Consult a healthcare professional for medical advice, diagnosis, or treatment.
           </Text>
         )}
+        
         {/* Health Overview */}
         <View className="bg-surface rounded-xl p-4 mb-4 shadow-sm">
           <Text className="text-lg font-bold text-text-primary">Data to Sync</Text>
           <Text className="text-text-secondary text-xs mb-3">Based on data currently on this device</Text>
-          <View className="flex-row flex-wrap justify-between">
-            {HEALTH_METRICS.map(metric => healthMetricStates[metric.stateKey] && (
-              <View
-                key={metric.id}
-                className="w-[48%] bg-raised rounded-lg p-2 mb-2 items-start flex-row border border-border"
-              >
-                <Image source={metric.icon} className="w-6 h-6 mr-2" />
-                <View>
-                  <Text className="text-lg font-bold text-text-primary">{healthData[metric.id] || '0'}</Text>
-                  <Text className="text-sm text-text-secondary">{metric.label}</Text>
+          {HEALTH_METRICS.some(metric => healthMetricStates[metric.stateKey]) ? (
+            <View className="flex-row flex-wrap justify-between">
+              {HEALTH_METRICS.map(metric => healthMetricStates[metric.stateKey] && (
+                <View
+                  key={metric.id}
+                  className="w-[48%] bg-raised rounded-lg p-2 mb-2 items-start flex-row border border-border"
+                >
+                  <Image source={metric.icon} className="w-6 h-6 mr-2" />
+                  <View>
+                    <Text className="text-lg font-bold text-text-primary">{healthData[metric.id] || '0'}</Text>
+                    <Text className="text-sm text-text-secondary">{metric.label}</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          ) : (
+            <View className="items-center py-4">
+              <Text className="text-text-muted text-sm text-center mb-3">
+                No health metrics selected. Choose which data to sync in settings.
+              </Text>
+              <TouchableOpacity
+                className="bg-accent-primary rounded-xl py-2.5 px-5"
+                onPress={() => navigation.navigate('Settings', { screen: 'HealthDataSettings' })}
+              >
+                <Text className="text-white font-semibold">Health Data Settings</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
 
