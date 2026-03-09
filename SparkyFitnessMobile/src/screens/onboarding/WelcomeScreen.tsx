@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
@@ -81,71 +82,80 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
         className="flex-1"
         contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: insets.top + 60,
-          paddingHorizontal: 32,
+          paddingTop: insets.top + 24,
+          paddingHorizontal: 24,
           paddingBottom: insets.bottom + 24,
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="items-center mb-10">
-          <Text className="text-4xl font-bold text-text-primary mb-3">
-            SparkyFitness
-          </Text>
-          <Text className="text-base text-text-secondary text-center leading-6">
-            Connect your server to sign in{'\n'} and sync your data. 
-          </Text>
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm mb-2 text-text-secondary">Server URL</Text>
-          <View className="border border-border-subtle rounded-lg bg-raised">
-            <TextInput
-              className="p-3 text-base text-text-primary"
-              placeholder="https://your-server-url.com"
-              placeholderTextColor={textMuted}
-              value={url}
-              onChangeText={(text) => { setUrl(text); setError(''); }}
-              autoCapitalize="none"
-              keyboardType="url"
-              autoCorrect={false}
-              editable={!loading}
-            />
-          </View>
-        </View>
-
-        {error !== '' && (
-          <View className="mb-4 p-3 rounded-lg bg-status-danger-bg">
-            <Text className="text-sm text-status-danger-text">{error}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          className="items-center justify-center py-3.5 rounded-[10px] bg-accent-primary mb-4"
-          onPress={handleContinue}
-          activeOpacity={0.8}
-          disabled={loading}
-          style={{ opacity: loading ? 0.7 : 1 }}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-white text-[17px] font-semibold">Continue</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="items-center py-3"
-          onPress={handleSetUpLater}
-          activeOpacity={0.7}
-        >
-          <Text className="text-base" style={{ color: accentPrimary }}>
-            Set Up Later
-          </Text>
-        </TouchableOpacity>
 
         <View className="flex-1" />
 
-        <Text className="text-xs text-text-muted text-center leading-4">
+        <View className="bg-surface rounded-xl py-2 px-3 mb-3 shadow-sm">
+
+          <View className="items-center mt-2 mb-2">
+            <Image source={require('../../../assets/icons/sparky.png')} className="w-20 h-20" />
+          </View>
+
+          <View className="items-center mb-4">
+            <Text className="text-3xl font-bold text-text-primary mb-2">
+              Connect Your Server
+            </Text>
+            <Text className="text-base text-text-secondary text-center leading-6">
+              Connect your server to sign in and sync
+            </Text>
+          </View>
+
+          <View className="mb-6">
+            <Text className="text-sm mb-1 text-text-secondary">SparkyFitness URL</Text>
+            <View className="border border-border-subtle rounded-lg bg-raised">
+              <TextInput
+                className="p-3 text-base text-text-primary"
+                placeholder="https://fitness.example.com"
+                placeholderTextColor={textMuted}
+                value={url}
+                onChangeText={(text) => { setUrl(text); setError(''); }}
+                autoCapitalize="none"
+                keyboardType="url"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
+          </View>
+
+          {error !== '' && (
+            <View className="mb-4 p-3 rounded-lg bg-status-danger-bg">
+              <Text className="text-sm text-status-danger-text">{error}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            className="items-center justify-center py-3.5 rounded-[10px] bg-accent-primary mb-4"
+            onPress={handleContinue}
+            activeOpacity={0.8}
+            disabled={loading}
+            style={{ opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white text-[17px] font-semibold">Continue</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="items-center py-3"
+            onPress={handleSetUpLater}
+            activeOpacity={0.7}
+          >
+            <Text className="text-base" style={{ color: accentPrimary }}>
+              Continue Without Server
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View className="flex-1" />
+
+        <Text className="text-xs text-text-muted text-start leading-4 mb-8">
           For fitness and wellness tracking only. Not medical advice. Consult a
           healthcare professional for medical advice, diagnosis, or treatment.
         </Text>
