@@ -133,7 +133,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     // Loading state
     if (isLoading || isConnectionLoading || isPreferencesLoading || isMeasurementsLoading) {
       return (
-        <View className="flex-1">
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="automatic"
+        >
           {!isConnectionLoading && isConnected && (
             <DateNavigator
               title="Dashboard"
@@ -145,18 +149,22 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
               skipSafeAreaTop
             />
           )}
-          <View className="flex-1 items-center justify-center p-8 shadow-sm">
+          <View className="items-center p-8 mt-16">
             <ActivityIndicator size="large" color="#3B82F6" />
             <Text className="text-text-muted text-base mt-4">Loading summary...</Text>
           </View>
-        </View>
+        </ScrollView>
       );
     }
 
     // Error state
     if (isError || isPreferencesError || isMeasurementsError) {
       return (
-        <View className="flex-1">
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="automatic"
+        >
           <DateNavigator
             title="Dashboard"
             selectedDate={selectedDate}
@@ -166,7 +174,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
             onDatePress={openCalendar}
             skipSafeAreaTop
           />
-          <View className="flex-1 items-center justify-center p-8 shadow-sm">
+          <View className="items-center p-8 mt-16">
             <Icon name="alert-circle" size={64} color="#EF4444" />
             <Text className="text-text-muted text-lg text-center mt-4">
               Failed to load summary
@@ -181,7 +189,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
               <Text className="text-white font-semibold">Retry</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       );
     }
 
