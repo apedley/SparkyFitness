@@ -4,7 +4,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useCSSVariable } from 'uniwind';
 import { saveServerConfig, setActiveServerConfig } from '../../services/storage';
 import type { ServerConfig } from '../../services/storage';
-import { queryClient, serverConnectionQueryKey } from '../../hooks';
+import { invalidateServerConnection } from '../../hooks';
 import Icon from '../../components/Icon';
 
 type ApiKeyFormProps = {
@@ -40,7 +40,7 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({ config, onSuccess }) => {
     });
     await setActiveServerConfig(config.id);
 
-    queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });
+    invalidateServerConnection();
     onSuccess();
   };
 

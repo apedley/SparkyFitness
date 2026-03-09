@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { serverConnectionQueryKey } from './queryKeys';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -12,3 +13,6 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+export const invalidateServerConnection = () =>
+  queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });

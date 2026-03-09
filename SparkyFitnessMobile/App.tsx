@@ -161,8 +161,8 @@ function AppContent() {
     // Register HealthKit background delivery and observer subscriptions (iOS)
     // Only if the user has background sync enabled — otherwise observers would
     // bypass the preference and continue syncing in the background.
-    // When the user toggles the setting at runtime, SettingsScreen calls
-    // startObservers/stopObservers directly, so the lifecycle stays in sync.
+    // When the user toggles the setting at runtime, HealthDataSettingsScreen
+    // calls startObservers/stopObservers directly, so the lifecycle stays in sync.
     if (Platform.OS === 'ios') {
       loadBackgroundSyncEnabled().then(enabled => {
         if (!enabled) return;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useCSSVariable } from 'uniwind';
@@ -8,16 +8,13 @@ import type { NativeBottomTabScreenProps } from '@bottom-tabs/react-navigation';
 import type { RootStackParamList, TabParamList } from '../../types/navigation';
 import type { SettingsStackParamList } from '../../types/settingsNavigation';
 import type { ServerConfig, ProxyHeader } from '../../services/storage';
-import { proxyHeadersToRecord } from '../../services/storage';
-import { setPendingProxyHeaders, clearPendingProxyHeaders } from '../../services/api/authService';
+import { useProxyHeadersLifecycle } from '../../hooks';
 import Icon from '../../components/Icon';
 import ScreenHeader from '../../components/ScreenHeader';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 import SettingsRow from '../../components/settings/SettingsRow';
 import ProxyHeadersModal from '../../components/ProxyHeadersModal';
-import SegmentedControl from '../../components/SegmentedControl';
-import SignInForm from './SignInForm';
-import ApiKeyForm from './ApiKeyForm';
+import AuthMethodSelector from '../../components/AuthMethodSelector';
 
 type AddServerScreenProps = CompositeScreenProps<
   StackScreenProps<SettingsStackParamList, 'AddServer'>,
@@ -27,14 +24,8 @@ type AddServerScreenProps = CompositeScreenProps<
   >
 >;
 
-const authSegments = [
-  { key: 'session' as const, label: 'Sign In' },
-  { key: 'apiKey' as const, label: 'API Key' },
-];
-
 const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
   const [url, setUrl] = useState('');
-  const [authMethod, setAuthMethod] = useState<'session' | 'apiKey'>('session');
   const [proxyHeaders, setProxyHeaders] = useState<ProxyHeader[]>([]);
   const [showProxyHeaders, setShowProxyHeaders] = useState(false);
   const configIdRef = useRef(Date.now().toString());
@@ -43,9 +34,7 @@ const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
     '--color-text-secondary',
   ]) as [string, string];
 
-  useEffect(() => {
-    return () => clearPendingProxyHeaders();
-  }, []);
+  useProxyHeadersLifecycle(proxyHeaders.length ? proxyHeaders : undefined);
 
   const config: ServerConfig = {
     id: configIdRef.current,
@@ -56,11 +45,6 @@ const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
 
   const handleProxyHeadersSave = (headers: ProxyHeader[]) => {
     setProxyHeaders(headers);
-    if (headers.length) {
-      setPendingProxyHeaders(proxyHeadersToRecord(headers));
-    } else {
-      clearPendingProxyHeaders();
-    }
   };
 
   const handleAuthSuccess = () => {
@@ -109,19 +93,7 @@ const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
           />
         </SettingsGroup>
 
-        <View className="mb-4">
-          <SegmentedControl
-            segments={authSegments}
-            activeKey={authMethod}
-            onSelect={setAuthMethod}
-          />
-        </View>
-
-        {authMethod === 'session' ? (
-          <SignInForm config={config} onSuccess={handleAuthSuccess} />
-        ) : (
-          <ApiKeyForm config={config} onSuccess={handleAuthSuccess} />
-        )}
+        <AuthMethodSelector config={config} onSuccess={handleAuthSuccess} />
 
         <ProxyHeadersModal
           visible={showProxyHeaders}

@@ -1,4 +1,4 @@
-export { queryClient } from './queryClient';
+export { queryClient, invalidateServerConnection } from './queryClient';
 export {
   serverConnectionQueryKey,
   dailySummaryQueryKey,
@@ -36,4 +36,6 @@ export { useFoodVariants } from './useFoodVariants';
 export { useSaveFood } from './useSaveFood';
 export { useAddFoodEntry } from './useAddFoodEntry';
 export { useMeasurementsRange } from './useMeasurementsRange';
+export { useServerConfig, useServerConfigs } from './useServerConfig';
+export { useProxyHeadersLifecycle } from './useProxyHeadersLifecycle';
 export type { StepsDataPoint, StepsRange, WeightDataPoint } from './useMeasurementsRange';

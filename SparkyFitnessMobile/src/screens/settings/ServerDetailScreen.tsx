@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   TouchableOpacity,
@@ -7,7 +7,6 @@ import {
   Switch,
   Linking,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { useCSSVariable } from 'uniwind';
 import * as WebBrowser from 'expo-web-browser';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -17,16 +16,16 @@ import type { RootStackParamList, TabParamList } from '../../types/navigation';
 import type { SettingsStackParamList } from '../../types/settingsNavigation';
 import {
   getAllServerConfigs,
-  getActiveServerConfig,
   setActiveServerConfig,
   deleteServerConfig,
 } from '../../services/storage';
-import type { ServerConfig } from '../../services/storage';
 import { notifyNoConfigs } from '../../services/api/authService';
 import { addLog } from '../../services/LogService';
 import { useServerConnection } from '../../hooks';
+import { useServerConfig } from '../../hooks/useServerConfig';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 import SettingsRow from '../../components/settings/SettingsRow';
+import { getAuthStatusText } from '../../utils/authUtils';
 import ProxyHeadersModal from '../../components/ProxyHeadersModal';
 import ScreenHeader from '../../components/ScreenHeader';
 
@@ -38,41 +37,15 @@ type ServerDetailScreenProps = CompositeScreenProps<
   >
 >;
 
-function getAuthStatusText(config: ServerConfig): string {
-  if (config.authType === 'session' && config.sessionToken) {
-    return 'Signed in';
-  }
-  if (config.authType === 'apiKey' && config.apiKey) {
-    return 'API key configured';
-  }
-  return 'Not configured';
-}
-
 const ServerDetailScreen: React.FC<ServerDetailScreenProps> = ({ route, navigation }) => {
   const { configId } = route.params;
 
   const [accentPrimary] = useCSSVariable(['--color-accent-primary']) as [string];
 
-  const [config, setConfig] = useState<ServerConfig | null>(null);
-  const [isActive, setIsActive] = useState(false);
+  const { config, isActive, reload } = useServerConfig(configId);
   const [showProxyHeaders, setShowProxyHeaders] = useState(false);
 
   const { refetch: refetchConnection } = useServerConnection();
-
-  const loadConfig = useCallback(async () => {
-    const configs = await getAllServerConfigs();
-    const found = configs.find(c => c.id === configId) ?? null;
-    setConfig(found);
-
-    const active = await getActiveServerConfig();
-    setIsActive(active?.id === configId);
-  }, [configId]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadConfig();
-    }, [loadConfig])
-  );
 
   const handleToggleActive = async (value: boolean) => {
     if (!value || !config) return;
@@ -84,7 +57,7 @@ const ServerDetailScreen: React.FC<ServerDetailScreenProps> = ({ route, navigati
 
     try {
       await setActiveServerConfig(configId);
-      setIsActive(true);
+      await reload();
       refetchConnection();
       addLog('Active server configuration changed.', 'SUCCESS');
     } catch (error) {
@@ -141,7 +114,7 @@ const ServerDetailScreen: React.FC<ServerDetailScreenProps> = ({ route, navigati
     if (!config) return;
     const { saveServerConfig: save } = await import('../../services/storage');
     await save({ ...config, proxyHeaders: headers });
-    await loadConfig();
+    await reload();
   };
 
   if (!config) return null;

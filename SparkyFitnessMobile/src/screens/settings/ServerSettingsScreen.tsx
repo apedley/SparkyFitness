@@ -1,13 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import {
-  getAllServerConfigs,
-  getActiveServerConfig,
-} from '../../services/storage';
-import type { ServerConfig } from '../../services/storage';
 import ServerConfigComponent from '../../components/ServerConfig';
 import ScreenHeader from '../../components/ScreenHeader';
+import { useServerConfigs } from '../../hooks/useServerConfig';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { NativeBottomTabScreenProps } from '@bottom-tabs/react-navigation';
@@ -23,22 +18,7 @@ type ServerSettingsScreenProps = CompositeScreenProps<
 >;
 
 const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = ({ navigation }) => {
-  const [serverConfigs, setServerConfigs] = useState<ServerConfig[]>([]);
-  const [activeConfigId, setActiveConfigId] = useState<string | null>(null);
-
-  const loadConfig = async (): Promise<void> => {
-    const allConfigs = await getAllServerConfigs();
-    setServerConfigs(allConfigs);
-
-    const activeConfig = await getActiveServerConfig();
-    setActiveConfigId(activeConfig?.id ?? null);
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadConfig();
-    }, [])
-  );
+  const { configs, activeConfigId } = useServerConfigs();
 
   return (
     <View className="flex-1 bg-background">
@@ -46,7 +26,7 @@ const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = ({ navigation 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="p-4 pt-2">
           <ServerConfigComponent
-            serverConfigs={serverConfigs}
+            serverConfigs={configs}
             activeConfigId={activeConfigId}
             onEditServer={(configId) => navigation.navigate('ServerDetail', { configId })}
             onAddServer={() => navigation.navigate('AddServer')}

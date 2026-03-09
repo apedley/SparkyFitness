@@ -33,8 +33,7 @@ jest.mock('../../../src/services/storage', () => ({
 }));
 
 jest.mock('../../../src/hooks', () => ({
-  queryClient: { invalidateQueries: jest.fn() },
-  serverConnectionQueryKey: ['serverConnection'],
+  invalidateServerConnection: jest.fn(),
 }));
 
 jest.mock('../../../src/components/Icon', () => {

@@ -9,13 +9,12 @@ import {
   verifyTotp,
   sendEmailOtp,
   verifyEmailOtp,
-  clearPendingProxyHeaders,
   suppressSessionExpired,
   type MfaFactors,
 } from '../../services/api/authService';
 import { saveServerConfig, setActiveServerConfig } from '../../services/storage';
 import type { ServerConfig } from '../../services/storage';
-import { queryClient, serverConnectionQueryKey } from '../../hooks';
+import { invalidateServerConnection } from '../../hooks';
 
 type SignInFormProps = {
   config: ServerConfig;
@@ -121,9 +120,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ config, onSuccess }) => {
       }
 
       await saveSessionConfig(result.sessionToken, result.user.email);
-      clearPendingProxyHeaders();
       suppressSessionExpired(false);
-      queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });
+      invalidateServerConnection();
       onSuccess();
     } catch (err) {
       if (err instanceof LoginError) {
@@ -153,9 +151,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ config, onSuccess }) => {
           : await verifyEmailOtp(serverUrl, code);
 
       await saveSessionConfig(result.sessionToken, result.user.email);
-      clearPendingProxyHeaders();
       suppressSessionExpired(false);
-      queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });
+      invalidateServerConnection();
       onSuccess();
     } catch (err) {
       if (err instanceof LoginError) {

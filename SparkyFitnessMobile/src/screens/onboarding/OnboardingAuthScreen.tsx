@@ -13,16 +13,9 @@ import { useCSSVariable } from 'uniwind';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { OnboardingStackParamList } from '../../types/onboardingNavigation';
 import type { RootStackParamList } from '../../types/navigation';
-import {
-  getAllServerConfigs,
-  proxyHeadersToRecord,
-  saveOnboardingComplete,
-} from '../../services/storage';
+import { getAllServerConfigs, saveOnboardingComplete } from '../../services/storage';
 import type { ServerConfig } from '../../services/storage';
-import {
-  setPendingProxyHeaders,
-  clearPendingProxyHeaders,
-} from '../../services/api/authService';
+import { useProxyHeadersLifecycle } from '../../hooks';
 import SegmentedControl from '../../components/SegmentedControl';
 import SignInForm from '../settings/SignInForm';
 import ApiKeyForm from '../settings/ApiKeyForm';
@@ -55,17 +48,7 @@ const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ route, navi
     }, [loadConfig])
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      if (config?.proxyHeaders) {
-        setPendingProxyHeaders(proxyHeadersToRecord(config.proxyHeaders));
-      }
-
-      return () => {
-        clearPendingProxyHeaders();
-      };
-    }, [config])
-  );
+  useProxyHeadersLifecycle(config?.proxyHeaders);
 
   const handleAuthSuccess = async () => {
     await saveOnboardingComplete();
