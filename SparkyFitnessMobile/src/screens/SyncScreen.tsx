@@ -507,8 +507,8 @@ const SyncScreen: React.FC<SyncScreenProps> = () => {
   };
 
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 80 }}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
         {/* Header */}
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-2xl font-bold text-text-primary">Sync</Text>

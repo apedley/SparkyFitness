@@ -5,9 +5,7 @@ import SettingsIndexScreen from './SettingsIndexScreen';
 import ServerSettingsScreen from './ServerSettingsScreen';
 import AddServerScreen from './AddServerScreen';
 import ServerDetailScreen from './ServerDetailScreen';
-import AuthenticationSettingsScreen from './AuthenticationSettingsScreen';
-import SignInScreen from './SignInScreen';
-import ApiKeyScreen from './ApiKeyScreen';
+import AuthenticationScreen from './AuthenticationScreen';
 import HealthDataSettingsScreen from './HealthDataSettingsScreen';
 import AppearanceSettingsScreen from './AppearanceSettingsScreen';
 import AboutScreen from './AboutScreen';
@@ -19,70 +17,20 @@ const Stack = createStackNavigator<SettingsStackParamList>();
 
 const SettingsNavigator: React.FC = () => {
   return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="SettingsIndex"
-        component={SettingsIndexScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ServerSettings"
-        component={ServerSettingsScreen}
-        options={{ title: 'Server', headerBackTitle: 'Settings' }}
-      />
-      <Stack.Screen
-        name="AddServer"
-        component={AddServerScreen}
-        options={{ title: 'Add Server', headerBackTitle: 'Server' }}
-      />
-      <Stack.Screen
-        name="ServerDetail"
-        component={ServerDetailScreen}
-        options={{ title: 'Server', headerBackTitle: 'Server' }}
-      />
-      <Stack.Screen
-        name="AuthenticationSettings"
-        component={AuthenticationSettingsScreen}
-        options={{ title: 'Authentication', headerBackTitle: 'Server' }}
-      />
-      <Stack.Screen
-        name="SignInSettings"
-        component={SignInScreen}
-        options={{ title: 'Sign In', headerBackTitle: 'Authentication' }}
-      />
-      <Stack.Screen
-        name="ApiKeySettings"
-        component={ApiKeyScreen}
-        options={{ title: 'API Key', headerBackTitle: 'Authentication' }}
-      />
-      <Stack.Screen
-        name="HealthDataSettings"
-        component={HealthDataSettingsScreen}
-        options={{ title: 'Health Sync', headerBackTitle: 'Settings' }}
-      />
-      <Stack.Screen
-        name="AppearanceSettings"
-        component={AppearanceSettingsScreen}
-        options={{ title: 'Appearance', headerBackTitle: 'Settings' }}
-      />
-      <Stack.Screen
-        name="LogsSettings"
-        component={LogScreen}
-        options={{ title: 'Logs', headerBackTitle: 'Settings' }}
-      />
-      <Stack.Screen
-        name="About"
-        component={AboutScreen}
-        options={{ title: 'About', headerBackTitle: 'Settings' }}
-      />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SettingsIndex" component={SettingsIndexScreen} />
+      <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
+      <Stack.Screen name="AddServer" component={AddServerScreen} />
+      <Stack.Screen name="ServerDetail" component={ServerDetailScreen} />
+      <Stack.Screen name="Authentication" component={AuthenticationScreen} />
+      <Stack.Screen name="HealthDataSettings" component={HealthDataSettingsScreen} />
+      <Stack.Screen name="AppearanceSettings" component={AppearanceSettingsScreen} />
+      <Stack.Screen name="LogsSettings" component={LogScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
       {__DEV__ &&
         (Constants.expoConfig?.extra?.APP_VARIANT === 'development' ||
           Constants.expoConfig?.extra?.APP_VARIANT === 'dev') && (
-          <Stack.Screen
-            name="DevToolsSettings"
-            component={DevToolsSettingsScreen}
-            options={{ title: 'Developer Tools', headerBackTitle: 'Settings' }}
-          />
+          <Stack.Screen name="DevToolsSettings" component={DevToolsSettingsScreen} />
         )}
     </Stack.Navigator>
   );

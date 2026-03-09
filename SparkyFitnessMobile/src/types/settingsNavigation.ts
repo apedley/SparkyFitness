@@ -3,9 +3,7 @@ export type SettingsStackParamList = {
   ServerSettings: undefined;
   AddServer: undefined;
   ServerDetail: { configId: string };
-  AuthenticationSettings: { configId: string };
-  SignInSettings: { configId: string };
-  ApiKeySettings: { configId: string };
+  Authentication: { configId: string };
   HealthDataSettings: undefined;
   AppearanceSettings: undefined;
   LogsSettings: undefined;

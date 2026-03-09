@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector, Directions } from 'react-native-gesture-handler';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCSSVariable } from 'uniwind';
@@ -23,6 +24,7 @@ type DiaryScreenProps = CompositeScreenProps<
 >;
 
 const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
   const lastKnownToday = useRef(getTodayDate());
   const calendarRef = useRef<CalendarSheetRef>(null);
@@ -153,18 +155,21 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
 
   return (
     <GestureDetector gesture={swipeGesture}>
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
         {!isConnectionLoading && isConnected && (
-          <DateNavigator
-            title="Diary"
-            selectedDate={selectedDate}
-            onPreviousDay={goToPreviousDay}
-            onNextDay={goToNextDay}
-            onToday={goToToday}
-            onDatePress={openCalendar}
-            hideChevrons
-            showDateAlways
-          />
+          <View className="px-4">
+            <DateNavigator
+              title="Diary"
+              selectedDate={selectedDate}
+              onPreviousDay={goToPreviousDay}
+              onNextDay={goToNextDay}
+              onToday={goToToday}
+              onDatePress={openCalendar}
+              hideChevrons
+              showDateAlways
+              skipSafeAreaTop
+            />
+          </View>
         )}
         {renderContent()}
         <CalendarSheet ref={calendarRef} selectedDate={selectedDate} onSelectDate={handleCalendarSelect} />

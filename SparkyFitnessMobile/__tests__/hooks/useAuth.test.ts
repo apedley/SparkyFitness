@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import { setOnSessionExpired, setOnNoConfigs, suppressSessionExpired } from '../../src/services/api/authService';
-import { getActiveServerConfig, clearServerConfigCache } from '../../src/services/storage';
+import { clearServerConfigCache } from '../../src/services/storage';
 
 jest.mock('../../src/services/api/authService', () => ({
   setOnSessionExpired: jest.fn(),
@@ -10,13 +10,11 @@ jest.mock('../../src/services/api/authService', () => ({
 }));
 
 jest.mock('../../src/services/storage', () => ({
-  getActiveServerConfig: jest.fn(),
   clearServerConfigCache: jest.fn(),
 }));
 
 const mockSetOnSessionExpired = setOnSessionExpired as jest.MockedFunction<typeof setOnSessionExpired>;
 const mockSetOnNoConfigs = setOnNoConfigs as jest.MockedFunction<typeof setOnNoConfigs>;
-const mockGetActiveServerConfig = getActiveServerConfig as jest.MockedFunction<typeof getActiveServerConfig>;
 const mockClearServerConfigCache = clearServerConfigCache as jest.MockedFunction<typeof clearServerConfigCache>;
 const mockSuppressSessionExpired = suppressSessionExpired as jest.MockedFunction<typeof suppressSessionExpired>;
 
@@ -46,36 +44,6 @@ function createMockNavigationRef() {
 describe('useAuth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetActiveServerConfig.mockResolvedValue(null);
-  });
-
-  test('navigates to ServerSettings when no active config on mount', async () => {
-    mockGetActiveServerConfig.mockResolvedValue(null);
-    const navRef = createMockNavigationRef();
-
-    renderHook(() => useAuth(navRef));
-
-    await act(async () => {});
-
-    expect(navRef.navigate).toHaveBeenCalledWith('Tabs', {
-      screen: 'Settings',
-      params: { screen: 'ServerSettings' },
-    });
-  });
-
-  test('does not navigate when config exists', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
-    const navRef = createMockNavigationRef();
-
-    renderHook(() => useAuth(navRef));
-
-    await act(async () => {});
-
-    expect(navRef.navigate).not.toHaveBeenCalled();
   });
 
   test('registers callbacks on mount', async () => {
@@ -90,12 +58,7 @@ describe('useAuth', () => {
     expect(mockSetOnNoConfigs).toHaveBeenCalledWith(expect.any(Function));
   });
 
-  test('session expired callback navigates to SignInSettings', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
+  test('session expired callback navigates to ServerDetail', async () => {
     const navRef = createMockNavigationRef();
 
     renderHook(() => useAuth(navRef));
@@ -109,18 +72,13 @@ describe('useAuth', () => {
     expect(navRef.navigate).toHaveBeenCalledWith('Tabs', {
       screen: 'Settings',
       params: {
-        screen: 'SignInSettings',
+        screen: 'ServerDetail',
         params: { configId: 'config-42' },
       },
     });
   });
 
   test('session expired clears config cache and suppresses session expired', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
     const navRef = createMockNavigationRef();
 
     renderHook(() => useAuth(navRef));
@@ -138,17 +96,10 @@ describe('useAuth', () => {
   });
 
   test('no-configs callback navigates to ServerSettings', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
     const navRef = createMockNavigationRef();
 
     renderHook(() => useAuth(navRef));
     await act(async () => {});
-
-    navRef.navigate.mockClear();
 
     const noConfigsCb = mockSetOnNoConfigs.mock.calls[0][0];
     act(() => {
@@ -162,13 +113,16 @@ describe('useAuth', () => {
   });
 
   test('does not navigate when navigationRef is not ready', async () => {
-    mockGetActiveServerConfig.mockResolvedValue(null);
     const navRef = createMockNavigationRef();
     navRef.isReady.mockReturnValue(false);
 
     renderHook(() => useAuth(navRef));
-
     await act(async () => {});
+
+    const sessionExpiredCb = mockSetOnSessionExpired.mock.calls[0][0];
+    act(() => {
+      sessionExpiredCb('config-42');
+    });
 
     expect(navRef.navigate).not.toHaveBeenCalled();
   });

@@ -106,7 +106,11 @@ export const saveServerConfig = async (config: ServerConfig): Promise<void> => {
 
     await AsyncStorage.setItem(SERVER_CONFIGS_KEY, JSON.stringify(stored));
     activeServerConfigCache = undefined;
-    await setActiveServerConfig(config.id);
+
+    // Only auto-activate if this is the only server configured
+    if (stored.length === 1) {
+      await setActiveServerConfig(config.id);
+    }
   } catch (e) {
     console.error('Failed to save server config.', e);
     throw e;

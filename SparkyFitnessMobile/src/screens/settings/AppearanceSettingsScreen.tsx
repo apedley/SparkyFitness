@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemePreference, setThemePreference, type ThemePreference } from '../../services/themeService';
 import Icon from '../../components/Icon';
+import ScreenHeader from '../../components/ScreenHeader';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 
 const themeOptions: { label: string; value: ThemePreference }[] = [
@@ -12,11 +14,14 @@ const themeOptions: { label: string; value: ThemePreference }[] = [
 ];
 
 const AppearanceSettingsScreen: React.FC = () => {
+  const navigation = useNavigation();
   const currentTheme = useThemePreference();
 
   return (
-    <View className="flex-1 bg-background pt-4 px-4">
-      <SettingsGroup>
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Appearance" onBack={() => navigation.goBack()} />
+      <View className="px-4">
+        <SettingsGroup>
         {themeOptions.map(({ label, value }) => (
           <TouchableOpacity
             key={value}
@@ -29,7 +34,8 @@ const AppearanceSettingsScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         ))}
-      </SettingsGroup>
+        </SettingsGroup>
+      </View>
     </View>
   );
 };

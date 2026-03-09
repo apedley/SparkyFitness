@@ -9,6 +9,7 @@ import type { RootStackParamList, TabParamList } from '../../types/navigation';
 import type { SettingsStackParamList } from '../../types/settingsNavigation';
 import { saveServerConfig } from '../../services/storage';
 import Icon from '../../components/Icon';
+import ScreenHeader from '../../components/ScreenHeader';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 
 type AddServerScreenProps = CompositeScreenProps<
@@ -48,12 +49,13 @@ const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16, paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <SettingsGroup title="Server URL">
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Add Server" onBack={() => navigation.goBack()} />
+      <ScrollView
+        contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <SettingsGroup title="Server URL">
         <View className="px-4 py-3">
           <View className="flex-row items-center">
             <TextInput
@@ -85,7 +87,8 @@ const AddServerScreen: React.FC<AddServerScreenProps> = ({ navigation }) => {
       >
         <Text className="text-white text-[17px] font-semibold">Next</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Alert, ActivityIndicator, ScrollView, Image } from 'react-native';
+import { View, Text, Alert, ActivityIndicator, ScrollView, Image, Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import * as Application from 'expo-application';
 import PrivacyPolicyModal from '../../components/PrivacyPolicyModal';
+import ScreenHeader from '../../components/ScreenHeader';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 import SettingsRow from '../../components/settings/SettingsRow';
 import { useServerConnection, usePreferences, queryClient } from '../../hooks';
@@ -9,6 +11,7 @@ import { shareDiagnosticReport, sanitizeQueryKey } from '../../services/diagnost
 import type { DiagnosticQueryState } from '../../types/diagnosticReport';
 
 const AboutScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
   const { isConnected } = useServerConnection();
   const { preferences: userPreferences } = usePreferences({ enabled: isConnected });
@@ -46,14 +49,26 @@ const AboutScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background px-4" contentContainerStyle={{ paddingBottom: 40 }}>
-      <View className="p-4 items-center">
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="About" onBack={() => navigation.goBack()} />
+      <ScrollView className="px-4" contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="p-4 items-center">
         <Image source={require('../../../assets/icons/sparky.png')} className="w-16 h-16 mb-2" />
         <Text className="text-lg font-bold text-text-primary mb-1">SparkyFitness</Text>
         <Text className="text-text-secondary mb-1">
           Version {Application.nativeApplicationVersion} Build {Application.nativeBuildVersion}
         </Text>
       </View>
+      <SettingsGroup>
+        <SettingsRow
+          label="GitHub"
+          onPress={() => Linking.openURL('https://github.com/CodeWithCJ/SparkyFitness')}
+        />
+        <SettingsRow
+          label="Privacy Policy"
+          onPress={() => setShowPrivacyModal(true)}
+        />
+      </SettingsGroup>
 
       <SettingsGroup>
         <SettingsRow
@@ -63,23 +78,17 @@ const AboutScreen: React.FC = () => {
         />
       </SettingsGroup>
 
-      <Text className="text-text-secondary text-sm px-6 mt-1.5 mb-5">
-        Exports a local diagnostic report (app version, sync status, logs).{'\n'}
-        No personal health or food data is included. Nothing is sent automatically.
+      <Text className="text-text-secondary text-sm px-4 mb-5">
+        Exports a local diagnostic report (app version, sync status, logs). No personal health or food data is included and nothing is sent automatically.
       </Text>
 
-      <SettingsGroup>
-        <SettingsRow
-          label="Privacy Policy"
-          onPress={() => setShowPrivacyModal(true)}
-        />
-      </SettingsGroup>
 
-      <PrivacyPolicyModal
-        visible={showPrivacyModal}
-        onClose={() => setShowPrivacyModal(false)}
-      />
-    </ScrollView>
+        <PrivacyPolicyModal
+          visible={showPrivacyModal}
+          onClose={() => setShowPrivacyModal(false)}
+        />
+      </ScrollView>
+    </View>
   );
 };
 

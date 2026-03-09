@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
-import SignInScreen from '../../../src/screens/settings/SignInScreen';
+import SignInForm from '../../../src/screens/settings/SignInForm';
 import {
   login,
   LoginError,
@@ -11,7 +11,6 @@ import {
   verifyEmailOtp,
 } from '../../../src/services/api/authService';
 import {
-  getAllServerConfigs,
   saveServerConfig,
   type ServerConfig,
 } from '../../../src/services/storage';
@@ -24,36 +23,19 @@ jest.mock('../../../src/services/api/authService', () => ({
   verifyTotp: jest.fn(),
   sendEmailOtp: jest.fn(),
   verifyEmailOtp: jest.fn(),
-  setPendingProxyHeaders: jest.fn(),
   clearPendingProxyHeaders: jest.fn(),
   suppressSessionExpired: jest.fn(),
 }));
 
 jest.mock('../../../src/services/storage', () => ({
-  getAllServerConfigs: jest.fn(),
   saveServerConfig: jest.fn().mockResolvedValue(undefined),
-  proxyHeadersToRecord: jest.requireActual('../../../src/services/storage').proxyHeadersToRecord,
+  setActiveServerConfig: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('../../../src/hooks', () => ({
   queryClient: { invalidateQueries: jest.fn() },
   serverConnectionQueryKey: ['serverConnection'],
 }));
-
-jest.mock('@react-navigation/native', () => {
-  const actual = jest.requireActual('@react-navigation/native');
-  return {
-    ...actual,
-    useFocusEffect: (cb: () => (() => void) | void) => {
-      // Run the callback immediately so proxy headers logic executes
-      const { useEffect } = require('react');
-      useEffect(() => {
-        return cb();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, []);
-    },
-  };
-});
 
 jest.mock('../../../src/components/Icon', () => {
   const { View } = require('react-native');
@@ -63,35 +45,12 @@ jest.mock('../../../src/components/Icon', () => {
   };
 });
 
-jest.mock('../../../src/components/settings/SettingsGroup', () => {
-  const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({ children, title }: any) => (
-      <View testID={`settings-group-${title ?? 'untitled'}`}>{children}</View>
-    ),
-  };
-});
-
-jest.mock('../../../src/components/settings/SettingsRow', () => {
-  const { Text, View } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({ label }: any) => (
-      <View testID="settings-row">
-        <Text>{label}</Text>
-      </View>
-    ),
-  };
-});
-
 const mockLogin = login as jest.MockedFunction<typeof login>;
 const mockClearAuthCookies = clearAuthCookies as jest.MockedFunction<typeof clearAuthCookies>;
 const mockFetchMfaFactors = fetchMfaFactors as jest.MockedFunction<typeof fetchMfaFactors>;
 const mockVerifyTotp = verifyTotp as jest.MockedFunction<typeof verifyTotp>;
 const mockSendEmailOtp = sendEmailOtp as jest.MockedFunction<typeof sendEmailOtp>;
 const mockVerifyEmailOtp = verifyEmailOtp as jest.MockedFunction<typeof verifyEmailOtp>;
-const mockGetAllServerConfigs = getAllServerConfigs as jest.MockedFunction<typeof getAllServerConfigs>;
 const mockSaveServerConfig = saveServerConfig as jest.MockedFunction<typeof saveServerConfig>;
 
 const testConfig: ServerConfig = {
@@ -102,48 +61,30 @@ const testConfig: ServerConfig = {
   sessionToken: 'old-token',
 };
 
-const mockNavigation = {
-  goBack: jest.fn(),
-  navigate: jest.fn(),
-  setOptions: jest.fn(),
-  addListener: jest.fn().mockReturnValue(jest.fn()),
-} as any;
+const mockOnSuccess = jest.fn();
 
-const mockRoute = {
-  params: { configId: 'cfg-1' },
-  key: 'SignInSettings-1',
-  name: 'SignInSettings' as const,
-};
-
-function renderScreen(overrides: Partial<{ route: typeof mockRoute; navigation: typeof mockNavigation }> = {}) {
+function renderForm(config: ServerConfig = testConfig) {
   return render(
-    <SignInScreen
-      navigation={overrides.navigation ?? mockNavigation}
-      route={overrides.route ?? mockRoute}
-    />,
+    <SignInForm config={config} onSuccess={mockOnSuccess} />,
   );
 }
 
-function pressSignInButton(result: ReturnType<typeof renderScreen>) {
+function pressSignInButton(result: ReturnType<typeof renderForm>) {
   const buttons = result.getAllByText('Sign In');
   fireEvent.press(buttons[buttons.length - 1]);
 }
 
-describe('SignInScreen', () => {
+describe('SignInForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetAllServerConfigs.mockResolvedValue([testConfig]);
     mockClearAuthCookies.mockResolvedValue(undefined);
     mockSaveServerConfig.mockResolvedValue(undefined);
   });
 
   describe('credentials form', () => {
-    it('renders the sign-in form with server URL display', async () => {
-      const result = renderScreen();
+    it('renders the sign-in form', () => {
+      const result = renderForm();
 
-      await waitFor(() =>
-        expect(result.getByText('https://test-server.com')).toBeTruthy(),
-      );
       expect(result.getByPlaceholderText('email@example.com')).toBeTruthy();
       expect(result.getByPlaceholderText('Password')).toBeTruthy();
     });
@@ -151,8 +92,7 @@ describe('SignInScreen', () => {
 
   describe('validation', () => {
     it('shows error when email is empty', async () => {
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       await act(async () => {
         pressSignInButton(result);
@@ -163,8 +103,7 @@ describe('SignInScreen', () => {
     });
 
     it('shows error when password is empty', async () => {
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'user@example.com');
 
@@ -178,15 +117,14 @@ describe('SignInScreen', () => {
   });
 
   describe('successful login', () => {
-    it('calls login, saves config with email, and goes back', async () => {
+    it('calls login, saves config with email, and calls onSuccess', async () => {
       mockLogin.mockResolvedValue({
         type: 'success',
         sessionToken: 'new-session-token',
         user: { email: 'user@example.com' },
       });
 
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'user@example.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'password123');
@@ -209,7 +147,7 @@ describe('SignInScreen', () => {
           email: 'user@example.com',
         }),
       );
-      expect(mockNavigation.goBack).toHaveBeenCalled();
+      expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
 
@@ -217,8 +155,7 @@ describe('SignInScreen', () => {
     it('displays LoginError message', async () => {
       mockLogin.mockRejectedValue(new LoginError('Invalid credentials', 401));
 
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'wrong');
@@ -233,8 +170,7 @@ describe('SignInScreen', () => {
     it('displays generic error for non-LoginError exceptions', async () => {
       mockLogin.mockRejectedValue(new Error('Network error'));
 
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
@@ -251,13 +187,11 @@ describe('SignInScreen', () => {
 
   describe('MFA flow', () => {
     async function navigateToMfa(
-      result: ReturnType<typeof renderScreen>,
+      result: ReturnType<typeof renderForm>,
       factors = { mfaTotpEnabled: true, mfaEmailEnabled: false },
     ) {
       mockLogin.mockResolvedValue({ type: 'mfa_required' });
       mockFetchMfaFactors.mockResolvedValue(factors);
-
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'user@test.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
@@ -268,7 +202,7 @@ describe('SignInScreen', () => {
     }
 
     it('transitions to MFA form when login returns mfa_required', async () => {
-      const result = renderScreen();
+      const result = renderForm();
       await navigateToMfa(result);
 
       expect(
@@ -282,7 +216,7 @@ describe('SignInScreen', () => {
         user: { email: 'user@test.com' },
       });
 
-      const result = renderScreen();
+      const result = renderForm();
       await navigateToMfa(result);
 
       fireEvent.changeText(result.getByPlaceholderText('000000'), '123456');
@@ -299,11 +233,11 @@ describe('SignInScreen', () => {
           email: 'user@test.com',
         }),
       );
-      expect(mockNavigation.goBack).toHaveBeenCalled();
+      expect(mockOnSuccess).toHaveBeenCalled();
     });
 
     it('shows method toggle when both TOTP and email are enabled', async () => {
-      const result = renderScreen();
+      const result = renderForm();
       await navigateToMfa(result, {
         mfaTotpEnabled: true,
         mfaEmailEnabled: true,
@@ -320,7 +254,7 @@ describe('SignInScreen', () => {
         user: { email: 'user@test.com' },
       });
 
-      const result = renderScreen();
+      const result = renderForm();
       await navigateToMfa(result, {
         mfaTotpEnabled: true,
         mfaEmailEnabled: true,
@@ -357,11 +291,11 @@ describe('SignInScreen', () => {
         'https://test-server.com',
         '654321',
       );
-      expect(mockNavigation.goBack).toHaveBeenCalled();
+      expect(mockOnSuccess).toHaveBeenCalled();
     });
 
     it('navigates back to credentials from MFA and clears cookies', async () => {
-      const result = renderScreen();
+      const result = renderForm();
       await navigateToMfa(result);
 
       expect(
@@ -378,14 +312,12 @@ describe('SignInScreen', () => {
   });
 
   describe('MFA error handling', () => {
-    async function setupMfaForm(result: ReturnType<typeof renderScreen>) {
+    async function setupMfaForm(result: ReturnType<typeof renderForm>) {
       mockLogin.mockResolvedValue({ type: 'mfa_required' });
       mockFetchMfaFactors.mockResolvedValue({
         mfaTotpEnabled: true,
         mfaEmailEnabled: false,
       });
-
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
@@ -400,7 +332,7 @@ describe('SignInScreen', () => {
         new LoginError('invalid code', 400),
       );
 
-      const result = renderScreen();
+      const result = renderForm();
       await setupMfaForm(result);
 
       fireEvent.changeText(result.getByPlaceholderText('000000'), '000000');
@@ -417,7 +349,7 @@ describe('SignInScreen', () => {
     it('shows rate limit error on 429', async () => {
       mockVerifyTotp.mockRejectedValue(new LoginError('Too many', 429));
 
-      const result = renderScreen();
+      const result = renderForm();
       await setupMfaForm(result);
 
       fireEvent.changeText(result.getByPlaceholderText('000000'), '111111');
@@ -436,7 +368,7 @@ describe('SignInScreen', () => {
         new LoginError('INVALID_TWO_FACTOR_COOKIE', 401),
       );
 
-      const result = renderScreen();
+      const result = renderForm();
       await setupMfaForm(result);
 
       fireEvent.changeText(result.getByPlaceholderText('000000'), '222222');
@@ -454,7 +386,7 @@ describe('SignInScreen', () => {
     it('shows generic error for non-LoginError MFA failures', async () => {
       mockVerifyTotp.mockRejectedValue(new Error('Network error'));
 
-      const result = renderScreen();
+      const result = renderForm();
       await setupMfaForm(result);
 
       fireEvent.changeText(result.getByPlaceholderText('000000'), '333333');
@@ -478,8 +410,7 @@ describe('SignInScreen', () => {
         new LoginError('Email send failed', 500),
       );
 
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
@@ -502,8 +433,7 @@ describe('SignInScreen', () => {
       mockLogin.mockResolvedValue({ type: 'mfa_required' });
       mockFetchMfaFactors.mockRejectedValue(new Error('Failed'));
 
-      const result = renderScreen();
-      await waitFor(() => expect(result.getByPlaceholderText('email@example.com')).toBeTruthy());
+      const result = renderForm();
 
       fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
       fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');

@@ -626,7 +626,8 @@ describe('storage', () => {
       await saveServerConfig(configB);
       const result = await getActiveServerConfig();
 
-      expect(result).toEqual(configB);
+      // configA remains active because auto-activate only applies to the first server
+      expect(result).toEqual(configA);
     });
 
     test('setActiveServerConfig invalidates cache', async () => {

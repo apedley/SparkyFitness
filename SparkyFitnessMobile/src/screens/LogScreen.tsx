@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import BottomSheetPicker from '../components/BottomSheetPicker';
+import ScreenHeader from '../components/ScreenHeader';
 import {
   getLogs,
   clearLogs,
@@ -21,6 +22,7 @@ import {
 import type { LogEntry, LogSummary, LogFilter } from '../services/LogService';
 
 const LogScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -150,6 +152,7 @@ const LogScreen: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background">
+      <ScreenHeader title="Logs" onBack={() => navigation.goBack()} />
       <View className="p-4 pb-0 z-100">
         {/* Today's Summary */}
         <View className="bg-surface rounded-xl p-4 py-2.5 mb-2.5 shadow-sm">

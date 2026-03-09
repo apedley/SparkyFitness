@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Alert, ScrollView, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import ScreenHeader from '../../components/ScreenHeader';
 import { loadBackgroundSyncEnabled, saveBackgroundSyncEnabled } from '../../services/storage';
 import { addLog } from '../../services/LogService';
 import { initHealthConnect, requestHealthPermissions, saveHealthPreference, loadHealthPreference, enableBackgroundDeliveryForMetric, disableBackgroundDeliveryForMetric, setupBackgroundDeliveryForEnabledMetrics, disableAllBackgroundDelivery, cleanupAllSubscriptions, refreshSubscriptions, startObservers, stopObservers } from '../../services/healthConnectService';
@@ -11,6 +13,7 @@ import SyncFrequency from '../../components/SyncFrequency';
 import type { HealthMetricStates } from '../../types/healthRecords';
 
 const HealthDataSettingsScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [healthMetricStates, setHealthMetricStates] = useState<HealthMetricStates>(
     HEALTH_METRICS.reduce((acc, metric) => ({ ...acc, [metric.stateKey]: false }), {} as HealthMetricStates)
   );
@@ -146,9 +149,11 @@ const HealthDataSettingsScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ paddingBottom: 40 }}>
-      <View className="p-4">
-        <SyncFrequency
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Health Sync" onBack={() => navigation.goBack()} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="p-4">
+          <SyncFrequency
           isEnabled={isBackgroundSyncEnabled}
           onToggle={async (newValue) => {
             if (newValue && Platform.OS === 'android') {
@@ -195,8 +200,9 @@ const HealthDataSettingsScreen: React.FC = () => {
           isAllMetricsEnabled={isAllMetricsEnabled}
           handleToggleAllMetrics={handleToggleAllMetrics}
         />
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 

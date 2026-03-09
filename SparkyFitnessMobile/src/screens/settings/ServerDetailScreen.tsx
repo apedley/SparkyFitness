@@ -1,5 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { Text, TouchableOpacity, ScrollView, Alert, Switch, Linking } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Switch,
+  Linking,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCSSVariable } from 'uniwind';
 import * as WebBrowser from 'expo-web-browser';
@@ -21,6 +28,7 @@ import { useServerConnection } from '../../hooks';
 import SettingsGroup from '../../components/settings/SettingsGroup';
 import SettingsRow from '../../components/settings/SettingsRow';
 import ProxyHeadersModal from '../../components/ProxyHeadersModal';
+import ScreenHeader from '../../components/ScreenHeader';
 
 type ServerDetailScreenProps = CompositeScreenProps<
   StackScreenProps<SettingsStackParamList, 'ServerDetail'>,
@@ -35,7 +43,7 @@ function getAuthStatusText(config: ServerConfig): string {
     return config.email ? `Signed in as ${config.email}` : 'Signed in';
   }
   if (config.authType === 'apiKey' && config.apiKey) {
-    return 'API key';
+    return 'API key configured';
   }
   return 'Not configured';
 }
@@ -141,61 +149,67 @@ const ServerDetailScreen: React.FC<ServerDetailScreenProps> = ({ route, navigati
   const authStatus = getAuthStatusText(config);
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16, paddingBottom: 40 }}
-    >
-      <SettingsGroup title="Server URL">
-        <SettingsRow label={config.url} />
-      </SettingsGroup>
+    <>
+      <ScreenHeader title="Server" onBack={() => navigation.goBack()} />
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16, paddingBottom: 100 }}
+      >
+        <SettingsGroup title="Server URL">
+          <SettingsRow label={config.url} />
+        </SettingsGroup>
 
-      <SettingsGroup title="Connection">
-        <SettingsRow
-          label="Authentication"
-          subtitle={authStatus}
-          onPress={() => navigation.navigate('AuthenticationSettings', { configId })}
-        />
-        <SettingsRow
-          label="Use This Server"
-          trailing={
-            <Switch
-              value={isActive}
-              onValueChange={handleToggleActive}
-              trackColor={{ true: accentPrimary }}
-            />
-          }
-        />
-        <SettingsRow
-          label="Open Web Dashboard"
-          onPress={handleOpenWebDashboard}
-        />
-      </SettingsGroup>
+        <SettingsGroup>
+          <SettingsRow
+            label="Authentication"
+            subtitle={authStatus}
+            onPress={() => navigation.navigate('Authentication', { configId })}
+          />
+        </SettingsGroup>
 
-      <SettingsGroup title="Advanced">
-        <SettingsRow
-          label={`Proxy Headers${config.proxyHeaders?.length ? ` (${config.proxyHeaders.length})` : ''}`}
-          onPress={() => setShowProxyHeaders(true)}
+        <SettingsGroup title="Connection">
+          <SettingsRow
+            label="Use This Server"
+            trailing={
+              <Switch
+                value={isActive}
+                onValueChange={handleToggleActive}
+                trackColor={{ true: accentPrimary }}
+              />
+            }
+          />
+          <SettingsRow
+            label="Open Web Dashboard"
+            onPress={handleOpenWebDashboard}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="Advanced">
+          <SettingsRow
+            label={`Proxy Headers${config.proxyHeaders?.length ? ` (${config.proxyHeaders.length})` : ''}`}
+            onPress={() => setShowProxyHeaders(true)}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup>
+          <TouchableOpacity
+            className="flex-row items-center justify-center px-4 py-3"
+            onPress={handleDelete}
+            accessibilityLabel="Delete server"
+            accessibilityRole="button"
+          >
+            <Text className="text-base text-accent-primary">Delete Server</Text>
+          </TouchableOpacity>
+        </SettingsGroup>
+
+        <ProxyHeadersModal
+          visible={showProxyHeaders}
+          onClose={() => setShowProxyHeaders(false)}
+          headers={config.proxyHeaders ?? []}
+          onSave={handleProxyHeadersSave}
         />
-      </SettingsGroup>
-
-      <SettingsGroup>
-        <TouchableOpacity
-          className="flex-row items-center justify-center px-4 py-3"
-          onPress={handleDelete}
-          accessibilityLabel="Delete server"
-          accessibilityRole="button"
-        >
-          <Text className="text-base text-accent-primary">Delete Server</Text>
-        </TouchableOpacity>
-      </SettingsGroup>
-
-      <ProxyHeadersModal
-        visible={showProxyHeaders}
-        onClose={() => setShowProxyHeaders(false)}
-        headers={config.proxyHeaders ?? []}
-        onSave={handleProxyHeadersSave}
-      />
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 };
 
