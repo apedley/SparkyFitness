@@ -3,7 +3,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Constants from 'expo-constants';
 import SettingsIndexScreen from './SettingsIndexScreen';
 import ServerSettingsScreen from './ServerSettingsScreen';
-import ServerEditScreen from './ServerEditScreen';
+import AddServerScreen from './AddServerScreen';
+import ServerDetailScreen from './ServerDetailScreen';
+import AuthenticationSettingsScreen from './AuthenticationSettingsScreen';
+import SignInScreen from './SignInScreen';
+import ApiKeyScreen from './ApiKeyScreen';
 import HealthDataSettingsScreen from './HealthDataSettingsScreen';
 import AppearanceSettingsScreen from './AppearanceSettingsScreen';
 import AboutScreen from './AboutScreen';
@@ -27,9 +31,29 @@ const SettingsNavigator: React.FC = () => {
         options={{ title: 'Server', headerBackTitle: 'Settings' }}
       />
       <Stack.Screen
-        name="ServerEditSettings"
-        component={ServerEditScreen}
+        name="AddServer"
+        component={AddServerScreen}
+        options={{ title: 'Add Server', headerBackTitle: 'Server' }}
+      />
+      <Stack.Screen
+        name="ServerDetail"
+        component={ServerDetailScreen}
         options={{ title: 'Server', headerBackTitle: 'Server' }}
+      />
+      <Stack.Screen
+        name="AuthenticationSettings"
+        component={AuthenticationSettingsScreen}
+        options={{ title: 'Authentication', headerBackTitle: 'Server' }}
+      />
+      <Stack.Screen
+        name="SignInSettings"
+        component={SignInScreen}
+        options={{ title: 'Sign In', headerBackTitle: 'Authentication' }}
+      />
+      <Stack.Screen
+        name="ApiKeySettings"
+        component={ApiKeyScreen}
+        options={{ title: 'API Key', headerBackTitle: 'Authentication' }}
       />
       <Stack.Screen
         name="HealthDataSettings"

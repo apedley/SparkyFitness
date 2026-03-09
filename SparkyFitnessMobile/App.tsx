@@ -1,9 +1,10 @@
 import './global.css'
 import React, { useEffect, useMemo, useState } from 'react';
-import { StatusBar, Platform, Alert, type ImageSourcePropType } from 'react-native';
+import { StatusBar, Platform, type ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   NavigationContainer,
+  createNavigationContainerRef,
   type Theme,
 } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,7 +13,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useUniwind, useCSSVariable } from 'uniwind';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { queryClient, serverConnectionQueryKey } from './src/hooks';
+import { queryClient } from './src/hooks';
 
 import { createStackNavigator, type StackNavigationProp } from '@react-navigation/stack';
 import SyncScreen from './src/screens/SyncScreen';
@@ -24,11 +25,8 @@ import FoodEntryAddScreen from './src/screens/FoodEntryAddScreen';
 import FoodEntryViewScreen from './src/screens/FoodEntryViewScreen';
 import FoodFormScreen from './src/screens/FoodFormScreen';
 import FoodScanScreen from './src/screens/FoodScanScreen';
-import LoginModal from './src/components/LoginModal';
-import ServerConfigModal from './src/components/ServerConfigModal';
 import { useAuth } from './src/hooks/useAuth';
-import { saveServerConfig, getActiveServerConfig, loadBackgroundSyncEnabled } from './src/services/storage';
-import { notifyNoConfigs } from './src/services/api/authService';
+import { loadBackgroundSyncEnabled } from './src/services/storage';
 import { configureBackgroundSync, performBackgroundSync } from './src/services/backgroundSyncService';
 import { startObservers, stopObservers } from './src/services/healthConnectService';
 import { initializeTheme } from './src/services/themeService';
@@ -40,6 +38,8 @@ import type { RootStackParamList, TabParamList } from './src/types/navigation';
 const Tab = createNativeBottomTabNavigator<TabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 type TabIcons = {
   sync: ImageSourcePropType;
   dashboard: ImageSourcePropType;
@@ -50,11 +50,7 @@ type TabIcons = {
 
 function AppContent() {
   const { theme } = useUniwind();
-  const { showLoginModal, expiredConfigId, dismissLoginModal, handleLoginSuccess } = useAuth();
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyUrl, setApiKeyUrl] = useState('');
-  const [apiKeyValue, setApiKeyValue] = useState('');
-  const [apiKeyProxyHeaders, setApiKeyProxyHeaders] = useState<import('./src/services/storage').ProxyHeader[]>([]);
+  useAuth(navigationRef);
 
   const [primary, chrome, chromeBorder, bgPrimary, textPrimary, tabActive, tabInactive] = useCSSVariable([
     '--color-accent-primary',
@@ -153,7 +149,7 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <SafeAreaProvider>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -271,60 +267,6 @@ function AppContent() {
             }}
           />
         </Stack.Navigator>
-        <LoginModal
-          visible={showLoginModal}
-          defaultConfigId={expiredConfigId}
-          onLoginSuccess={() => {
-            handleLoginSuccess();
-            queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });
-          }}
-          onUseApiKey={(serverUrl, proxyHeaders) => {
-            dismissLoginModal();
-            setApiKeyUrl(serverUrl);
-            setApiKeyValue('');
-            setApiKeyProxyHeaders(proxyHeaders);
-            setShowApiKeyModal(true);
-          }}
-          onDismiss={dismissLoginModal}
-        />
-        <ServerConfigModal
-          visible={showApiKeyModal}
-          url={apiKeyUrl}
-          setUrl={setApiKeyUrl}
-          apiKey={apiKeyValue}
-          setApiKey={setApiKeyValue}
-          proxyHeaders={apiKeyProxyHeaders}
-          setProxyHeaders={setApiKeyProxyHeaders}
-          isEditing={false}
-          onSave={async () => {
-            const url = apiKeyUrl.trim().replace(/\/+$/, '');
-            if (!url || !apiKeyValue.trim()) {
-              Alert.alert('Missing fields', 'Please enter both a server URL and API key.');
-              return;
-            }
-            if (__DEV__ === false && !url.startsWith('https://')) {
-              Alert.alert('Insecure URL', 'Please use an HTTPS URL for production.');
-              return;
-            }
-            await saveServerConfig({
-              id: Date.now().toString(),
-              url,
-              apiKey: apiKeyValue.trim(),
-              authType: 'apiKey',
-              proxyHeaders: apiKeyProxyHeaders,
-            });
-            setShowApiKeyModal(false);
-            dismissLoginModal();
-            queryClient.invalidateQueries({ queryKey: serverConnectionQueryKey });
-          }}
-          onClose={async () => {
-            setShowApiKeyModal(false);
-            const config = await getActiveServerConfig();
-            if (!config) {
-              notifyNoConfigs();
-            }
-          }}
-        />
       </SafeAreaProvider>
     </NavigationContainer>
   );

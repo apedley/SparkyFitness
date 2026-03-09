@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useAuth } from '../../src/hooks/useAuth';
-import { setOnSessionExpired, setOnNoConfigs } from '../../src/services/api/authService';
+import { setOnSessionExpired, setOnNoConfigs, suppressSessionExpired } from '../../src/services/api/authService';
 import { getActiveServerConfig, clearServerConfigCache } from '../../src/services/storage';
 
 jest.mock('../../src/services/api/authService', () => ({
@@ -18,6 +18,30 @@ const mockSetOnSessionExpired = setOnSessionExpired as jest.MockedFunction<typeo
 const mockSetOnNoConfigs = setOnNoConfigs as jest.MockedFunction<typeof setOnNoConfigs>;
 const mockGetActiveServerConfig = getActiveServerConfig as jest.MockedFunction<typeof getActiveServerConfig>;
 const mockClearServerConfigCache = clearServerConfigCache as jest.MockedFunction<typeof clearServerConfigCache>;
+const mockSuppressSessionExpired = suppressSessionExpired as jest.MockedFunction<typeof suppressSessionExpired>;
+
+function createMockNavigationRef() {
+  return {
+    isReady: jest.fn().mockReturnValue(true),
+    navigate: jest.fn(),
+    current: null,
+    getRootState: jest.fn(),
+    dispatch: jest.fn(),
+    canGoBack: jest.fn(),
+    goBack: jest.fn(),
+    resetRoot: jest.fn(),
+    getParent: jest.fn(),
+    getCurrentRoute: jest.fn(),
+    getCurrentOptions: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    reset: jest.fn(),
+    setParams: jest.fn(),
+    isFocused: jest.fn(),
+    getId: jest.fn(),
+    getState: jest.fn(),
+  } as any;
+}
 
 describe('useAuth', () => {
   beforeEach(() => {
@@ -25,33 +49,38 @@ describe('useAuth', () => {
     mockGetActiveServerConfig.mockResolvedValue(null);
   });
 
-  test('shows login modal when no active config on mount', async () => {
+  test('navigates to ServerSettings when no active config on mount', async () => {
     mockGetActiveServerConfig.mockResolvedValue(null);
+    const navRef = createMockNavigationRef();
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
 
-    // Wait for the async check to complete
     await act(async () => {});
 
-    expect(result.current.showLoginModal).toBe(true);
+    expect(navRef.navigate).toHaveBeenCalledWith('Tabs', {
+      screen: 'Settings',
+      params: { screen: 'ServerSettings' },
+    });
   });
 
-  test('does not show login modal when config exists', async () => {
+  test('does not navigate when config exists', async () => {
     mockGetActiveServerConfig.mockResolvedValue({
       id: '1',
       url: 'https://example.com',
       apiKey: 'key',
     });
+    const navRef = createMockNavigationRef();
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
 
     await act(async () => {});
 
-    expect(result.current.showLoginModal).toBe(false);
+    expect(navRef.navigate).not.toHaveBeenCalled();
   });
 
   test('registers callbacks on mount', async () => {
-    renderHook(() => useAuth());
+    const navRef = createMockNavigationRef();
+    renderHook(() => useAuth(navRef));
 
     await act(async () => {});
 
@@ -61,14 +90,15 @@ describe('useAuth', () => {
     expect(mockSetOnNoConfigs).toHaveBeenCalledWith(expect.any(Function));
   });
 
-  test('session expired callback shows modal with config ID', async () => {
+  test('session expired callback navigates to SignInSettings', async () => {
     mockGetActiveServerConfig.mockResolvedValue({
       id: '1',
       url: 'https://example.com',
       apiKey: 'key',
     });
+    const navRef = createMockNavigationRef();
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
     await act(async () => {});
 
     const sessionExpiredCb = mockSetOnSessionExpired.mock.calls[0][0];
@@ -76,21 +106,26 @@ describe('useAuth', () => {
       sessionExpiredCb('config-42');
     });
 
-    expect(result.current.showLoginModal).toBe(true);
-    expect(result.current.expiredConfigId).toBe('config-42');
+    expect(navRef.navigate).toHaveBeenCalledWith('Tabs', {
+      screen: 'Settings',
+      params: {
+        screen: 'SignInSettings',
+        params: { configId: 'config-42' },
+      },
+    });
   });
 
-  test('session expired clears config cache on first trigger', async () => {
+  test('session expired clears config cache and suppresses session expired', async () => {
     mockGetActiveServerConfig.mockResolvedValue({
       id: '1',
       url: 'https://example.com',
       apiKey: 'key',
     });
+    const navRef = createMockNavigationRef();
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
     await act(async () => {});
 
-    expect(result.current.showLoginModal).toBe(false);
     mockClearServerConfigCache.mockClear();
 
     const sessionExpiredCb = mockSetOnSessionExpired.mock.calls[0][0];
@@ -99,73 +134,42 @@ describe('useAuth', () => {
     });
 
     expect(mockClearServerConfigCache).toHaveBeenCalledTimes(1);
+    expect(mockSuppressSessionExpired).toHaveBeenCalledWith(true);
   });
 
-  test('no-configs callback shows modal', async () => {
+  test('no-configs callback navigates to ServerSettings', async () => {
     mockGetActiveServerConfig.mockResolvedValue({
       id: '1',
       url: 'https://example.com',
       apiKey: 'key',
     });
+    const navRef = createMockNavigationRef();
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
     await act(async () => {});
-    expect(result.current.showLoginModal).toBe(false);
+
+    navRef.navigate.mockClear();
 
     const noConfigsCb = mockSetOnNoConfigs.mock.calls[0][0];
     act(() => {
       noConfigsCb();
     });
 
-    expect(result.current.showLoginModal).toBe(true);
+    expect(navRef.navigate).toHaveBeenCalledWith('Tabs', {
+      screen: 'Settings',
+      params: { screen: 'ServerSettings' },
+    });
   });
 
-  test('dismissLoginModal resets state', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
+  test('does not navigate when navigationRef is not ready', async () => {
+    mockGetActiveServerConfig.mockResolvedValue(null);
+    const navRef = createMockNavigationRef();
+    navRef.isReady.mockReturnValue(false);
 
-    const { result } = renderHook(() => useAuth());
+    renderHook(() => useAuth(navRef));
+
     await act(async () => {});
 
-    const sessionExpiredCb = mockSetOnSessionExpired.mock.calls[0][0];
-    act(() => {
-      sessionExpiredCb('config-42');
-    });
-    expect(result.current.showLoginModal).toBe(true);
-    expect(result.current.expiredConfigId).toBe('config-42');
-
-    act(() => {
-      result.current.dismissLoginModal();
-    });
-
-    expect(result.current.showLoginModal).toBe(false);
-    expect(result.current.expiredConfigId).toBeNull();
-  });
-
-  test('handleLoginSuccess resets state', async () => {
-    mockGetActiveServerConfig.mockResolvedValue({
-      id: '1',
-      url: 'https://example.com',
-      apiKey: 'key',
-    });
-
-    const { result } = renderHook(() => useAuth());
-    await act(async () => {});
-
-    const sessionExpiredCb = mockSetOnSessionExpired.mock.calls[0][0];
-    act(() => {
-      sessionExpiredCb('config-42');
-    });
-    expect(result.current.showLoginModal).toBe(true);
-
-    act(() => {
-      result.current.handleLoginSuccess();
-    });
-
-    expect(result.current.showLoginModal).toBe(false);
-    expect(result.current.expiredConfigId).toBeNull();
+    expect(navRef.navigate).not.toHaveBeenCalled();
   });
 });

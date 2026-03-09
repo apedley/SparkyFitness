@@ -3,13 +3,14 @@ import type { StackScreenProps } from '@react-navigation/stack';
 import type { FoodInfoItem } from './foodInfo';
 import type { FoodEntry } from './foodEntries';
 import type { FoodFormData } from '../components/FoodForm';
+import type { SettingsStackParamList } from './settingsNavigation';
 
 export type TabParamList = {
   Dashboard: undefined;
   Diary: { selectedDate?: string } | undefined;
   Add: undefined;
   Sync: undefined;
-  Settings: undefined;
+  Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
 };
 
 export type RootStackParamList = {

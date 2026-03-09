@@ -1,7 +1,11 @@
 export type SettingsStackParamList = {
   SettingsIndex: undefined;
   ServerSettings: undefined;
-  ServerEditSettings: { configId: string; prefillUrl?: string; prefillProxyHeaders?: import('../services/storage').ProxyHeader[] };
+  AddServer: undefined;
+  ServerDetail: { configId: string };
+  AuthenticationSettings: { configId: string };
+  SignInSettings: { configId: string };
+  ApiKeySettings: { configId: string };
   HealthDataSettings: undefined;
   AppearanceSettings: undefined;
   LogsSettings: undefined;

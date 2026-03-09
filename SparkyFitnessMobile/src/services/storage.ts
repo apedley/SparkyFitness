@@ -14,6 +14,7 @@ export interface ServerConfig {
   apiKey: string;
   authType?: 'apiKey' | 'session';
   sessionToken?: string;
+  email?: string;
   proxyHeaders?: ProxyHeader[];
 }
 
@@ -23,6 +24,7 @@ interface StoredServerConfig {
   url: string;
   apiKey?: string; // Present only in legacy data before migration
   authType?: 'apiKey' | 'session';
+  email?: string;
 }
 
 export type TimeRange = 'today' | '24h' | '3d' | '7d' | '30d' | '90d' | '180d' | '365d';
@@ -70,10 +72,14 @@ export const saveServerConfig = async (config: ServerConfig): Promise<void> => {
     const existingAuthType = index > -1 ? stored[index].authType : undefined;
     const authType = config.authType ?? existingAuthType;
 
+    const existingEmail = index > -1 ? stored[index].email : undefined;
+    const email = config.email ?? existingEmail;
+
     const stripped: StoredServerConfig = {
       id: config.id,
       url: config.url,
       ...(authType ? { authType } : {}),
+      ...(email ? { email } : {}),
     };
 
     if (index > -1) {
@@ -161,6 +167,7 @@ export const getAllServerConfigs = async (): Promise<ServerConfig[]> => {
           id: entry.id,
           url: entry.url,
           ...(entry.authType ? { authType: entry.authType } : {}),
+          ...(entry.email ? { email: entry.email } : {}),
           ...(sessionToken ? { sessionToken } : {}),
           ...(proxyHeaders?.length ? { proxyHeaders } : {}),
         };
@@ -185,10 +192,11 @@ export const getAllServerConfigs = async (): Promise<ServerConfig[]> => {
     // Re-read to avoid overwriting configs saved by concurrent saveServerConfig calls.
     if (migrated) {
       const current = await getRawStoredConfigs();
-      const cleaned = current.map(({ id, url, authType }) => ({
+      const cleaned = current.map(({ id, url, authType, email }) => ({
         id,
         url,
         ...(authType ? { authType } : {}),
+        ...(email ? { email } : {}),
       }));
       await AsyncStorage.setItem(SERVER_CONFIGS_KEY, JSON.stringify(cleaned));
     }

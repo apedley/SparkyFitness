@@ -1,23 +1,33 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 import { useCSSVariable } from 'uniwind';
 import type { ServerConfig as ServerConfigType } from '../services/storage';
-import Icon from './Icon';
 import SettingsGroup from './settings/SettingsGroup';
 import SettingsRow from './settings/SettingsRow';
 
 interface ServerConfigProps {
   serverConfigs: ServerConfigType[];
   activeConfigId: string | null;
-  onActivateServer: (id: string) => void;
   onEditServer: (configId: string) => void;
   onAddServer: () => void;
+}
+
+function getStatusText(config: ServerConfigType, isActive: boolean): string {
+  const parts: string[] = [];
+  if (isActive) parts.push('Active');
+  if (config.authType === 'session' && config.sessionToken) {
+    parts.push(config.email ? `Signed in as ${config.email}` : 'Signed in');
+  } else if (config.authType === 'apiKey' && config.apiKey) {
+    parts.push('API key');
+  } else {
+    parts.push('Not configured');
+  }
+  return parts.join(' \u00B7 ');
 }
 
 const ServerConfig: React.FC<ServerConfigProps> = ({
   serverConfigs,
   activeConfigId,
-  onActivateServer,
   onEditServer,
   onAddServer,
 }) => {
@@ -29,33 +39,15 @@ const ServerConfig: React.FC<ServerConfigProps> = ({
     <SettingsGroup>
       {serverConfigs.map((item) => {
         const isActive = item.id === activeConfigId;
-
-        const leading = (
-          <View className="w-7 items-center mr-1">
-            {isActive && (
-              <Icon name="checkmark" size={18} color={accentPrimary} weight="semibold" />
-            )}
-          </View>
-        );
-
-        const trailing = (
-          <TouchableOpacity
-            onPress={() => onEditServer(item.id)}
-            accessibilityLabel={`Edit ${item.url}`}
-            accessibilityRole="button"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Icon name="info-circle" size={22} color={accentPrimary} />
-          </TouchableOpacity>
-        );
+        const status = getStatusText(item, isActive);
 
         return (
           <SettingsRow
             key={item.id}
             label={item.url}
-            onPress={() => onActivateServer(item.id)}
-            leading={leading}
-            trailing={trailing}
+            subtitle={status}
+            subtitleBelow
+            onPress={() => onEditServer(item.id)}
           />
         );
       })}
