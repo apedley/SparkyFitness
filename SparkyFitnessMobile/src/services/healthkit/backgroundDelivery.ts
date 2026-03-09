@@ -75,6 +75,9 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 // Incremented each time rebuildSubscriptions is called so that stale async
 // rebuilds discard their results instead of registering orphaned observers.
 let rebuildGeneration = 0;
+// HealthKit observer queries fire immediately on subscription. This flag
+// suppresses those initial firings so we don't trigger a sync every app open.
+let suppressingInitialCallbacks = false;
 // Same pattern for background delivery registration — bumped by
 // startObservers/stopObservers so in-flight enableBackgroundDelivery
 // calls are discarded after teardown.
@@ -207,12 +210,17 @@ function rebuildSubscriptions(): void {
   }
 
   const debouncedCallback = () => {
+    if (suppressingInitialCallbacks) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
       callback();
     }, 5000);
   };
+
+  // Suppress the initial observer firings that HealthKit sends immediately
+  // on subscription. Lift the suppression after a short grace period.
+  suppressingInitialCallbacks = true;
 
   Promise.all(enabledChecks)
     .then(() => {
@@ -236,6 +244,14 @@ function rebuildSubscriptions(): void {
           addLog(`[BackgroundDelivery] Failed to subscribe to ${id}: ${message}`, 'ERROR');
         }
       }
+
+      // Allow observer callbacks after initial firings have settled
+      setTimeout(() => {
+        if (generation === rebuildGeneration) {
+          suppressingInitialCallbacks = false;
+          addLog('[BackgroundDelivery] Initial observer suppression lifted', 'DEBUG');
+        }
+      }, 10_000);
     })
     .catch((error) => {
       const message = error instanceof Error ? error.message : String(error);

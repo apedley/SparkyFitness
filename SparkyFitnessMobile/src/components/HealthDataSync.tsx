@@ -41,7 +41,6 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
   const [learnMoreExpanded, setLearnMoreExpanded] = useState(false);
 
   const isIOS = Platform.OS === 'ios';
-  const platformSubtitle = isIOS ? 'Apple Health' : 'Health Connect';
   const platformSummary = isIOS
     ? 'Reads selected data from Apple Health and syncs it to your self-hosted server.'
     : 'Reads selected data from Health Connect and syncs it to your self-hosted server.';
@@ -106,7 +105,6 @@ const HealthDataSync: React.FC<HealthDataSyncProps> = ({
     <View className="bg-surface rounded-xl p-4 mb-4 shadow-sm">
       <Text className="text-lg font-bold mb-3 text-text-primary">Health Data to Sync</Text>
       <View className="mb-3">
-        <Text className="text-sm font-semibold text-text-secondary mb-1">{platformSubtitle}</Text>
         <Text className="text-sm text-text-secondary">{platformSummary}</Text>
         <Text className="text-sm text-text-secondary mt-1">
           <Text className="font-semibold">Not medical advice.</Text> Consult a healthcare professional for medical advice, diagnosis, or treatment.

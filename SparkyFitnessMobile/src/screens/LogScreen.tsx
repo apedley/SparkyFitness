@@ -19,11 +19,8 @@ import {
   LOG_FILTER_OPTIONS,
 } from '../services/LogService';
 import type { LogEntry, LogSummary, LogFilter } from '../services/LogService';
-import type { RootStackScreenProps } from '../types/navigation';
 
-type LogScreenProps = RootStackScreenProps<'Logs'>;
-
-const LogScreen: React.FC<LogScreenProps> = () => {
+const LogScreen: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
