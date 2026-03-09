@@ -122,9 +122,9 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
           </Text>
           <TouchableOpacity
             className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => navigation.navigate('Settings', { screen: 'ServerSettings' })}
           >
-            <Text className="text-white font-semibold">Go to Settings</Text>
+            <Text className="text-white font-semibold">Go to Server Settings</Text>
           </TouchableOpacity>
         </View>
       );

@@ -253,6 +253,15 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
           <Text className="text-text-secondary text-base mt-4 text-center">
             Connect to a server to view foods
           </Text>
+          <TouchableOpacity
+            className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
+            onPress={() => {
+              navigation.goBack();
+              navigation.navigate('Tabs', { screen: 'Settings', params: { screen: 'ServerSettings' } });
+            }}
+          >
+            <Text className="text-white font-semibold">Go to Server Settings</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -386,6 +395,15 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
           <Text className="text-text-secondary text-base mt-4 text-center">
             Connect to a server to view meals
           </Text>
+          <TouchableOpacity
+            className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
+            onPress={() => {
+              navigation.goBack();
+              navigation.navigate('Tabs', { screen: 'Settings', params: { screen: 'ServerSettings' } });
+            }}
+          >
+            <Text className="text-white font-semibold">Go to Server Settings</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -547,6 +565,15 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
           <Text className="text-text-secondary text-base mt-4 text-center">
             Connect to a server to search online foods
           </Text>
+          <TouchableOpacity
+            className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
+            onPress={() => {
+              navigation.goBack();
+              navigation.navigate('Tabs', { screen: 'Settings', params: { screen: 'ServerSettings' } });
+            }}
+          >
+            <Text className="text-white font-semibold">Go to Server Settings</Text>
+          </TouchableOpacity>
         </View>
       );
     }

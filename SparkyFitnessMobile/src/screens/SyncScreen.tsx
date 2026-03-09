@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, ScrollView, Platform } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetPicker from '../components/BottomSheetPicker';
 import ConnectionStatus from '../components/ConnectionStatus';
+import Icon from '../components/Icon';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   initHealthConnect,
@@ -42,7 +43,7 @@ const timeRangeOptions: TimeRangeOption[] = [
   { label: "Last Year", value: "365d" },
 ];
 
-const SyncScreen: React.FC<SyncScreenProps> = () => {
+const SyncScreen: React.FC<SyncScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [healthMetricStates, setHealthMetricStates] = useState<HealthMetricStates>({});
   const [healthData, setHealthData] = useState<HealthDataDisplayState>({});
@@ -535,52 +536,72 @@ const SyncScreen: React.FC<SyncScreenProps> = () => {
             <Text className="text-text-secondary text-xs mt-2">Large time ranges may take a while.</Text>
           )}
         </View>
-        {/* Sync Now Button */}
-        <TouchableOpacity
-          className="bg-accent-primary rounded-xl py-3.5 px-4 flex-row items-center mb-2"
-          onPress={handleSync}
-          disabled={syncMutation.isPending || !isHealthConnectInitialized}
-        >
-          <Image
-            source={require('../../assets/icons/sync_now_alt.png')}
-            className="w-6 h-6 mr-3"
-            tintColor="#fff"
-          />
-          <View className="flex-1">
-            <Text className="text-white text-lg font-semibold">{syncMutation.isPending ? "Syncing..." : "Sync Now"}</Text>
-            <Text className="text-white/80 text-sm mt-0.5">Send your health data to your server</Text>
+        {!isConnected ? (
+          <View className="items-center justify-center py-8">
+            <Icon name="cloud-offline" size={48} color="#9CA3AF" />
+            <Text className="text-text-muted text-lg text-center mt-4">
+              No server configured
+            </Text>
+            <Text className="text-text-muted text-sm text-center mt-2">
+              Configure your server connection to sync health data.
+            </Text>
+            <TouchableOpacity
+              className="bg-accent-primary rounded-xl py-3 px-6 mt-6"
+              onPress={() => navigation.navigate('Settings', { screen: 'ServerSettings' })}
+            >
+              <Text className="text-white font-semibold">Go to Server Settings</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        ) : (
+          <>
+            {/* Sync Now Button */}
+            <TouchableOpacity
+              className="bg-accent-primary rounded-xl py-3.5 px-4 flex-row items-center mb-2"
+              onPress={handleSync}
+              disabled={syncMutation.isPending || !isHealthConnectInitialized}
+            >
+              <Image
+                source={require('../../assets/icons/sync_now_alt.png')}
+                className="w-6 h-6 mr-3"
+                tintColor="#fff"
+              />
+              <View className="flex-1">
+                <Text className="text-white text-lg font-semibold">{syncMutation.isPending ? "Syncing..." : "Sync Now"}</Text>
+                <Text className="text-white/80 text-sm mt-0.5">Send your health data to your server</Text>
+              </View>
+            </TouchableOpacity>
 
 
-        {!isHealthConnectInitialized && (
-          <Text className="text-red-500 mt-2.5 text-center">
-            {isAndroid
-              ? 'Health Connect is not available. Please make sure it is installed and enabled.'
-              : 'Health data (HealthKit) is not available. Please enable Health access in the iOS Health app.'}
-          </Text>
+            {!isHealthConnectInitialized && (
+              <Text className="text-red-500 mt-2.5 text-center">
+                {isAndroid
+                  ? 'Health Connect is not available. Please make sure it is installed and enabled.'
+                  : 'Health data (HealthKit) is not available. Please enable Health access in the iOS Health app.'}
+              </Text>
+            )}
+
+            {/* Last Synced Time - always reserve space to prevent layout shift */}
+            <View>
+              <Text className="text-text-muted text-center mb-2">
+                {lastSyncedTimeLoaded
+                  ? (lastSyncedTime
+                    ? <><Text className="font-bold">Last synced:</Text> {formatRelativeTime(new Date(lastSyncedTime))}</>
+                    : formatRelativeTime(null))
+                  : ' '}
+              </Text>
+              {Platform.OS === 'ios' && (
+                <Text className="text-text-muted text-center text-xs mb-2">
+                  <Text className="font-bold">Source:</Text> Apple Health
+                </Text>
+              )}
+              {Platform.OS === 'android' && (
+                <Text className="text-text-muted text-center text-xs mb-2">
+                  <Text className="font-bold">Source:</Text> Health Connect
+                </Text>
+              )}
+            </View>
+          </>
         )}
-
-        {/* Last Synced Time - always reserve space to prevent layout shift */}
-        <View>
-          <Text className="text-text-muted text-center mb-2">
-            {lastSyncedTimeLoaded
-              ? (lastSyncedTime
-                ? <><Text className="font-bold">Last synced:</Text> {formatRelativeTime(new Date(lastSyncedTime))}</>
-                : formatRelativeTime(null))
-              : ' '}
-          </Text>
-          {Platform.OS === 'ios' && (
-            <Text className="text-text-muted text-center text-xs mb-2">
-              <Text className="font-bold">Source:</Text> Apple Health
-            </Text>
-          )}
-          {Platform.OS === 'android' && (
-            <Text className="text-text-muted text-center text-xs mb-2">
-              <Text className="font-bold">Source:</Text> Health Connect
-            </Text>
-          )}
-        </View>
 
         {/* Health Disclaimer */}
         {Platform.OS === 'android' && (
