@@ -278,6 +278,7 @@ function AppContent() {
             name="FoodEntryAdd"
             component={FoodEntryAddScreen}
             options={{
+              presentation: 'modal',
               headerShown: false,
               gestureEnabled: true,
               gestureDirection: 'horizontal',

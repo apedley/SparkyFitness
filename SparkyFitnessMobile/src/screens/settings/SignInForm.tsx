@@ -125,7 +125,22 @@ const SignInForm: React.FC<SignInFormProps> = ({ config, onSuccess }) => {
       onSuccess();
     } catch (err) {
       if (err instanceof LoginError) {
-        setError(err.message);
+        if (err.statusCode === 429) {
+          setError('Too many attempts. Please wait a moment and try again.');
+        } else if (
+          err.message.includes('INVALID_EMAIL_OR_PASSWORD') ||
+          err.message.toLowerCase().includes('invalid email or password')
+        ) {
+          setError('Incorrect email or password.');
+        } else if (err.statusCode === 401) {
+          setError('Invalid credentials. Please check your email and password.');
+        } else if (err.statusCode === 403) {
+          setError('Access denied. Your account may be disabled.');
+        } else if (err.statusCode !== undefined && err.statusCode >= 500) {
+          setError('The server encountered an error. Please try again later.');
+        } else {
+          setError(err.message);
+        }
       } else {
         setError('Could not connect to server. Check the URL and try again.');
       }
@@ -171,7 +186,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ config, onSuccess }) => {
           setError('Your session has expired. Please sign in again.');
           setStep('credentials');
         } else {
-          setError(err.message);
+          setError('Verification failed. Please try again.');
         }
       } else {
         setError('Verification failed. Please try again.');
@@ -190,7 +205,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ config, onSuccess }) => {
       setEmailOtpSent(true);
     } catch (err) {
       if (err instanceof LoginError) {
-        setError(err.message);
+        if (err.statusCode === 429) {
+          setError('Too many attempts. Please wait a moment and try again.');
+        } else {
+          setError('Failed to send email code. Please try again.');
+        }
       } else {
         setError('Failed to send email code. Please try again.');
       }

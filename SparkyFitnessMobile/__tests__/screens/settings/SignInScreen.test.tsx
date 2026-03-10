@@ -151,8 +151,8 @@ describe('SignInForm', () => {
   });
 
   describe('login errors', () => {
-    it('displays LoginError message', async () => {
-      mockLogin.mockRejectedValue(new LoginError('Invalid credentials', 401));
+    it('displays friendly error for invalid credentials', async () => {
+      mockLogin.mockRejectedValue(new LoginError('Invalid email or password (INVALID_EMAIL_OR_PASSWORD)', 401));
 
       const result = renderForm();
 
@@ -163,7 +163,52 @@ describe('SignInForm', () => {
         pressSignInButton(result);
       });
 
-      expect(result.getByText('Invalid credentials')).toBeTruthy();
+      expect(result.getByText('Incorrect email or password.')).toBeTruthy();
+    });
+
+    it('displays friendly error for generic 401', async () => {
+      mockLogin.mockRejectedValue(new LoginError('Unauthorized', 401));
+
+      const result = renderForm();
+
+      fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
+      fireEvent.changeText(result.getByPlaceholderText('Password'), 'wrong');
+
+      await act(async () => {
+        pressSignInButton(result);
+      });
+
+      expect(result.getByText('Invalid credentials. Please check your email and password.')).toBeTruthy();
+    });
+
+    it('displays friendly error for rate limiting', async () => {
+      mockLogin.mockRejectedValue(new LoginError('Rate limited', 429));
+
+      const result = renderForm();
+
+      fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
+      fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
+
+      await act(async () => {
+        pressSignInButton(result);
+      });
+
+      expect(result.getByText('Too many attempts. Please wait a moment and try again.')).toBeTruthy();
+    });
+
+    it('displays friendly error for server errors', async () => {
+      mockLogin.mockRejectedValue(new LoginError('Internal error', 500));
+
+      const result = renderForm();
+
+      fireEvent.changeText(result.getByPlaceholderText('email@example.com'), 'a@b.com');
+      fireEvent.changeText(result.getByPlaceholderText('Password'), 'pass');
+
+      await act(async () => {
+        pressSignInButton(result);
+      });
+
+      expect(result.getByText('The server encountered an error. Please try again later.')).toBeTruthy();
     });
 
     it('displays generic error for non-LoginError exceptions', async () => {
@@ -423,7 +468,7 @@ describe('SignInForm', () => {
         fireEvent.press(result.getByText('Send Code'));
       });
 
-      expect(result.getByText('Email send failed')).toBeTruthy();
+      expect(result.getByText('Failed to send email code. Please try again.')).toBeTruthy();
     });
   });
 

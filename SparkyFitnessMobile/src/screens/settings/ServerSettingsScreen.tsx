@@ -22,7 +22,7 @@ const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = ({ navigation 
 
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader title="Server" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Server List" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="p-4 pt-2">
           <ServerConfigComponent

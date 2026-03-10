@@ -142,7 +142,7 @@ const HealthDataSettingsScreen: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader title="Health Sync" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Health Data Sync" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="p-4">
         <HealthDataSync

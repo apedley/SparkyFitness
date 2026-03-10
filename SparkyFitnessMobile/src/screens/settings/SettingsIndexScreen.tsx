@@ -102,7 +102,7 @@ const SettingsIndexScreen: React.FC<SettingsIndexScreenProps> = ({ navigation })
 
         <SettingsGroup>
           <SettingsRow
-            label="Health Sync"
+            label="Health Data Sync"
             subtitle={`${enabledMetricCount} enabled`}
             onPress={() => navigation.navigate('HealthDataSettings')}
           />

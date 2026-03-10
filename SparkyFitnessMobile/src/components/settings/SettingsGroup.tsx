@@ -16,7 +16,7 @@ const SettingsGroup: React.FC<SettingsGroupProps> = ({ title, children }) => {
           {title}
         </Text>
       )}
-      <View className="bg-surface rounded-3xl overflow-hidden">
+      <View className="bg-surface rounded-xl overflow-hidden">
         {childArray.map((child, index) => (
           <React.Fragment key={index}>
             {index > 0 && <View className="h-px bg-border-subtle mx-4" />}
