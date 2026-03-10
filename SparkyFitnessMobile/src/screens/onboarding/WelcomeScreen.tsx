@@ -124,8 +124,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
           </View>
 
           {error !== '' && (
-            <View className="mb-4 p-3 rounded-lg bg-status-danger-bg">
-              <Text className="text-sm text-status-danger-text">{error}</Text>
+            <View className="mb-4 p-3 rounded-lg bg-bg-danger">
+              <Text className="text-sm text-text-danger">{error}</Text>
             </View>
           )}
 

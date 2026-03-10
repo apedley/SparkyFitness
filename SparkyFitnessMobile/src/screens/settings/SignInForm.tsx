@@ -23,8 +23,8 @@ type SignInFormProps = {
 
 const ErrorBanner = ({ message }: { message: string }) =>
   message ? (
-    <View className="mb-4 p-3 rounded-lg bg-status-danger-bg">
-      <Text className="text-sm text-status-danger-text">{message}</Text>
+    <View className="mb-4 p-3 rounded-lg bg-bg-danger">
+      <Text className="text-sm text-text-danger">{message}</Text>
     </View>
   ) : null;
 

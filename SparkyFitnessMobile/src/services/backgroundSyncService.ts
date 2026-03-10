@@ -178,7 +178,6 @@ export const configureBackgroundSync = async (): Promise<void> => {
     const enabled = await loadBackgroundSyncEnabled();
     if (!enabled) {
       await BackgroundTask.unregisterTaskAsync(BACKGROUND_TASK_NAME).catch(() => {});
-      addLog('[Background Sync] Background sync disabled, task unregistered', 'INFO');
       return;
     }
 
