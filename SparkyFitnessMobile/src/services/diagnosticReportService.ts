@@ -52,7 +52,9 @@ export const sanitizeQueryKey = (queryKey: readonly unknown[]): readonly unknown
  * Sanitizes a log entry by redacting URLs, tokens, and API keys from message and details.
  */
 export const sanitizeLogEntry = (entry: LogEntry): LogEntry => ({
+  id: entry.id,
   timestamp: entry.timestamp,
+  source: entry.source,
   message: sanitizeString(entry.message),
   status: entry.status,
   details: entry.details.map(sanitizeString),

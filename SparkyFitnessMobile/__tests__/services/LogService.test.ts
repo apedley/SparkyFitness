@@ -37,7 +37,10 @@ describe('LogService', () => {
       expect(logs).toHaveLength(1);
       expect(logs[0].message).toBe('Test message');
       expect(logs[0].status).toBe('INFO');
+      expect(logs[0].source).toBe('App');
       expect(logs[0].details).toEqual([]);
+      expect(logs[0].id).toEqual(expect.any(String));
+      expect(logs[0].id.length).toBeGreaterThan(0);
     });
 
     test('creates log entry with all specified values', async () => {
@@ -64,28 +67,16 @@ describe('LogService', () => {
       expect(logs[2].message).toBe('First');
     });
 
-    test('addLog respects current filter threshold', async () => {
-      await setLogFilter('warnings_errors');
+    test('stores all entries regardless of current filter', async () => {
+      await setLogFilter('errors_only');
 
       await addLog('Debug message', 'DEBUG');
       await addLog('Info message', 'INFO');
-
-      // Use 'all' filter to see all logs that were actually stored
-      const logs = await getLogs(0, 30, 'all');
-
-      expect(logs).toHaveLength(0);
-    });
-
-    test('addLog stores logs at or below current filter threshold', async () => {
-      await setLogFilter('warnings_errors');
-
       await addLog('Error message', 'ERROR');
-      await addLog('Warning message', 'WARNING');
 
+      // All entries should be stored, regardless of filter
       const logs = await getLogs(0, 30, 'all');
-
-      expect(logs).toHaveLength(2);
-      expect(logs.map(l => l.status)).toEqual(['WARNING', 'ERROR']);
+      expect(logs).toHaveLength(3);
     });
 
     test('log entries have correct structure', async () => {
@@ -96,9 +87,64 @@ describe('LogService', () => {
       expect(logs[0]).toMatchObject({
         message: 'Test',
         status: 'SUCCESS',
+        source: 'App',
         details: ['detail'],
       });
+      expect(logs[0].id).toEqual(expect.any(String));
       expect(logs[0].timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    });
+
+    test('each entry gets a unique id', async () => {
+      await addLog('First');
+      await addLog('Second');
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].id).not.toBe(logs[1].id);
+    });
+  });
+
+  describe('source parsing from [Tag] prefix', () => {
+    test('extracts source from [Tag] prefix and strips it from message', async () => {
+      await addLog('[Background Sync] Starting sync');
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].source).toBe('Background Sync');
+      expect(logs[0].message).toBe('Starting sync');
+    });
+
+    test('defaults source to App when no tag present', async () => {
+      await addLog('Active server configuration changed.');
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].source).toBe('App');
+      expect(logs[0].message).toBe('Active server configuration changed.');
+    });
+
+    test('handles various tag formats', async () => {
+      await addLog('[HealthKit] Synced 42 records');
+      await addLog('[Auth Service] Session expired');
+      await addLog('[API] Request failed');
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].source).toBe('API');
+      expect(logs[0].message).toBe('Request failed');
+      expect(logs[1].source).toBe('Auth Service');
+      expect(logs[1].message).toBe('Session expired');
+      expect(logs[2].source).toBe('HealthKit');
+      expect(logs[2].message).toBe('Synced 42 records');
+    });
+
+    test('does not parse brackets in the middle of a message', async () => {
+      await addLog('Something [not a tag] happened');
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].source).toBe('App');
+      expect(logs[0].message).toBe('Something [not a tag] happened');
     });
   });
 
@@ -110,20 +156,16 @@ describe('LogService', () => {
     });
 
     test('when filter is null, uses stored filter', async () => {
-      // Default filter is 'no_debug', so debug logs should be filtered out
       await setLogFilter('all');
       await addLog('Error log', 'ERROR');
       await addLog('Info log', 'INFO');
 
-      // First, verify logs were stored by checking with 'all' filter
       const allLogs = await getLogs(0, 30, 'all');
       expect(allLogs).toHaveLength(2);
 
-      // Now check that default filtering (null = stored filter = 'all') works
       const filteredLogs = await getLogs(0, 30, null);
       expect(filteredLogs).toHaveLength(2);
 
-      // Change filter to 'errors_only' and verify filtering
       await setLogFilter('errors_only');
       const errorOnlyLogs = await getLogs(0, 30, null);
       expect(errorOnlyLogs).toHaveLength(1);
@@ -131,16 +173,13 @@ describe('LogService', () => {
     });
 
     test('respects filter parameter over stored filter', async () => {
-      // First store logs with permissive filter so they all get saved
-      await setLogFilter('all');
       await addLog('Error log', 'ERROR');
       await addLog('Warning log', 'WARNING');
       await addLog('Info log', 'INFO');
 
-      // Change stored filter to 'errors_only' - normally getLogs would only show error
       await setLogFilter('errors_only');
 
-      // But with filter='all', we override and see all logs
+      // Override with filter='all'
       const logs = await getLogs(0, 30, 'all');
 
       expect(logs).toHaveLength(3);
@@ -418,15 +457,13 @@ describe('LogService', () => {
       jest.useFakeTimers();
       jest.setSystemTime(new Date('2024-06-15T10:00:00.000Z'));
 
-      // Set to all to store all statuses
-      await setLogFilter('all');
-
       await addLog('Info log', 'SUCCESS');
       await addLog('Warn log', 'WARNING');
       await addLog('Error log', 'ERROR');
       await addLog('Debug log', 'DEBUG');
 
       // With 'all' filter, all logs should be counted
+      await setLogFilter('all');
       let summary = await getLogSummary();
       expect(summary.SUCCESS).toBe(1);
       expect(summary.WARNING).toBe(1);
@@ -457,12 +494,45 @@ describe('LogService', () => {
       const logs = await getLogs(0, 30, 'all');
 
       expect(logs).toHaveLength(3);
-      // Old debug level should become DEBUG status (first in array)
+      // Old debug level should become DEBUG status
       expect(logs[0].status).toBe('DEBUG');
-      // Old info level with SUCCESS status should keep SUCCESS (second in array)
+      // Old info level with SUCCESS status should keep SUCCESS
       expect(logs[1].status).toBe('SUCCESS');
-      // Old error level should keep ERROR status (third in array)
+      // Old error level should keep ERROR status
       expect(logs[2].status).toBe('ERROR');
+    });
+
+    test('migrates old entries without id/source', async () => {
+      const oldLogs = [
+        { timestamp: new Date().toISOString(), message: '[Background Sync] Data synced', status: 'SUCCESS', details: [] },
+        { timestamp: new Date().toISOString(), message: 'Plain message', status: 'INFO', details: [] },
+      ];
+      await AsyncStorage.setItem('app_logs', JSON.stringify(oldLogs));
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs).toHaveLength(2);
+      // First entry: [Tag] prefix should be parsed into source
+      expect(logs[0].source).toBe('Background Sync');
+      expect(logs[0].message).toBe('Data synced');
+      expect(logs[0].id).toEqual(expect.any(String));
+      // Second entry: no tag → source defaults to 'App'
+      expect(logs[1].source).toBe('App');
+      expect(logs[1].message).toBe('Plain message');
+      expect(logs[1].id).toEqual(expect.any(String));
+    });
+
+    test('does not re-migrate entries that already have id and source', async () => {
+      const existingLogs = [
+        { id: 'abc123', timestamp: new Date().toISOString(), source: 'HealthKit', message: 'Synced', status: 'SUCCESS', details: [] },
+      ];
+      await AsyncStorage.setItem('app_logs', JSON.stringify(existingLogs));
+
+      const logs = await getLogs(0, 30, 'all');
+
+      expect(logs[0].id).toBe('abc123');
+      expect(logs[0].source).toBe('HealthKit');
+      expect(logs[0].message).toBe('Synced');
     });
 
     test('migrates old log level preference to new filter format', async () => {
@@ -538,7 +608,7 @@ describe('LogService', () => {
 
     test('flush merges with existing entries in storage', async () => {
       // Pre-populate storage with an existing entry
-      const existing = [{ timestamp: '2024-01-01T00:00:00.000Z', message: 'Existing', status: 'INFO', details: [] }];
+      const existing = [{ id: 'old1', timestamp: '2024-01-01T00:00:00.000Z', source: 'App', message: 'Existing', status: 'INFO', details: [] }];
       await AsyncStorage.setItem('app_logs', JSON.stringify(existing));
 
       await addLog('New entry');
@@ -554,7 +624,9 @@ describe('LogService', () => {
     test('flush caps total entries at MAX_LOG_ENTRIES', async () => {
       // Pre-populate storage with entries near the cap
       const existing = Array.from({ length: 995 }, (_, i) => ({
+        id: `old-${i}`,
         timestamp: new Date().toISOString(),
+        source: 'App',
         message: `Old ${i}`,
         status: 'INFO',
         details: [],

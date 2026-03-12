@@ -188,7 +188,9 @@ describe('diagnosticReportService', () => {
   // ---- sanitizeLogEntry ----
   describe('sanitizeLogEntry', () => {
     const makeEntry = (message: string, details: string[] = []): LogEntry => ({
+      id: 'test-id',
       timestamp: '2026-02-27T10:00:00.000Z',
+      source: 'App',
       message,
       status: 'INFO',
       details,

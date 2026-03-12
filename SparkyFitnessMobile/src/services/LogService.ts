@@ -8,7 +8,9 @@ export type LogStatus = 'DEBUG' | 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 export type LogFilter = 'all' | 'no_debug' | 'warnings_errors' | 'errors_only';
 
 export interface LogEntry {
+  id: string;
   timestamp: string;
+  source: string;
   message: string;
   status: LogStatus;
   details: string[];
@@ -21,6 +23,16 @@ export interface LogSummary {
   WARNING: number;
   ERROR: number;
 }
+
+const generateId = (): string => Math.random().toString(36).slice(2);
+
+const parseSource = (message: string): { source: string; cleanMessage: string } => {
+  const match = message.match(/^\[([^\]]+)\]\s*/);
+  if (match) {
+    return { source: match[1], cleanMessage: message.slice(match[0].length) };
+  }
+  return { source: 'App', cleanMessage: message };
+};
 
 const LOG_KEY = 'app_logs';
 const LOG_FILTER_KEY = 'log_filter';
@@ -65,22 +77,28 @@ let consecutiveFlushFailures = 0;
 let appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
 /**
- * Migrates an old log entry format to the new format.
- * Old format: { level: 'info', status: 'SUCCESS', ... }
- * New format: { status: 'SUCCESS', ... }
+ * Migrates old log entry formats to the current format.
+ * Handles: missing id/source fields, old level field.
  */
 const migrateLogEntry = (entry: LogEntry & { level?: string }): LogEntry => {
-  if (!entry.level) return entry; // Already migrated
+  const hasLegacyLevel = !!entry.level;
+  const missingNewFields = !entry.id || !entry.source;
 
-  // If level='debug', always map to DEBUG (level takes precedence)
-  // Otherwise, use the existing status value directly
-  const newStatus: LogStatus =
-    entry.level === 'debug' ? 'DEBUG' : (entry.status || 'INFO');
+  if (!hasLegacyLevel && !missingNewFields) return entry;
+
+  const status: LogStatus =
+    hasLegacyLevel && entry.level === 'debug' ? 'DEBUG' : (entry.status || 'INFO');
+
+  const { source, cleanMessage } = entry.source
+    ? { source: entry.source, cleanMessage: entry.message }
+    : parseSource(entry.message);
 
   return {
+    id: entry.id || generateId(),
     timestamp: entry.timestamp,
-    message: entry.message,
-    status: newStatus,
+    source,
+    message: cleanMessage,
+    status,
     details: entry.details || [],
   };
 };
@@ -148,6 +166,7 @@ const scheduleFlush = (): void => {
 
 /**
  * Adds a new log entry with a specified status and optional details.
+ * All entries are stored regardless of the current filter setting.
  */
 export const addLog = async (
   message: string,
@@ -155,17 +174,12 @@ export const addLog = async (
   details: string[] = []
 ): Promise<void> => {
   try {
-    const currentFilter = await getLogFilter();
-    const statusSeverity = STATUS_SEVERITY[status];
-    const filterThreshold = FILTER_THRESHOLD[currentFilter];
-
-    if (statusSeverity > filterThreshold) {
-      return; // Don't log if status severity is below the filter threshold
-    }
-
+    const { source, cleanMessage } = parseSource(message);
     const newLog: LogEntry = {
+      id: generateId(),
       timestamp: new Date().toISOString(),
-      message,
+      source,
+      message: cleanMessage,
       status,
       details,
     };
