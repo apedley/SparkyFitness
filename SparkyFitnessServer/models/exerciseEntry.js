@@ -11,6 +11,7 @@ async function upsertExerciseEntryData(
   exerciseId,
   caloriesBurned,
   date,
+  source = "Manual",
 ) {
   log("info", "upsertExerciseEntryData received date parameter:", date);
   const client = await getClient(userId);
@@ -63,12 +64,13 @@ async function upsertExerciseEntryData(
     const updateClient = await getClient(userId);
     try {
       const updateResult = await updateClient.query(
-        "UPDATE exercise_entries SET calories_burned = $1, notes = $2, updated_by_user_id = $3, exercise_name = $4 WHERE id = $5 RETURNING *",
+        "UPDATE exercise_entries SET calories_burned = $1, notes = $2, updated_by_user_id = $3, exercise_name = $4, source = $5 WHERE id = $6 RETURNING *",
         [
           caloriesBurned,
           "Active calories logged from Apple Health (updated).",
           createdByUserId,
           exerciseName,
+          source,
           existingEntry.id,
         ],
       );
@@ -89,8 +91,8 @@ async function upsertExerciseEntryData(
     const insertClient = await getClient(userId);
     try {
       const insertResult = await insertClient.query(
-        `INSERT INTO exercise_entries (user_id, exercise_id, entry_date, calories_burned, duration_minutes, notes, created_by_user_id, exercise_name)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        `INSERT INTO exercise_entries (user_id, exercise_id, entry_date, calories_burned, duration_minutes, notes, created_by_user_id, exercise_name, source)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
           userId,
           exerciseId,
@@ -100,6 +102,7 @@ async function upsertExerciseEntryData(
           "Active calories logged from Apple Health.",
           createdByUserId,
           exerciseName,
+          source,
         ],
       );
       result = insertResult.rows[0];
