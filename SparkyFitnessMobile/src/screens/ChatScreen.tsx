@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ActivityIndicator, Alert, FlatList } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, FlatList, TextInput } from 'react-native';
 import { fetch as expoFetch } from 'expo/fetch';
+import { flushTapSync } from '@assistant-ui/tap';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
@@ -14,6 +15,7 @@ import {
   MessagePrimitive,
   ErrorPrimitive,
   ActionBarPrimitive,
+  useAui,
   useAuiState,
   type MessageRole,
 } from '@assistant-ui/react-native';
@@ -221,6 +223,38 @@ function MessageBubble({ role }: { role: MessageRole }) {
   );
 }
 
+/**
+ * Composer text field.
+ *
+ * A drop-in for `ComposerPrimitive.Input`, but it flushes the store update
+ * synchronously on each keystroke. The composer's `text` lives in the
+ * assistant-ui runtime, whose updates are batched onto a macrotask by
+ * `@assistant-ui/tap`'s scheduler. `ComposerPrimitive.Input` is a *controlled*
+ * `TextInput` (`value={text}`), so with that deferral the value prop lags the
+ * keystroke by a frame: the char you type is shown by the native field, then
+ * the next render commits the stale (pre-keystroke) value and wipes it, then
+ * the flushed update commits and re-adds it — the "type → delete → retype"
+ * flicker. `flushTapSync` runs the scheduler inline so `value` updates in the
+ * same tick as the keystroke and the field stays in lockstep. (Upstream applies
+ * the same fix, but only on the web path — see @assistant-ui/react-native's
+ * ComposerInput.)
+ */
+function SyncedComposerInput(
+  props: Omit<React.ComponentProps<typeof TextInput>, 'value' | 'onChangeText'>,
+) {
+  const aui = useAui();
+  const text = useAuiState((s) => s.composer.text);
+
+  const onChangeText = useCallback(
+    (value: string) => {
+      flushTapSync(() => aui.composer().setText(value));
+    },
+    [aui],
+  );
+
+  return <TextInput value={text} onChangeText={onChangeText} {...props} />;
+}
+
 /** The bottom input row. ComposerInput/Send manage their own state + actions. */
 function Composer() {
   const [muted, raised, textPrimary] = useCSSVariable([
@@ -233,7 +267,7 @@ function Composer() {
     <ComposerPrimitive.Root
       style={{ flexDirection: 'row', alignItems: 'flex-end', padding: 12, gap: 8 }}
     >
-      <ComposerPrimitive.Input
+      <SyncedComposerInput
         placeholder="Message Sparky…"
         placeholderTextColor={muted}
         autoFocus
