@@ -235,3 +235,53 @@ describe('ServiceForm — test connection button', () => {
     ).toBeNull();
   });
 });
+
+describe('ServiceForm — chat tool profile (Ollama only)', () => {
+  it('offers the router option alongside full and core under Ollama', async () => {
+    const { getByLabelText, findByRole } = renderForm(
+      makeFormData({
+        service_type: 'ollama',
+        custom_url: 'http://localhost:11434',
+        showCustomModelInput: true,
+        custom_model_name: 'qwen3:4b',
+        model_name: 'qwen3:4b',
+        chat_tool_profile: 'full',
+      })
+    );
+
+    const trigger = getByLabelText(
+      'settings.aiService.userSettings.chatToolProfile',
+      { selector: 'button' }
+    );
+    fireEvent.click(trigger);
+
+    // The t mock echoes the key, so options render as their translation keys.
+    // findByRole throws if the option is absent, so a truthy result is the check.
+    expect(
+      await findByRole('option', {
+        name: 'settings.aiService.userSettings.chatToolProfileRouter',
+      })
+    ).toBeTruthy();
+    expect(
+      await findByRole('option', {
+        name: 'settings.aiService.userSettings.chatToolProfileFull',
+      })
+    ).toBeTruthy();
+    expect(
+      await findByRole('option', {
+        name: 'settings.aiService.userSettings.chatToolProfileCore',
+      })
+    ).toBeTruthy();
+  });
+
+  it('does not render the tool-profile selector for a non-Ollama service', () => {
+    const { queryByLabelText } = renderForm(
+      makeFormData({ service_type: 'openai' })
+    );
+    expect(
+      queryByLabelText('settings.aiService.userSettings.chatToolProfile', {
+        selector: 'button',
+      })
+    ).toBeNull();
+  });
+});

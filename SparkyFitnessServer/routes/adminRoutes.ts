@@ -570,7 +570,7 @@ router.get('/ai-service-settings/global', async (req, res, next) => {
  *                 type: string
  *               chat_tool_profile:
  *                 type: string
- *                 enum: [full, core]
+ *                 enum: [full, core, router]
  *     responses:
  *       201:
  *         description: Global AI service setting created
@@ -664,7 +664,7 @@ router.post('/ai-service-settings/global', async (req, res, next) => {
  *                 type: string
  *               chat_tool_profile:
  *                 type: string
- *                 enum: [full, core]
+ *                 enum: [full, core, router]
  *     responses:
  *       200:
  *         description: Global AI service setting updated

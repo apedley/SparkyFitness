@@ -1,12 +1,14 @@
 /**
- * Dev harness: A/B the chatbot's 'full' (35-tool) vs 'core' (18-tool) tool
- * surface against a real Ollama model, to eyeball tool-selection accuracy and
- * latency on a small/local model.
+ * Dev harness: A/B/C the chatbot's 'full' (35-tool), 'core' (18-tool), and
+ * 'router' (per-message auto-selected) tool surfaces against a real Ollama
+ * model, to eyeball tool-selection accuracy and latency on a small/local model.
  *
- * Both arms use the same model, backend, prompt, and the production system
- * prompt — only the tool surface differs (what Ollama gets via
- * buildChatbotTools('core') vs every other provider's 'full'). Tool handlers
- * are stripped before the call, so the model's selection is captured without
+ * All arms use the same model, backend, prompt, and the production system prompt
+ * — only the tool surface differs (full vs core vs the router's per-message
+ * pick). The router arm additionally runs the real selectToolDomains pre-pass
+ * and reports its routed domains plus separate route vs generation latency (the
+ * router adds directly to time-to-first-token). Tool handlers are stripped
+ * before the generation call, so the model's selection is captured without
  * running any handler — nothing touches the database. This measures tool
  * selection + prefill size, not execution.
  *
@@ -25,8 +27,19 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { generateText, stepCountIs } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { buildChatbotTools, type ChatToolProfile } from '../ai/tools/index.js';
-import { getSystemPrompt } from '../services/chatService.js';
+import {
+  buildChatbotTools,
+  buildChatbotToolsForDomains,
+  CORE_DOMAINS,
+  type ChatToolProfile,
+  type ToolDomain,
+} from '../ai/tools/index.js';
+import {
+  getSystemPrompt,
+  type ChatPromptCapabilities,
+} from '../services/chatService.js';
+import { selectToolDomains } from '../ai/toolRouter.js';
+import type { ProviderConfig } from '../ai/providerDispatch.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -45,6 +58,24 @@ const provider = createOpenAI({
 });
 const model = provider.chat(MODEL);
 const systemPrompt = getSystemPrompt(TZ, 'None');
+
+// The router calls Ollama's native /api/chat with a grammar-constrained schema
+// via dispatchAiRequest, so it needs the base URL (no /v1) as a ProviderConfig.
+const routerProvider: ProviderConfig = {
+  service_type: 'ollama',
+  custom_url: OLLAMA_URL,
+  model_name: MODEL,
+};
+
+function capabilitiesForDomains(domains: ToolDomain[]): ChatPromptCapabilities {
+  const set = new Set(domains);
+  return {
+    hasFood: set.has('food'),
+    hasExercise: set.has('exercise'),
+    hasCheckin: set.has('checkin'),
+    hasVision: set.has('vision'),
+  };
+}
 
 // Drop execute so the model's tool selection is captured without running a real
 // handler (which would hit the database). Returned tool calls are inspected
@@ -101,6 +132,65 @@ function report(r: Awaited<ReturnType<typeof runProfile>>) {
   }
 }
 
+// Router arm: run the real per-message classifier against the live model, then
+// generate with only the routed tools. Mirrors chatService — a null (garbage)
+// route falls back to the core domains. Reports the routed domains plus separate
+// route and generation latencies (the router adds directly to time-to-first-token).
+async function runRouter() {
+  const routeStart = performance.now();
+  const routed = await selectToolDomains(routerProvider, PROMPT);
+  const routeMs = Math.round(performance.now() - routeStart);
+  const resolved = routed ?? [...CORE_DOMAINS];
+
+  const builtTools = buildChatbotToolsForDomains(USER_ID, TZ, resolved);
+  const toolCount = Object.keys(builtTools).length;
+  const tools = selectionOnly(builtTools as Record<string, unknown>);
+  const routedSystemPrompt = getSystemPrompt(
+    TZ,
+    'None',
+    capabilitiesForDomains(resolved)
+  );
+
+  const genStart = performance.now();
+  const result = await generateText({
+    model,
+    system: routedSystemPrompt,
+    messages: [{ role: 'user', content: PROMPT }],
+    tools,
+    stopWhen: stepCountIs(1),
+    maxRetries: 1,
+  });
+  const genMs = Math.round(performance.now() - genStart);
+
+  return {
+    routed,
+    resolved,
+    routeMs,
+    toolCount,
+    genMs,
+    inputTokens: result.usage?.inputTokens ?? null,
+    calls: result.toolCalls.map(
+      (c) => `${c.toolName}(${JSON.stringify(c.input)})`
+    ),
+    text: result.text.trim(),
+  };
+}
+
+function reportRouter(r: Awaited<ReturnType<typeof runRouter>>) {
+  const routedLabel = r.routed
+    ? r.routed.join(', ') || '(empty — small talk)'
+    : 'null → core fallback';
+  console.log(
+    `\n[router] routed: ${routedLabel} | ${r.toolCount} tools | route ${r.routeMs} ms | gen ${r.genMs} ms | input≈${r.inputTokens ?? '?'} tok`
+  );
+  if (r.calls.length > 0) {
+    console.log(`  tool calls: ${r.calls.join(', ')}`);
+  } else {
+    console.log('  tool calls: (none — model answered in text)');
+    if (r.text) console.log(`  text: ${r.text.slice(0, 200)}`);
+  }
+}
+
 async function main() {
   console.log('=== Ollama tool-profile A/B ===');
   console.log(`model: ${MODEL}   url: ${OLLAMA_URL}`);
@@ -117,6 +207,7 @@ async function main() {
 
   report(await runProfile('full'));
   report(await runProfile('core'));
+  reportRouter(await runRouter());
   console.log('');
 }
 

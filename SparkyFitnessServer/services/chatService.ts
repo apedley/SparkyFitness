@@ -43,11 +43,24 @@ interface ChatMessage {
 }
 
 import { generateText, streamText, stepCountIs } from 'ai';
-import type { JSONValue, LanguageModelUsage, UIMessageChunk } from 'ai';
+import type {
+  JSONValue,
+  LanguageModelUsage,
+  ToolSet,
+  UIMessageChunk,
+} from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { buildChatbotTools, type ChatToolProfile } from '../ai/tools/index.js';
+import {
+  buildChatbotTools,
+  buildChatbotToolsForDomains,
+  ALL_DOMAINS,
+  CORE_DOMAINS,
+  type ChatToolProfile,
+  type ToolDomain,
+} from '../ai/tools/index.js';
+import { selectToolDomains } from '../ai/toolRouter.js';
 
 const MAX_AGENTIC_STEPS = 15;
 
@@ -55,6 +68,25 @@ const MAX_AGENTIC_STEPS = 15;
 // full request (system + tools + history), so a high count multiplies token cost
 // on a hard provider outage. 3 covers transient blips without a runaway 5×.
 const MAX_PROVIDER_RETRIES = 3;
+
+// Opt-in chat-reasoning logging. Reasoning models (notably Ollama's qwen3 /
+// deepseek-r1) emit a chain-of-thought that is verbose and reflects the user's
+// health data, so it is gated behind its own env flag rather than the general
+// log level. Enable with SPARKY_FITNESS_LOG_CHAT_REASONING=true. The flag is read
+// per call (kept togglable and unit-testable), and a line is only emitted when a
+// model actually returned reasoning — in practice the local reasoning models.
+function logChatReasoning(
+  serviceType: string,
+  modelName: string,
+  reasoningText: string | undefined
+): void {
+  if (process.env.SPARKY_FITNESS_LOG_CHAT_REASONING !== 'true') return;
+  if (!reasoningText?.trim()) return;
+  log(
+    'info',
+    `[chat] reasoning provider=${serviceType} model=${modelName}:\n${reasoningText}`
+  );
+}
 
 async function handleAiServiceSettings(
   action: string,
@@ -358,16 +390,152 @@ async function saveSparkyChatHistory(
     throw error;
   }
 }
+// The decrypted backend AI service row, narrowed to the fields chat routing
+// reads. getAiServiceSettingForBackend returns an untyped row plus a decrypted
+// api_key; this captures just what prepareChatContext and the router need.
+interface ChatAiService {
+  service_type: string;
+  api_key?: string | null;
+  model_name?: string | null;
+  custom_url?: string | null;
+  chat_tool_profile?: string | null;
+}
+
+// Which tool-specific guidance blocks the system prompt should include, derived
+// from the selected tool domains so the prompt never describes tools the model
+// wasn't given. All-true reproduces the historical 'full' prompt verbatim.
+export interface ChatPromptCapabilities {
+  hasFood: boolean;
+  hasExercise: boolean;
+  hasCheckin: boolean;
+  hasVision: boolean;
+}
+
+const ALL_CAPABILITIES: ChatPromptCapabilities = {
+  hasFood: true,
+  hasExercise: true,
+  hasCheckin: true,
+  hasVision: true,
+};
+
+// Mirror of the chat message-mapper's image predicate (see the map in
+// processChatMessage): a part is an image if it is an image/image_url part, or a
+// file part carrying an image mime or a data:image/ URL.
+function isImagePart(part: ChatMessagePart): boolean {
+  if (part.type === 'image' || part.type === 'image_url') return true;
+  if (part.type === 'file') {
+    return Boolean(
+      part.mimeType?.startsWith('image/') ||
+      part.mediaType?.startsWith('image/') ||
+      part.url?.startsWith('data:image/')
+    );
+  }
+  return false;
+}
+
+/**
+ * Extract the latest *user* turn's text and whether it carries an image, used to
+ * route tools once per message. Skips trailing assistant placeholders (the
+ * client sometimes appends an empty assistant turn), reads text from a plain
+ * string content or from `type:'text'` parts (text can live in `.text` or
+ * `.content`), and detects images with the same predicate the message mapper
+ * uses.
+ */
+function latestUserTurn(messages: ChatMessage[]): {
+  text: string | null;
+  hasImage: boolean;
+} {
+  let turn: ChatMessage | undefined;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role !== 'assistant') {
+      turn = messages[i];
+      break;
+    }
+  }
+  if (!turn) return { text: null, hasImage: false };
+
+  const partsSource =
+    turn.parts && Array.isArray(turn.parts)
+      ? turn.parts
+      : Array.isArray(turn.content)
+        ? turn.content
+        : null;
+
+  if (partsSource) {
+    const text =
+      partsSource
+        .filter((p) => p.type === 'text')
+        .map((p) => (p.text ?? p.content ?? '').trim())
+        .filter((t) => t.length > 0)
+        .join(' ') || null;
+    return { text, hasImage: partsSource.some(isImagePart) };
+  }
+
+  const text =
+    typeof turn.content === 'string' && turn.content.trim().length > 0
+      ? turn.content.trim()
+      : null;
+  return { text, hasImage: false };
+}
+
+function unionDomains(a: ToolDomain[], b: ToolDomain[]): ToolDomain[] {
+  return [...new Set([...a, ...b])];
+}
+
+function capabilitiesForDomains(domains: ToolDomain[]): ChatPromptCapabilities {
+  const set = new Set(domains);
+  return {
+    hasFood: set.has('food'),
+    hasExercise: set.has('exercise'),
+    hasCheckin: set.has('checkin'),
+    hasVision: set.has('vision'),
+  };
+}
+
+/**
+ * Pick the routed tool domains for an Ollama service on the 'router' profile.
+ * A latest-turn image forces vision+food regardless of text (photos ⇒ log a
+ * meal). With text, the LLM router selects the domains, unioned with the image
+ * base; a router failure/garbage response (`null`) falls back to the core
+ * logging domains so the turn is never left with too few tools. With neither
+ * text nor image the router is skipped entirely.
+ */
+async function resolveRoutedDomains(
+  aiService: ChatAiService,
+  latestUserText: string | null,
+  hasLatestImage: boolean
+): Promise<ToolDomain[]> {
+  const base: ToolDomain[] = hasLatestImage ? ['vision', 'food'] : [];
+  if (!latestUserText) {
+    return hasLatestImage ? ['vision', 'food'] : [...CORE_DOMAINS];
+  }
+  const routerProvider: ProviderConfig = {
+    service_type: aiService.service_type,
+    api_key: aiService.api_key ?? undefined,
+    model_name: aiService.model_name ?? undefined,
+    custom_url: aiService.custom_url ?? undefined,
+  };
+  const routed = await selectToolDomains(routerProvider, latestUserText);
+  return routed ? unionDomains(base, routed) : unionDomains(base, CORE_DOMAINS);
+}
+
 /**
  * Loads the per-user chat context shared by the blocking and streaming paths:
  * the system prompt (custom categories + timezone) and the in-process tool
  * registry. Everything is scoped to the authenticated user — chat tool calls
  * always act as the logged-in actor, matching the previous MCP behavior.
+ *
+ * Tool selection is per-service: an Ollama service on the 'router' profile runs
+ * a cheap LLM pre-pass (once per message, before the agentic loop) to expose
+ * only the relevant tool domains; 'core' trims to the fixed logging set; every
+ * other backend gets the full set, so a stale 'core'/'router' on a non-Ollama
+ * service can never trim it.
  */
 async function prepareChatContext(
   authenticatedUserId: string,
-  serviceType: string,
-  chatToolProfile?: string | null
+  aiService: ChatAiService,
+  latestUserText: string | null,
+  hasLatestImage: boolean
 ) {
   const [customCategories, chatTz] = await Promise.all([
     measurementRepository.getCustomCategories(authenticatedUserId),
@@ -384,71 +552,120 @@ async function prepareChatContext(
           .join('\n')
       : 'None';
 
-  // Per-service chat tool profile. 'core' trims the tool surface for small/local
-  // models and is only offered for Ollama; every other backend always gets the
-  // full set, so a stale 'core' on a non-Ollama service can never trim it.
-  const toolProfile: ChatToolProfile =
-    serviceType === 'ollama' && chatToolProfile === 'core' ? 'core' : 'full';
-  const tools = buildChatbotTools(authenticatedUserId, chatTz, toolProfile);
-  log(
-    'info',
-    `Loaded ${Object.keys(tools).length} ${toolProfile} tools for chatbot: ${Object.keys(tools).join(', ')}`
-  );
+  const serviceType = aiService.service_type;
+  const chatToolProfile = aiService.chat_tool_profile;
+
+  let tools: ToolSet;
+  let capabilities: ChatPromptCapabilities;
+
+  if (serviceType === 'ollama' && chatToolProfile === 'router') {
+    const domains = await resolveRoutedDomains(
+      aiService,
+      latestUserText,
+      hasLatestImage
+    );
+    tools = buildChatbotToolsForDomains(authenticatedUserId, chatTz, domains);
+    capabilities = capabilitiesForDomains(domains);
+    log(
+      'info',
+      `Loaded ${Object.keys(tools).length} router tools for chatbot (domains: ${domains.join(', ') || 'none'}): ${Object.keys(tools).join(', ')}`
+    );
+  } else {
+    const toolProfile: ChatToolProfile =
+      serviceType === 'ollama' && chatToolProfile === 'core' ? 'core' : 'full';
+    tools = buildChatbotTools(authenticatedUserId, chatTz, toolProfile);
+    capabilities = capabilitiesForDomains(
+      toolProfile === 'core' ? CORE_DOMAINS : ALL_DOMAINS
+    );
+    log(
+      'info',
+      `Loaded ${Object.keys(tools).length} ${toolProfile} tools for chatbot: ${Object.keys(tools).join(', ')}`
+    );
+  }
 
   return {
     systemPromptContent: getSystemPrompt(
       chatTz,
       customCategoriesList,
-      toolProfile
+      capabilities
     ),
     tools,
   };
 }
 
+// Join into the "a, b, or c" phrasing the logging sentence uses (Oxford comma
+// only from three items), so a trimmed domain set reads naturally.
+function joinOr(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} or ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, or ${items[items.length - 1]}`;
+}
+
 export function getSystemPrompt(
   chatTz: string,
   customCategoriesList: string,
-  profile: ChatToolProfile = 'full'
+  capabilities: ChatPromptCapabilities = ALL_CAPABILITIES
 ): string {
-  // Vision tools (sparky_analyze_food_image, sparky_scan_label) are dropped
-  // from the 'core' profile, so omit their guidance there — keeping the prompt
-  // a strict subset of the full one and never pointing small/local models at
-  // tools they don't have.
-  const visionSupport =
-    profile === 'full'
-      ? `
+  const { hasFood, hasExercise, hasCheckin, hasVision } = capabilities;
 
-## VISION SUPPORT
-You are a multimodal AI. When the user provides an image (photo of food, meal, or nutrition label):
-1. **Analyze it directly** using your built-in vision capabilities. You can see the images in the conversation history.
-2. If you need a more structured nutritional estimate or if the image is a complex meal, you can use the 'sparky_analyze_food_image' tool as a secondary step.
-3. For nutrition labels, you can use 'sparky_scan_label' to ensure high accuracy in data extraction.
-4. Based on your analysis, proceed to log the entry using the appropriate tools (e.g., 'sparky_manage_food').`
-      : '';
+  // Sections are `\n\n`-joined, so a gated-out block leaves no double blank
+  // line and an all-capabilities prompt is byte-identical to the historical
+  // 'full' output (and core to the historical 'core' output). Guarded by the
+  // system-prompt golden test.
+  const loggingDomains: string[] = [];
+  if (hasFood) loggingDomains.push('food');
+  if (hasExercise) loggingDomains.push('exercise');
+  if (hasCheckin) loggingDomains.push('measurements');
 
-  return `You are Sparky, an AI nutrition and wellness coach. Your primary goal is to help users track their food, exercise, and measurements, and provide helpful advice and motivation based on their data and general health knowledge.
+  const sections: string[] = [
+    'You are Sparky, an AI nutrition and wellness coach. Your primary goal is to help users track their food, exercise, and measurements, and provide helpful advice and motivation based on their data and general health knowledge.',
+    `The current local date is ${todayInZone(chatTz)}.`,
+  ];
 
-The current local date is ${todayInZone(chatTz)}.
+  if (loggingDomains.length > 0) {
+    sections.push(
+      `When the user mentions logging ${joinOr(loggingDomains)}, prioritize using the matching tools.`
+    );
+  }
 
-When the user mentions logging food, exercise, or measurements, prioritize using the matching tools.
+  if (hasCheckin) {
+    sections.push(
+      `Here are the user's existing custom measurement categories:\n${customCategoriesList}`,
+      'When logging measurements or custom categories, compare user inputs to the list above. If you find a match or variations (synonyms, capitalization), use the exact category name.'
+    );
+  }
 
-Here are the user's existing custom measurement categories:
-${customCategoriesList}
-
-When logging measurements or custom categories, compare user inputs to the list above. If you find a match or variations (synonyms, capitalization), use the exact category name.
-
-For solid food items or beverages that are not water, use the 'sparky_manage_food' tool. Do NOT classify water as food. Use the 'sparky_manage_food' tool with the 'log_water' action for water intake.
-
-## MANDATORY FOOD LOOKUP RULE
+  if (hasFood) {
+    sections.push(
+      "For solid food items or beverages that are not water, use the 'sparky_manage_food' tool. Do NOT classify water as food. Use the 'sparky_manage_food' tool with the 'log_water' action for water intake.",
+      `## MANDATORY FOOD LOOKUP RULE
 BEFORE creating any new food entry or logging food that may not exist in the database, you MUST call the 'sparky_manage_food' tool with the 'lookup_food_nutrition' action first to search for verified nutritional data. This searches internal database, user food providers, OpenFoodFacts, and other verified sources.
 
 - If 'lookup_food_nutrition' returns nutrition data (calories > 0), use that data when calling 'sparky_manage_food' with the 'log_food' action. Do NOT override it with your own estimates.
 - Only use AI-estimated nutrition if 'lookup_food_nutrition' explicitly returns no data or a zero-calorie result.
 - Always tell the user the source of nutrition data (e.g., "from OpenFoodFacts", "from internal database", "AI estimate").
 - If the user explicitly asks for internet search or a specific source, pass that preference to 'lookup_food_nutrition' using the provider_type parameter.
-- **Nutritional detail**: When creating a food via the 'create_food' action, include any micronutrients (saturated_fat, fiber, sugar, sodium, etc.) the looked-up source provides or that you can confidently derive. Don't fabricate values you can't reasonably estimate, and don't pad unknown fields with zeros.${visionSupport}
+- **Nutritional detail**: When creating a food via the 'create_food' action, include any micronutrients (saturated_fat, fiber, sugar, sodium, etc.) the looked-up source provides or that you can confidently derive. Don't fabricate values you can't reasonably estimate, and don't pad unknown fields with zeros.`
+    );
+  }
 
-Be precise with data extraction and call the correct tools in the correct order.`;
+  if (hasVision) {
+    sections.push(
+      `## VISION SUPPORT
+You are a multimodal AI. When the user provides an image (photo of food, meal, or nutrition label):
+1. **Analyze it directly** using your built-in vision capabilities. You can see the images in the conversation history.
+2. If you need a more structured nutritional estimate or if the image is a complex meal, you can use the 'sparky_analyze_food_image' tool as a secondary step.
+3. For nutrition labels, you can use 'sparky_scan_label' to ensure high accuracy in data extraction.
+4. Based on your analysis, proceed to log the entry using the appropriate tools (e.g., 'sparky_manage_food').`
+    );
+  }
+
+  sections.push(
+    'Be precise with data extraction and call the correct tools in the correct order.'
+  );
+
+  return sections.join('\n\n');
 }
 
 // OpenAI's 24h extended retention is only supported on the gpt-5.1+ families
@@ -650,10 +867,14 @@ async function processChatMessage(
       throw new Error(`Unsupported service type: ${aiService.service_type}`);
     }
 
+    // Route tools once per user message, before the agentic loop runs.
+    const { text: latestUserText, hasImage: hasLatestImage } =
+      latestUserTurn(messages);
     const { systemPromptContent, tools } = await prepareChatContext(
       authenticatedUserId,
-      aiService.service_type,
-      aiService.chat_tool_profile
+      aiService,
+      latestUserText,
+      hasLatestImage
     );
 
     const chatProviderOptions = buildChatProviderOptions(
@@ -831,6 +1052,7 @@ async function processChatMessage(
       'info',
       `[chat] provider=${aiService.service_type} model=${modelName} cacheReadTokens=${usage?.inputTokenDetails?.cacheReadTokens ?? 0} inputTokens=${usage?.inputTokens ?? 0} noCacheTokens=${usage?.inputTokenDetails?.noCacheTokens ?? 0} cacheWriteTokens=${usage?.inputTokenDetails?.cacheWriteTokens ?? 0} outputTokens=${usage?.outputTokens ?? 0} totalTokens=${usage?.totalTokens ?? 0}`
     );
+    logChatReasoning(aiService.service_type, modelName, result.reasoningText);
 
     // Save history dynamically to DB (replacing frontend client-side saves)
     const lastUserMsg = incomingMessages[incomingMessages.length - 1];
@@ -1234,10 +1456,14 @@ async function processChatMessageStream(
       throw new Error(`Unsupported service type: ${aiService.service_type}`);
     }
 
+    // Route tools once per user message, before the agentic loop runs.
+    const { text: latestUserText, hasImage: hasLatestImage } =
+      latestUserTurn(messages);
     const { systemPromptContent, tools } = await prepareChatContext(
       authenticatedUserId,
-      aiService.service_type,
-      aiService.chat_tool_profile
+      aiService,
+      latestUserText,
+      hasLatestImage
     );
 
     const chatProviderOptions = buildChatProviderOptions(
@@ -1366,12 +1592,19 @@ async function processChatMessageStream(
           log('info', `[chat] tool result sizes: ${sizes}`);
         }
       },
-      onFinish: async ({ text, finishReason, usage, totalUsage }) => {
+      onFinish: async ({
+        text,
+        finishReason,
+        usage,
+        totalUsage,
+        reasoningText,
+      }) => {
         const observedUsage = totalUsage ?? usage;
         log(
           'info',
           `[chat] provider=${aiService.service_type} model=${modelName} cacheReadTokens=${observedUsage?.inputTokenDetails?.cacheReadTokens ?? 0} inputTokens=${observedUsage?.inputTokens ?? 0} noCacheTokens=${observedUsage?.inputTokenDetails?.noCacheTokens ?? 0} cacheWriteTokens=${observedUsage?.inputTokenDetails?.cacheWriteTokens ?? 0} outputTokens=${observedUsage?.outputTokens ?? 0} totalTokens=${observedUsage?.totalTokens ?? 0}`
         );
+        logChatReasoning(aiService.service_type, modelName, reasoningText);
 
         // Get the last user message from conversationMessages to ensure parts are captured
         const lastUserMessage = [...conversationMessages]

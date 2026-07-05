@@ -188,7 +188,7 @@ export const ServiceForm = ({
             value={formData.chat_tool_profile ?? 'full'}
             onValueChange={(value) =>
               onFormDataChange({
-                chat_tool_profile: value as 'full' | 'core',
+                chat_tool_profile: value as 'full' | 'core' | 'router',
               })
             }
           >
@@ -201,6 +201,9 @@ export const ServiceForm = ({
               </SelectItem>
               <SelectItem value="core">
                 {t(`${translationPrefix}.chatToolProfileCore`)}
+              </SelectItem>
+              <SelectItem value="router">
+                {t(`${translationPrefix}.chatToolProfileRouter`)}
               </SelectItem>
             </SelectContent>
           </Select>

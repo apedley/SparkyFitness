@@ -8,9 +8,15 @@ import measurementRepository from '../models/measurementRepository.js';
 import preferenceRepository from '../models/preferenceRepository.js';
 import foodRepository from '../models/foodRepository.js';
 import foodEntryService from '../services/foodEntryService.js';
+import { selectToolDomains } from '../ai/toolRouter.js';
 import { log } from '../config/logging.js';
 // Mock dependencies
 vi.mock('../models/chatRepository');
+// The tool router is exercised end-to-end in tests/toolRouter.test.ts; here we
+// stub it to drive prepareChatContext's routing/fallback branches directly.
+vi.mock('../ai/toolRouter', () => ({
+  selectToolDomains: vi.fn(),
+}));
 vi.mock('../models/userRepository');
 vi.mock('../models/measurementRepository');
 vi.mock('../models/preferenceRepository', () => ({
@@ -620,6 +626,121 @@ describe('chatService', () => {
       );
     });
 
+    it('routes to only the selected domains for an Ollama router service', async () => {
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'ollama',
+          chat_tool_profile: 'router',
+        }
+      );
+      vi.mocked(selectToolDomains).mockResolvedValue(['goals']);
+      scriptModel([textStep('Here are your goals.')]);
+
+      await chatService.processChatMessage(
+        [{ role: 'user', content: 'what are my goals?' }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+
+      // Router sees the assembled provider config and the latest user text.
+      expect(selectToolDomains).toHaveBeenCalledWith(
+        expect.objectContaining({ service_type: 'ollama' }),
+        'what are my goals?'
+      );
+      // Minimal floor: only the goals domain's two tools, no mandatory core set.
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(
+          /Loaded 2 router tools for chatbot \(domains: goals\):/
+        )
+      );
+    });
+
+    it('falls back to the core domains when the router returns null', async () => {
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'ollama',
+          chat_tool_profile: 'router',
+        }
+      );
+      vi.mocked(selectToolDomains).mockResolvedValue(null);
+      scriptModel([textStep('Sure!')]);
+
+      await chatService.processChatMessage(
+        [{ role: 'user', content: 'hmm' }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(
+          /Loaded 18 router tools for chatbot \(domains: exercise, food, checkin\):/
+        )
+      );
+    });
+
+    it('forces vision+food and skips the router for an image-only turn', async () => {
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'ollama',
+          chat_tool_profile: 'router',
+        }
+      );
+      scriptModel([textStep('Nice meal!')]);
+
+      const pngDataUrl =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+      await chatService.processChatMessage(
+        [{ role: 'user', content: [{ type: 'image', image: pngDataUrl }] }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+
+      // A photo forces vision+food regardless of text, so the LLM router is
+      // never invoked for an image-only turn.
+      expect(selectToolDomains).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(
+          /Loaded 10 router tools for chatbot \(domains: vision, food\):/
+        )
+      );
+    });
+
+    it('never routes a non-Ollama service even with a stale router profile', async () => {
+      // The profile gate keys on service_type, so a stale 'router' stored on a
+      // service later switched to OpenAI still loads the full 35-tool surface.
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'openai',
+          chat_tool_profile: 'router',
+        }
+      );
+      scriptModel([textStep('Hi there!')]);
+
+      await chatService.processChatMessage(
+        [{ role: 'user', content: 'hello' }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+
+      expect(selectToolDomains).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(/Loaded 35 full tools/)
+      );
+    });
+
     // Regression: keyless local servers (LM Studio, llama.cpp) configured as
     // openai_compatible/custom must work on the non-stream chat path. Previously
     // an ollama-only guard rejected them with "API key missing" even though the
@@ -1012,6 +1133,78 @@ describe('chatService', () => {
       expect(convoMessages.length).toBeLessThan(5);
       expect(allText).not.toContain('OLDEST');
       expect(allText).toContain('CURRENT what is my total?');
+    });
+
+    // prepareChatContext is shared with the blocking path but the two call sites
+    // have drifted before, so cover routing on the streaming path too.
+    const okStream = [
+      { type: 'stream-start', warnings: [] },
+      { type: 'text-start', id: 't1' },
+      { type: 'text-delta', id: 't1', delta: 'ok' },
+      { type: 'text-end', id: 't1' },
+      {
+        type: 'finish',
+        finishReason: { unified: 'stop', raw: undefined },
+        usage,
+      },
+    ];
+
+    it('routes to only the selected domains on the streaming path', async () => {
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'ollama',
+          chat_tool_profile: 'router',
+        }
+      );
+      vi.mocked(selectToolDomains).mockResolvedValue(['goals']);
+      streamModel(okStream);
+
+      const { stream } = await chatService.processChatMessageStream(
+        [{ role: 'user', content: 'what are my goals?' }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+      await drainStream(stream);
+
+      expect(selectToolDomains).toHaveBeenCalledWith(
+        expect.objectContaining({ service_type: 'ollama' }),
+        'what are my goals?'
+      );
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(
+          /Loaded 2 router tools for chatbot \(domains: goals\):/
+        )
+      );
+    });
+
+    it('falls back to the core domains on the streaming path when the router returns null', async () => {
+      vi.mocked(chatRepository.getAiServiceSettingForBackend).mockResolvedValue(
+        {
+          ...aiServiceSetting,
+          service_type: 'ollama',
+          chat_tool_profile: 'router',
+        }
+      );
+      vi.mocked(selectToolDomains).mockResolvedValue(null);
+      streamModel(okStream);
+
+      const { stream } = await chatService.processChatMessageStream(
+        [{ role: 'user', content: 'hmm' }],
+        'svc-1',
+        activeUserId,
+        actorUserId
+      );
+      await drainStream(stream);
+
+      expect(log).toHaveBeenCalledWith(
+        'info',
+        expect.stringMatching(
+          /Loaded 18 router tools for chatbot \(domains: exercise, food, checkin\):/
+        )
+      );
     });
   });
 

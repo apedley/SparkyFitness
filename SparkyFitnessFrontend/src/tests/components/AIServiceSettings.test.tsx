@@ -82,6 +82,8 @@ const translations: Record<string, string> = {
   'settings.aiService.userSettings.chatToolProfileFull': 'Full (all tools)',
   'settings.aiService.userSettings.chatToolProfileCore':
     'Core (faster, fewer tools)',
+  'settings.aiService.userSettings.chatToolProfileRouter':
+    'Router (auto-select tools)',
   'settings.aiService.userSettings.chatToolProfileDescription':
     'Core trims the chatbot to logging essentials.',
   'settings.aiService.userSettings.chatPreferences': 'Chat Preferences',

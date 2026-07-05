@@ -1,5 +1,8 @@
 import { vi, describe, expect, it } from 'vitest';
-import { buildChatbotTools } from '../ai/tools/index.js';
+import {
+  buildChatbotTools,
+  buildChatbotToolsForDomains,
+} from '../ai/tools/index.js';
 
 // Loading the real foodEntryService trips on a deep '@workspace/shared'
 // subpath import; the registry surface test never executes handlers.
@@ -123,5 +126,88 @@ describe('buildChatbotTools', () => {
     for (const [name, t] of Object.entries(tools)) {
       expect(t.strict, `${name} strict`).toBe(false);
     }
+  });
+
+  // The golden surface tests above sort the names, so runtime insertion order —
+  // which anchors the Anthropic cache breakpoint (the last tool the SDK emits) —
+  // is otherwise unprotected. These lock the canonical domain-block ordering.
+  it('emits the full surface in canonical domain-block order', () => {
+    const keys = Object.keys(buildChatbotTools('user-1', 'UTC'));
+    // Representative "manage" tool per logging domain, then a coach tool: their
+    // relative positions prove the exercise→food→checkin→coach block order.
+    expect(keys.indexOf('sparky_manage_exercise')).toBeLessThan(
+      keys.indexOf('sparky_manage_food')
+    );
+    expect(keys.indexOf('sparky_manage_food')).toBeLessThan(
+      keys.indexOf('sparky_manage_checkin')
+    );
+    expect(keys.indexOf('sparky_manage_checkin')).toBeLessThan(
+      keys.indexOf('sparky_get_health_summary')
+    );
+  });
+
+  it('keeps sparky_get_daily_report as the final full-set tool (cache breakpoint anchor)', () => {
+    const keys = Object.keys(buildChatbotTools('user-1', 'UTC'));
+    expect(keys[keys.length - 1]).toBe('sparky_get_daily_report');
+  });
+});
+
+describe('buildChatbotToolsForDomains', () => {
+  it('exposes exactly the requested domain’s tools', () => {
+    const tools = buildChatbotToolsForDomains('user-1', 'UTC', ['goals']);
+    expect(Object.keys(tools).sort()).toEqual([
+      'sparky_get_goal_snapshot',
+      'sparky_manage_goals',
+    ]);
+  });
+
+  it('composes in canonical order regardless of the order requested', () => {
+    // Router hands domains back in arbitrary order; the composed set must still
+    // follow the canonical block order (exercise, then food, then reports).
+    const keys = Object.keys(
+      buildChatbotToolsForDomains('user-1', 'UTC', [
+        'reports',
+        'food',
+        'exercise',
+      ])
+    );
+    expect(keys.indexOf('sparky_search_exercises')).toBeLessThan(
+      keys.indexOf('sparky_search_foods')
+    );
+    expect(keys.indexOf('sparky_search_foods')).toBeLessThan(
+      keys.indexOf('sparky_get_daily_report')
+    );
+    // reports is the last requested block, so its final tool anchors the cache.
+    expect(keys[keys.length - 1]).toBe('sparky_get_daily_report');
+  });
+
+  it('reapplies strict=false and the cache breakpoint to the sliced last tool', () => {
+    const tools = buildChatbotToolsForDomains('user-1', 'UTC', [
+      'vision',
+      'food',
+    ]);
+    const entries = Object.entries(tools);
+    const lastKey = entries[entries.length - 1][0];
+
+    for (const [name, tool] of entries) {
+      expect(tool.strict, `${name} strict`).toBe(false);
+      const cacheControl = (
+        tool.providerOptions?.anthropic as
+          | { cacheControl?: unknown }
+          | undefined
+      )?.cacheControl;
+      if (name === lastKey) {
+        expect(cacheControl, `${name} cacheControl`).toEqual({
+          type: 'ephemeral',
+        });
+      } else {
+        expect(cacheControl, `${name} cacheControl`).toBeUndefined();
+      }
+    }
+  });
+
+  it('returns an empty set for no domains', () => {
+    const tools = buildChatbotToolsForDomains('user-1', 'UTC', []);
+    expect(Object.keys(tools)).toEqual([]);
   });
 });
