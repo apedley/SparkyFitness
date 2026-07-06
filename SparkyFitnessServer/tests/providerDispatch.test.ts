@@ -399,7 +399,7 @@ describe('dispatchAiRequest — text-only structured request shapes', () => {
     );
   });
 
-  it('ollama sends the raw schema as format on /api/chat with no auth header', async () => {
+  it('ollama sends the raw schema as format on /api/chat with a no-key bearer', async () => {
     const m = mockFetch(ollamaBody(JSON.stringify(SAMPLE)));
     await dispatchAiRequest(
       baseRequest({
@@ -412,9 +412,28 @@ describe('dispatchAiRequest — text-only structured request shapes', () => {
     );
     const { url, headers, body } = captured(m);
     expect(url).toBe('http://localhost:11434/api/chat');
-    expect(headers.Authorization).toBeUndefined();
+    expect(headers.Authorization).toBe('Bearer no-key');
     expect(body.stream).toBe(false);
     expect(body.format).toEqual(SCHEMA);
+  });
+
+  // Regression: an Ollama service configured WITH an api_key (a keyed proxy or a
+  // hosted Ollama) must forward it on the native /api/chat call. The key was
+  // previously dropped here while the OpenAI-compatible chat path sent it, so
+  // the tool router's pre-pass 401'd and silently fell back to the core tools.
+  it('ollama forwards a configured api_key as a bearer on /api/chat', async () => {
+    const m = mockFetch(ollamaBody(JSON.stringify(SAMPLE)));
+    await dispatchAiRequest(
+      baseRequest({
+        provider: makeProvider({
+          service_type: 'ollama',
+          api_key: 'sk-ollama',
+          custom_url: 'http://localhost:11434',
+        }),
+      })
+    );
+    const { headers } = captured(m);
+    expect(headers.Authorization).toBe('Bearer sk-ollama');
   });
 });
 

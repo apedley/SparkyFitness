@@ -431,7 +431,14 @@ function buildOllamaRequest(ctx: BuildContext): BuiltRequest {
   }
   return {
     url: `${ctx.provider.custom_url}/api/chat`,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      // Vanilla Ollama ignores auth, but a keyed proxy (or hosted Ollama) in
+      // front of it needs a bearer. Mirror the OpenAI-family builder and the
+      // chat path's `no-key` sentinel so this native call presents the same
+      // credentials the OpenAI-compatible chat path already sends.
+      Authorization: `Bearer ${ctx.provider.api_key || 'no-key'}`,
+    },
     body,
   };
 }
