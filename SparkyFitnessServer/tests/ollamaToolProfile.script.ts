@@ -17,14 +17,16 @@
  *   (which looks exactly like "won't call tools"):
  *     OLLAMA_CONTEXT_LENGTH=16384 ollama serve
  *
- * Run from SparkyFitnessServer/:
- *   pnpm exec tsx tests/ollamaToolProfile.script.ts
- *   OLLAMA_MODEL=qwen3:30b-a3b PROMPT="log a 30 minute run" \
+ * Run from SparkyFitnessServer/. With no env set, the connection (URL, model,
+ * API key) comes from the Ollama service configured in the app — see
+ * ollamaServiceConfig.ts:
+ *   PROMPT="log a 30 minute run" pnpm exec tsx tests/ollamaToolProfile.script.ts
+ * or point it explicitly (local `ollama serve`, or cloud with a key from
+ * https://ollama.com/settings/keys):
+ *   OLLAMA_URL=http://localhost:11434 OLLAMA_MODEL=qwen3:4b \
  *     pnpm exec tsx tests/ollamaToolProfile.script.ts
  */
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import './scriptEnv.js';
 import { generateText, stepCountIs } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import {
@@ -40,21 +42,22 @@ import {
 } from '../services/chatService.js';
 import { selectToolDomains } from '../ai/toolRouter.js';
 import type { ProviderConfig } from '../ai/providerDispatch.js';
+import { resolveOllamaConfig } from './ollamaServiceConfig.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434';
-const MODEL = process.env.OLLAMA_MODEL ?? 'qwen3:4b';
+const cfg = await resolveOllamaConfig();
+const OLLAMA_URL = cfg.url;
+const OLLAMA_API_KEY = cfg.apiKey;
+const MODEL = cfg.model;
 const PROMPT = process.env.PROMPT ?? 'log 2 eggs and a banana for breakfast';
 const USER_ID = '00000000-0000-0000-0000-000000000000';
 const TZ = 'UTC';
 
 // Same OpenAI-compatible wiring the server uses for Ollama (chatService appends
-// /v1 and calls provider.chat); Ollama ignores the api key.
+// /v1 and calls provider.chat); vanilla Ollama ignores the api key, Ollama
+// Cloud requires it as a Bearer token.
 const provider = createOpenAI({
   baseURL: `${OLLAMA_URL}/v1`,
-  apiKey: 'ollama',
+  apiKey: OLLAMA_API_KEY ?? 'ollama',
 });
 const model = provider.chat(MODEL);
 const systemPrompt = getSystemPrompt(TZ, 'None');
@@ -65,6 +68,7 @@ const routerProvider: ProviderConfig = {
   service_type: 'ollama',
   custom_url: OLLAMA_URL,
   model_name: MODEL,
+  api_key: OLLAMA_API_KEY,
 };
 
 function capabilitiesForDomains(domains: ToolDomain[]): ChatPromptCapabilities {
