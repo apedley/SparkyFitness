@@ -33,9 +33,19 @@ import {
   type AuthSettings,
   type OidcProvider,
 } from '../services/api/authService';
+import LocalNetworkPermissionHint from '../components/LocalNetworkPermissionHint';
 import { saveServerConfig } from '../services/storage';
 import { addLog } from '../services/LogService';
+import {
+  checkLocalNetworkPermission,
+  maybeAutoRequestLocalNetworkPermission,
+} from '../services/localNetworkPermission';
 import { normalizeUrl, getInsecureUrlError } from '../utils/serverUrl';
+import {
+  CONNECTION_CHECK_TIMEOUT_MS,
+  TimeoutError,
+  fetchWithTimeout,
+} from '../utils/concurrency';
 import { markCurrentVersionSeen } from '../services/whatsNewBanner';
 import { queryClient, serverConnectionQueryKey } from '../hooks';
 import type { RootStackScreenProps } from '../types/navigation';
@@ -46,13 +56,13 @@ const LEARN_MORE_SECTION_MIN_HEIGHT = 208;
 
 const checkReachability = async (url: string): Promise<boolean> => {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const response = await fetch(`${normalizeUrl(url)}/api/auth/settings`, {
-      signal: controller.signal,
-      cache: 'no-store', // skip native HTTP cache to avoid 304 empty bodies (#1353)
-    });
-    clearTimeout(timeout);
+    const response = await fetchWithTimeout(
+      `${normalizeUrl(url)}/api/auth/settings`,
+      {
+        cache: 'no-store', // skip native HTTP cache to avoid 304 empty bodies (#1353)
+      },
+      CONNECTION_CHECK_TIMEOUT_MS,
+    );
     return response.ok;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -80,6 +90,7 @@ export default function OnboardingScreen({ navigation }: Props) {
   const [serverUrl, setServerUrl] = useState('');
   const [error, setError] = useState('');
   const [checkingUrl, setCheckingUrl] = useState(false);
+  const [showLocalNetworkHint, setShowLocalNetworkHint] = useState(false);
 
   // Auth state (page 2)
   const [authTab, setAuthTab] = useState<AuthTab>('signIn');
@@ -146,6 +157,7 @@ export default function OnboardingScreen({ navigation }: Props) {
 
     setCheckingUrl(true);
     setError('');
+    setShowLocalNetworkHint(false);
 
     try {
       const settings = await fetchAuthSettings(url);
@@ -160,8 +172,22 @@ export default function OnboardingScreen({ navigation }: Props) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       addLog(`[Onboarding] Settings fetch failed for ${url}: ${message}. Trying fallback reachability...`, 'WARNING');
-      
-      const reachable = await checkReachability(url);
+
+      // A timeout is the silent-drop signature of Android's local-network
+      // protections (#1767) — the fallback would probe the same host and just
+      // add 10s of spinner, so ask for the permission instead. Fast HTTP
+      // errors (typo'd URL) go through the fallback as before.
+      const timedOut = err instanceof TimeoutError;
+      let reachable = false;
+      if (timedOut) {
+        const permission = await maybeAutoRequestLocalNetworkPermission();
+        if (permission === 'granted') {
+          reachable = await checkReachability(url);
+        }
+      } else {
+        reachable = await checkReachability(url);
+      }
+
       if (reachable) {
         setAuthSettings({
           trusted_origin: null,
@@ -173,6 +199,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         setPage(2);
       } else {
         setError('Could not reach server. Check the URL and try again.');
+        setShowLocalNetworkHint(!(await checkLocalNetworkPermission()));
       }
     } finally {
       setCheckingUrl(false);
@@ -315,13 +342,13 @@ export default function OnboardingScreen({ navigation }: Props) {
     setError('');
 
     try {
-      const response = await fetch(`${url}/api/identity/user`, {
+      const response = await fetchWithTimeout(`${url}/api/identity/user`, {
         method: 'GET',
         cache: 'no-store', // skip native HTTP cache to avoid 304 empty bodies (#1353)
         headers: {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
-      });
+      }, CONNECTION_CHECK_TIMEOUT_MS);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
@@ -506,6 +533,7 @@ export default function OnboardingScreen({ navigation }: Props) {
       </View>
 
       <ErrorBanner message={error} />
+      {showLocalNetworkHint && <LocalNetworkPermissionHint className="mb-4" />}
 
       {/* Actions */}
       <View className="gap-3 mt-2">

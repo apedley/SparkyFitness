@@ -145,6 +145,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       './plugins/withGlanceAndroidSupport',
       './plugins/withCalorieWidget',
       './plugins/withEnrichedMarkdownNoMath',
+      './plugins/withLocalNetworkPermission',
       ...(!isDev ? prodPlugins : []),
     ],
     extra: {

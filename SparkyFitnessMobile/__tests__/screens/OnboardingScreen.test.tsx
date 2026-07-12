@@ -2,8 +2,13 @@ import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from '../../src/screens/OnboardingScreen';
-import { login } from '../../src/services/api/authService';
+import { login, fetchAuthSettings } from '../../src/services/api/authService';
 import { saveServerConfig } from '../../src/services/storage';
+import {
+  checkLocalNetworkPermission,
+  maybeAutoRequestLocalNetworkPermission,
+} from '../../src/services/localNetworkPermission';
+import { TimeoutError } from '../../src/utils/concurrency';
 
 // Mock navigation
 const mockReplace = jest.fn();
@@ -25,6 +30,12 @@ jest.mock('../../src/services/api/authService', () => ({
   verifyTotp: jest.fn(),
   sendEmailOtp: jest.fn(),
   verifyEmailOtp: jest.fn(),
+  fetchAuthSettings: jest.fn(),
+}));
+
+jest.mock('../../src/services/localNetworkPermission', () => ({
+  checkLocalNetworkPermission: jest.fn(),
+  maybeAutoRequestLocalNetworkPermission: jest.fn(),
 }));
 
 jest.mock('../../src/services/storage', () => ({
@@ -46,11 +57,23 @@ global.fetch = mockFetch;
 
 const mockLogin = login as jest.MockedFunction<typeof login>;
 const mockSaveServerConfig = saveServerConfig as jest.MockedFunction<typeof saveServerConfig>;
+const mockFetchAuthSettings = fetchAuthSettings as jest.MockedFunction<typeof fetchAuthSettings>;
+const mockCheckLocalNetworkPermission = checkLocalNetworkPermission as jest.MockedFunction<
+  typeof checkLocalNetworkPermission
+>;
+const mockMaybeAutoRequest = maybeAutoRequestLocalNetworkPermission as jest.MockedFunction<
+  typeof maybeAutoRequestLocalNetworkPermission
+>;
 
 describe('OnboardingScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFetch.mockReset();
+    // Settings fetch fails by default so page-1 navigation exercises the
+    // reachability fallback (global fetch), like the pre-existing tests expect.
+    mockFetchAuthSettings.mockRejectedValue(new Error('settings unavailable'));
+    mockCheckLocalNetworkPermission.mockResolvedValue(true);
+    mockMaybeAutoRequest.mockResolvedValue('not-applicable');
   });
 
   const insets = { top: 0, bottom: 0, left: 0, right: 0 };
@@ -150,6 +173,79 @@ describe('OnboardingScreen', () => {
       });
 
       expect(mockReplace).toHaveBeenCalledWith('Tabs', { screen: 'Settings' });
+    });
+
+    test('timeout triggers the local-network auto-request and retries once when granted', async () => {
+      mockFetchAuthSettings.mockRejectedValueOnce(new TimeoutError('Request', 10_000));
+      mockMaybeAutoRequest.mockResolvedValueOnce('granted');
+      // Reachability retry after the grant succeeds
+      mockFetch.mockResolvedValueOnce({ ok: true });
+
+      const { getByText, getByPlaceholderText } = renderScreen();
+
+      fireEvent.changeText(
+        getByPlaceholderText('https://your-sparky-app.com'),
+        'https://example.com',
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('Next'));
+      });
+
+      await waitFor(() => {
+        expect(getByText('Connect to SparkyFitness')).toBeTruthy();
+      });
+      expect(mockMaybeAutoRequest).toHaveBeenCalledTimes(1);
+    });
+
+    test('timeout with denied permission shows the local-network hint without probing again', async () => {
+      mockFetchAuthSettings.mockRejectedValueOnce(new TimeoutError('Request', 10_000));
+      mockMaybeAutoRequest.mockResolvedValueOnce('denied');
+      mockCheckLocalNetworkPermission.mockResolvedValueOnce(false);
+
+      const { getByText, getByPlaceholderText } = renderScreen();
+
+      fireEvent.changeText(
+        getByPlaceholderText('https://your-sparky-app.com'),
+        'https://example.com',
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('Next'));
+      });
+
+      await waitFor(() => {
+        expect(
+          getByText('Could not reach server. Check the URL and try again.'),
+        ).toBeTruthy();
+      });
+      expect(getByText('Open Android settings')).toBeTruthy();
+      // A timeout skips the reachability fallback — it would probe the same host.
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    test('fast (non-timeout) failure does not auto-request the permission or show the hint', async () => {
+      mockFetchAuthSettings.mockRejectedValueOnce(new Error('HTTP 404'));
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const { getByText, getByPlaceholderText, queryByText } = renderScreen();
+
+      fireEvent.changeText(
+        getByPlaceholderText('https://your-sparky-app.com'),
+        'https://example.com',
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('Next'));
+      });
+
+      await waitFor(() => {
+        expect(
+          getByText('Could not reach server. Check the URL and try again.'),
+        ).toBeTruthy();
+      });
+      expect(mockMaybeAutoRequest).not.toHaveBeenCalled();
+      expect(queryByText('Open Android settings')).toBeNull();
     });
   });
 

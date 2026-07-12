@@ -18,6 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import Button from '../components/ui/Button';
 import Icon from '../components/Icon';
+import LocalNetworkPermissionHint from '../components/LocalNetworkPermissionHint';
 import ServerConfigModal from '../components/ServerConfigModal';
 import { useActiveWorkoutBarPadding } from '../components/ActiveWorkoutBar';
 import {
@@ -28,6 +29,10 @@ import {
 } from '../services/storage';
 import { addLog } from '../services/LogService';
 import { notifyNoConfigs } from '../services/api/authService';
+import {
+  checkLocalNetworkPermission,
+  maybeAutoRequestLocalNetworkPermission,
+} from '../services/localNetworkPermission';
 import { useNativeIOSHeadersActive } from '../services/nativeTabBarPreference';
 import { useScreenHeader } from '../hooks/useScreenHeader';
 import { useServerConfigs, useServerConnection } from '../hooks';
@@ -56,6 +61,7 @@ const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = () => {
   const [unifiedModalConfig, setUnifiedModalConfig] = useState<ServerConfig | null>(null);
   const [unifiedModalTab, setUnifiedModalTab] = useState<'signIn' | 'apiKey'>('signIn');
   const [isTesting, setIsTesting] = useState(false);
+  const [showLocalNetworkHint, setShowLocalNetworkHint] = useState(false);
 
   const otherConfigs = allConfigs.filter((c) => c.id !== activeConfig?.id);
 
@@ -165,7 +171,19 @@ const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = () => {
   const handleTestConnection = async (): Promise<void> => {
     setIsTesting(true);
     try {
-      const result = await refetchConnection();
+      let result = await refetchConnection();
+      if (result.data) {
+        setShowLocalNetworkHint(false);
+      } else {
+        // Any failure (this surface only sees a boolean) may be Android's
+        // local-network permission blocking the socket (#1767). The request
+        // fires at most once ever, so this stays quiet for ordinary failures.
+        const permission = await maybeAutoRequestLocalNetworkPermission();
+        if (permission === 'granted') {
+          result = await refetchConnection();
+        }
+        setShowLocalNetworkHint(!(await checkLocalNetworkPermission()));
+      }
       Toast.show({
         type: result.data ? 'success' : 'error',
         text1: result.data ? 'Connected' : 'Connection failed',
@@ -266,6 +284,7 @@ const ServerSettingsScreen: React.FC<ServerSettingsScreenProps> = () => {
                 )}
               </Button>
             </View>
+            {showLocalNetworkHint && <LocalNetworkPermissionHint className="mt-4" />}
           </View>
           </>
         )}

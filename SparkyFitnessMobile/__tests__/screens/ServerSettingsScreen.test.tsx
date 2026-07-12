@@ -11,6 +11,10 @@ import {
   type ServerConfig,
 } from '../../src/services/storage';
 import { notifyNoConfigs } from '../../src/services/api/authService';
+import {
+  checkLocalNetworkPermission,
+  maybeAutoRequestLocalNetworkPermission,
+} from '../../src/services/localNetworkPermission';
 import { useServerConfigs, useServerConnection } from '../../src/hooks';
 
 const mockGoBack = jest.fn();
@@ -31,6 +35,11 @@ jest.mock('../../src/services/storage', () => ({
 
 jest.mock('../../src/services/api/authService', () => ({
   notifyNoConfigs: jest.fn(),
+}));
+
+jest.mock('../../src/services/localNetworkPermission', () => ({
+  checkLocalNetworkPermission: jest.fn(),
+  maybeAutoRequestLocalNetworkPermission: jest.fn(),
 }));
 
 jest.mock('../../src/services/LogService', () => ({
@@ -74,6 +83,12 @@ const mockGetAllServerConfigs = getAllServerConfigs as jest.MockedFunction<typeo
 const mockSetActiveServerConfig = setActiveServerConfig as jest.MockedFunction<typeof setActiveServerConfig>;
 const mockDeleteServerConfig = deleteServerConfig as jest.MockedFunction<typeof deleteServerConfig>;
 const mockNotifyNoConfigs = notifyNoConfigs as jest.MockedFunction<typeof notifyNoConfigs>;
+const mockCheckLocalNetworkPermission = checkLocalNetworkPermission as jest.MockedFunction<
+  typeof checkLocalNetworkPermission
+>;
+const mockMaybeAutoRequest = maybeAutoRequestLocalNetworkPermission as jest.MockedFunction<
+  typeof maybeAutoRequestLocalNetworkPermission
+>;
 
 const insets = { top: 0, bottom: 0, left: 0, right: 0 };
 const frame = { x: 0, y: 0, width: 390, height: 844 };
@@ -103,6 +118,8 @@ describe('ServerSettingsScreen', () => {
       isError: false,
       refetch: mockRefetchConnection,
     } as any);
+    mockCheckLocalNetworkPermission.mockResolvedValue(true);
+    mockMaybeAutoRequest.mockResolvedValue('not-applicable');
   });
 
   test('promotes the next config to active when deleting the active server with another present', async () => {
@@ -220,5 +237,78 @@ describe('ServerSettingsScreen', () => {
         expect.objectContaining({ type: 'error', text1: 'Connection failed' }),
       );
     });
+  });
+
+  test('successful Test Connection does not auto-request the local-network permission', async () => {
+    const active = buildConfig('a', 'https://a.example.com');
+    mockUseServerConfigs.mockReturnValue({
+      allConfigs: [active],
+      activeConfig: active,
+      refetch: jest.fn(),
+      isLoading: false,
+    });
+    mockRefetchConnection.mockResolvedValueOnce({ data: true });
+
+    const { getByText } = renderScreen();
+
+    await act(async () => {
+      fireEvent.press(getByText('Test Connection'));
+    });
+
+    expect(mockMaybeAutoRequest).not.toHaveBeenCalled();
+  });
+
+  test('failed Test Connection auto-requests the permission and retries when granted', async () => {
+    const active = buildConfig('a', 'https://a.example.com');
+    mockUseServerConfigs.mockReturnValue({
+      allConfigs: [active],
+      activeConfig: active,
+      refetch: jest.fn(),
+      isLoading: false,
+    });
+    mockRefetchConnection
+      .mockResolvedValueOnce({ data: false })
+      .mockResolvedValueOnce({ data: true });
+    mockMaybeAutoRequest.mockResolvedValueOnce('granted');
+
+    const { getByText } = renderScreen();
+
+    await act(async () => {
+      fireEvent.press(getByText('Test Connection'));
+    });
+
+    await waitFor(() => {
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: 'Connected' }),
+      );
+    });
+    expect(mockMaybeAutoRequest).toHaveBeenCalledTimes(1);
+    expect(mockRefetchConnection).toHaveBeenCalledTimes(2);
+  });
+
+  test('failed Test Connection with denied permission shows the local-network hint', async () => {
+    const active = buildConfig('a', 'https://a.example.com');
+    mockUseServerConfigs.mockReturnValue({
+      allConfigs: [active],
+      activeConfig: active,
+      refetch: jest.fn(),
+      isLoading: false,
+    });
+    mockRefetchConnection.mockResolvedValueOnce({ data: false });
+    mockMaybeAutoRequest.mockResolvedValueOnce('denied');
+    mockCheckLocalNetworkPermission.mockResolvedValueOnce(false);
+
+    const { getByText } = renderScreen();
+
+    await act(async () => {
+      fireEvent.press(getByText('Test Connection'));
+    });
+
+    await waitFor(() => {
+      expect(getByText('Open Android settings')).toBeTruthy();
+    });
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'Connection failed' }),
+    );
   });
 });
