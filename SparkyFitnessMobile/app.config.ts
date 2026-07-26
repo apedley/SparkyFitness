@@ -155,6 +155,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       './plugins/withCalorieWidget',
       './plugins/withExactAlarmModule',
       './plugins/withEnrichedMarkdownNoMath',
+      './plugins/withAndroidTextClippingFix',
       [
         'expo-widgets',
         {
