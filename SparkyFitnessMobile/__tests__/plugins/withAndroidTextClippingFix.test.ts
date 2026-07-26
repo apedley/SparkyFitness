@@ -62,6 +62,7 @@ describe('addTextClippingFlagOverride', () => {
     const result = addTextClippingFlagOverride(MAIN_APPLICATION);
 
     for (const line of [
+      'import android.os.Build',
       'import android.util.Log',
       'import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags',
       'import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlagsDefaults',
@@ -76,6 +77,13 @@ describe('addTextClippingFlagOverride', () => {
       result.split('import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint\n')
         .length - 1,
     ).toBe(1);
+  });
+
+  it('logs that the override was applied so builds can be verified via adb', () => {
+    const result = addTextClippingFlagOverride(MAIN_APPLICATION);
+    expect(result).toContain(
+      '"Text-clipping flag override applied (API " + Build.VERSION.SDK_INT + ")"',
+    );
   });
 
   it('is idempotent', () => {

@@ -11,6 +11,7 @@ import { ConfigPlugin, withMainApplication } from 'expo/config-plugins';
 const FLAG_NAME = 'fixTextClippingAndroid15useBoundsForWidth';
 
 const FLAG_OVERRIDE_IMPORTS = [
+  'import android.os.Build',
   'import android.util.Log',
   'import com.facebook.react.common.ReleaseLevel',
   'import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint',
@@ -36,6 +37,9 @@ const FLAG_OVERRIDE_BLOCK = `    if (DefaultNewArchitectureEntryPoint.releaseLev
           override fun ${FLAG_NAME}(): Boolean = true
         }
       )
+      // The flag only takes effect on Android 15+ (API 35). \`adb logcat -s SparkyFitness\`
+      // verifies a given build actually contains this override and on which API level.
+      Log.i("SparkyFitness", "Text-clipping flag override applied (API " + Build.VERSION.SDK_INT + ")")
       if (accessedBeforeOverride != null) {
         Log.w("SparkyFitness", "Feature flags accessed before text-clipping override: " + accessedBeforeOverride)
       }
