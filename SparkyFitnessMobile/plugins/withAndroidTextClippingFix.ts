@@ -1,88 +1,56 @@
-// Works around Android 15+ text clipping (react-native#53666, #1905):
-// Android 15 renders text with bounds-based widths (`useBoundsForWidth`)
-// while React Native still measures with glyph advances, so measure and
-// render disagree and trailing glyphs get clipped on devices whose fonts
-// diverge (Samsung/OnePlus/Oppo). RN ships the fix behind the
-// `fixTextClippingAndroid15useBoundsForWidth` feature flag, default off;
-// this plugin enables it in MainApplication. Delete the plugin once React
-// Native flips the flag's default.
-import { ConfigPlugin, withMainApplication } from 'expo/config-plugins';
+// Works around Android 15+ text clipping on OEM devices (react-native#53666,
+// #1905): apps targeting SDK 35+ get bounds-based TextView width
+// (`useBoundsForWidth`), but React Native still measures text with glyph
+// advances, so on fonts whose glyph bounds overhang their advances
+// (Samsung/OnePlus/Oppo system fonts) rendered text needs more width than the
+// measured box and trailing glyphs clip. These theme items opt the render side
+// back into the pre-SDK-35 advance-based behavior so it matches RN's
+// measurement.
+//
+// Do not reach for RN's measure-side `fixTextClippingAndroid15useBoundsForWidth`
+// feature flag instead: it does not fix affected devices and upstream deleted
+// it as bug-implicated (react-native PR #56282). `elegantTextHeight` is
+// ignored on Android 16 for target-36 apps but still applies on Android 15
+// devices.
+import {
+  AndroidConfig,
+  ConfigPlugin,
+  withAndroidStyles,
+} from 'expo/config-plugins';
 
-const FLAG_NAME = 'fixTextClippingAndroid15useBoundsForWidth';
-
-const FLAG_OVERRIDE_IMPORTS = [
-  'import android.os.Build',
-  'import android.util.Log',
-  'import com.facebook.react.common.ReleaseLevel',
-  'import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint',
-  'import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags',
-  'import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlagsDefaults',
+const TEXT_MEASUREMENT_OPT_OUTS = [
+  { name: 'android:useBoundsForWidth', value: 'false', targetApi: '35' },
+  {
+    name: 'android:shiftDrawingOffsetForStartOverhang',
+    value: 'false',
+    targetApi: '35',
+  },
+  { name: 'android:elegantTextHeight', value: 'false' },
+  {
+    name: 'android:useLocalePreferredLineHeightForMinimum',
+    value: 'false',
+    targetApi: '33',
+  },
 ];
 
-// `loadReactNative()` installs the release-level flag overrides itself, and a
-// plain `ReactNativeFeatureFlags.override()` before it is clobbered by that
-// install while one after it throws ("cannot be overridden more than once").
-// `dangerouslyForceOverride` is RN's public API for replacing the installed
-// provider. The provider must keep every flag `load()` just set:
-// `ReactNativeFeatureFlagsOverrides_RNOSS_Stable_Android` is final, so it is
-// mirrored here (NewArchitectureDefaults + `useFabricInterop`) — keep in sync
-// with that class when upgrading RN. Skipped on non-stable release levels so
-// a canary/experimental experiment is not silently downgraded to
-// stable-plus-one-flag.
-const FLAG_OVERRIDE_BLOCK = `    if (DefaultNewArchitectureEntryPoint.releaseLevel == ReleaseLevel.STABLE) {
-      val accessedBeforeOverride = ReactNativeFeatureFlags.dangerouslyForceOverride(
-        // Mirrors ReactNativeFeatureFlagsOverrides_RNOSS_Stable_Android, which is final.
-        object : ReactNativeNewArchitectureFeatureFlagsDefaults() {
-          override fun useFabricInterop(): Boolean = true
-          override fun ${FLAG_NAME}(): Boolean = true
-        }
-      )
-      // The flag only takes effect on Android 15+ (API 35). \`adb logcat -s SparkyFitness\`
-      // verifies a given build actually contains this override and on which API level.
-      Log.i("SparkyFitness", "Text-clipping flag override applied (API " + Build.VERSION.SDK_INT + ")")
-      if (accessedBeforeOverride != null) {
-        Log.w("SparkyFitness", "Feature flags accessed before text-clipping override: " + accessedBeforeOverride)
-      }
-    }
-`;
-
-export function addTextClippingFlagOverride(src: string): string {
-  if (src.includes(FLAG_NAME)) {
-    return src;
+export function addTextMeasurementOptOuts(
+  styles: AndroidConfig.Resources.ResourceXML,
+): AndroidConfig.Resources.ResourceXML {
+  for (const { name, value, targetApi } of TEXT_MEASUREMENT_OPT_OUTS) {
+    styles = AndroidConfig.Styles.assignStylesValue(styles, {
+      add: true,
+      name,
+      value,
+      targetApi,
+      parent: AndroidConfig.Styles.getAppThemeGroup(),
+    });
   }
-
-  const importBlockMatch = src.match(/((?:^import [^\n]+\n)+)/m);
-  if (!importBlockMatch) {
-    throw new Error(
-      '[withAndroidTextClippingFix] Could not locate the import block in MainApplication.',
-    );
-  }
-  const block = importBlockMatch[1];
-  const missingImports = FLAG_OVERRIDE_IMPORTS.filter(
-    (line) => !src.includes(line),
-  );
-  src = src.replace(block, `${block}${missingImports.map((line) => `${line}\n`).join('')}`);
-
-  const loadCallMatch = src.match(/^[ \t]*loadReactNative\(this\)\n/m);
-  if (!loadCallMatch || loadCallMatch.index === undefined) {
-    throw new Error(
-      '[withAndroidTextClippingFix] Could not locate loadReactNative(this) in MainApplication.',
-    );
-  }
-  const insertAt = loadCallMatch.index + loadCallMatch[0].length;
-  return src.slice(0, insertAt) + FLAG_OVERRIDE_BLOCK + src.slice(insertAt);
+  return styles;
 }
 
 const withAndroidTextClippingFix: ConfigPlugin = (config) =>
-  withMainApplication(config, (config) => {
-    if (config.modResults.language !== 'kt') {
-      throw new Error(
-        '[withAndroidTextClippingFix] MainApplication is not Kotlin; update the plugin for the new template.',
-      );
-    }
-    config.modResults.contents = addTextClippingFlagOverride(
-      config.modResults.contents,
-    );
+  withAndroidStyles(config, (config) => {
+    config.modResults = addTextMeasurementOptOuts(config.modResults);
     return config;
   });
 

@@ -1,100 +1,86 @@
-import { addTextClippingFlagOverride } from '../../plugins/withAndroidTextClippingFix';
+import { AndroidConfig } from 'expo/config-plugins';
 
-const MAIN_APPLICATION = `package com.apedleydev.SparkyFitnessMobile.dev
+import { addTextMeasurementOptOuts } from '../../plugins/withAndroidTextClippingFix';
 
-import android.app.Application
-import android.content.res.Configuration
-import com.sparkyapps.sparkyfitness.exactalarm.ExactAlarmPackage
-import com.sparkyapps.sparkyfitness.widget.CalorieWidgetPackage
+type ResourceXML = AndroidConfig.Resources.ResourceXML;
 
-import com.facebook.react.PackageList
-import com.facebook.react.ReactApplication
-import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
-import com.facebook.react.ReactPackage
-import com.facebook.react.ReactHost
-import com.facebook.react.common.ReleaseLevel
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
-
-import expo.modules.ApplicationLifecycleDispatcher
-import expo.modules.ExpoReactHostFactory
-
-class MainApplication : Application(), ReactApplication {
-
-  override fun onCreate() {
-    super.onCreate()
-    DefaultNewArchitectureEntryPoint.releaseLevel = try {
-      ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
-    } catch (e: IllegalArgumentException) {
-      ReleaseLevel.STABLE
-    }
-    loadReactNative(this)
-    ApplicationLifecycleDispatcher.onApplicationCreate(this)
-  }
+function makeStylesXml(): ResourceXML {
+  return {
+    resources: {
+      style: [
+        {
+          $: { name: 'AppTheme', parent: 'Theme.AppCompat.DayNight.NoActionBar' },
+          item: [
+            {
+              $: { name: 'android:enforceNavigationBarContrast' },
+              _: 'false',
+            },
+            { $: { name: 'colorPrimary' }, _: '@color/colorPrimary' },
+          ],
+        },
+        {
+          $: { name: 'Theme.App.SplashScreen', parent: 'Theme.SplashScreen' },
+          item: [
+            {
+              $: { name: 'postSplashScreenTheme' },
+              _: '@style/AppTheme',
+            },
+          ],
+        },
+      ],
+    },
+  };
 }
-`;
 
-describe('addTextClippingFlagOverride', () => {
-  it('inserts the flag override immediately after loadReactNative(this)', () => {
-    const result = addTextClippingFlagOverride(MAIN_APPLICATION);
+const OPT_OUT_NAMES = [
+  'android:useBoundsForWidth',
+  'android:shiftDrawingOffsetForStartOverhang',
+  'android:elegantTextHeight',
+  'android:useLocalePreferredLineHeightForMinimum',
+];
 
-    const loadIndex = result.indexOf('loadReactNative(this)\n');
-    const overrideIndex = result.indexOf('dangerouslyForceOverride');
-    const lifecycleIndex = result.indexOf(
-      'ApplicationLifecycleDispatcher.onApplicationCreate(this)',
-    );
-    expect(loadIndex).toBeGreaterThan(-1);
-    expect(overrideIndex).toBeGreaterThan(loadIndex);
-    expect(lifecycleIndex).toBeGreaterThan(overrideIndex);
+function appThemeItems(xml: ResourceXML): Record<string, string> {
+  return (
+    AndroidConfig.Styles.getStylesGroupAsObject(xml, { name: 'AppTheme' }) ?? {}
+  );
+}
 
-    expect(result).toContain(
-      'override fun fixTextClippingAndroid15useBoundsForWidth(): Boolean = true',
-    );
-    expect(result).toContain(
-      'object : ReactNativeNewArchitectureFeatureFlagsDefaults()',
-    );
-    expect(result).toContain('override fun useFabricInterop(): Boolean = true');
-    expect(result).toContain(
-      'DefaultNewArchitectureEntryPoint.releaseLevel == ReleaseLevel.STABLE',
-    );
-  });
+describe('addTextMeasurementOptOuts', () => {
+  it('adds every text-measurement opt-out to AppTheme with value false', () => {
+    const result = addTextMeasurementOptOuts(makeStylesXml());
+    const items = appThemeItems(result);
 
-  it('adds the required imports without duplicating existing ones', () => {
-    const result = addTextClippingFlagOverride(MAIN_APPLICATION);
-
-    for (const line of [
-      'import android.os.Build',
-      'import android.util.Log',
-      'import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags',
-      'import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlagsDefaults',
-    ]) {
-      expect(result.split(`${line}\n`).length - 1).toBe(1);
+    for (const name of OPT_OUT_NAMES) {
+      expect(items[name]).toBe('false');
     }
-
-    expect(
-      result.split('import com.facebook.react.common.ReleaseLevel\n').length - 1,
-    ).toBe(1);
-    expect(
-      result.split('import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint\n')
-        .length - 1,
-    ).toBe(1);
   });
 
-  it('logs that the override was applied so builds can be verified via adb', () => {
-    const result = addTextClippingFlagOverride(MAIN_APPLICATION);
-    expect(result).toContain(
-      '"Text-clipping flag override applied (API " + Build.VERSION.SDK_INT + ")"',
-    );
+  it('preserves existing AppTheme items', () => {
+    const result = addTextMeasurementOptOuts(makeStylesXml());
+    const items = appThemeItems(result);
+
+    expect(items['android:enforceNavigationBarContrast']).toBe('false');
+    expect(items['colorPrimary']).toBe('@color/colorPrimary');
+  });
+
+  it('does not touch other styles', () => {
+    const result = addTextMeasurementOptOuts(makeStylesXml());
+    const splash = AndroidConfig.Styles.getStylesGroupAsObject(result, {
+      name: 'Theme.App.SplashScreen',
+    });
+
+    expect(splash).toEqual({ postSplashScreenTheme: '@style/AppTheme' });
   });
 
   it('is idempotent', () => {
-    const once = addTextClippingFlagOverride(MAIN_APPLICATION);
-    expect(addTextClippingFlagOverride(once)).toBe(once);
-  });
+    const once = addTextMeasurementOptOuts(makeStylesXml());
+    const twice = addTextMeasurementOptOuts(once);
 
-  it('throws when loadReactNative(this) is missing', () => {
-    const withoutLoad = MAIN_APPLICATION.replace('loadReactNative(this)\n', '');
-    expect(() => addTextClippingFlagOverride(withoutLoad)).toThrow(
-      /Could not locate loadReactNative/,
-    );
+    expect(twice).toEqual(once);
+    const appTheme = AndroidConfig.Styles.getStyleParent(twice, {
+      name: 'AppTheme',
+    });
+    const names = (appTheme?.item ?? []).map((item) => item.$.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 });
