@@ -28,7 +28,6 @@
       ],
       "react-native-health-connect",
       "expo-web-browser",
-      "expo-font",
       "expo-asset",
       "expo-background-task",
       "expo-secure-store",

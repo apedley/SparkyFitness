@@ -219,3 +219,29 @@
     }
   }
 }
+
+/* Android clips trailing glyphs on weighted text: OEM default fonts
+   (Samsung/OnePlus/Oppo) lack real 500-700 weight cuts, so the renderer
+   fake-bolds at draw time wider than the measured width and the last glyphs
+   are cut off (react-native#53666, #1905). Bundled Roboto statics
+   (assets/fonts, wired weight-by-weight via expo-font in app.config.ts) carry
+   true weights, so measurement and drawing agree. Android-only: iOS renders
+   San Francisco correctly and keeps it. */
+@utility font-medium {
+  font-weight: 500;
+  @variant android {
+    font-family: Roboto;
+  }
+}
+@utility font-semibold {
+  font-weight: 600;
+  @variant android {
+    font-family: Roboto;
+  }
+}
+@utility font-bold {
+  font-weight: 700;
+  @variant android {
+    font-family: Roboto;
+  }
+}

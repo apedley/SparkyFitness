@@ -151,6 +151,28 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       'expo-image',
+      [
+        // Weight-mapped Roboto statics for the Android text-clipping fix
+        // (#1905) — the font-medium/semibold/bold utilities in global.css set
+        // fontFamily 'Roboto' on Android so weighted text renders a true
+        // weight cut instead of OEM fake-bold that draws wider than measured.
+        'expo-font',
+        {
+          android: {
+            fonts: [
+              {
+                fontFamily: 'Roboto',
+                fontDefinitions: [
+                  { path: './assets/fonts/Roboto-Regular.ttf', weight: 400 },
+                  { path: './assets/fonts/Roboto-Medium.ttf', weight: 500 },
+                  { path: './assets/fonts/Roboto-SemiBold.ttf', weight: 600 },
+                  { path: './assets/fonts/Roboto-Bold.ttf', weight: 700 },
+                ],
+              },
+            ],
+          },
+        },
+      ],
       './plugins/withGlanceAndroidSupport',
       './plugins/withCalorieWidget',
       './plugins/withExactAlarmModule',
