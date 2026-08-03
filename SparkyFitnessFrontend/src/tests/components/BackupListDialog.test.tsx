@@ -7,6 +7,15 @@ import type { BackupFileInfo } from '@workspace/shared';
 
 jest.mock('@/hooks/Admin/useBackups');
 
+jest.mock('@/contexts/PreferencesContext', () => ({
+  usePreferences: () => ({
+    formatDate: (date: string | Date) =>
+      new Date(date).toISOString().slice(0, 10),
+    formatTime: (date: string | Date) =>
+      new Date(date).toISOString().slice(11, 16),
+  }),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (

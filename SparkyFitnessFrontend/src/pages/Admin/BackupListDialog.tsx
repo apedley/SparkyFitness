@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { BackupFileInfo } from '@workspace/shared';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { useBackupList, useDownloadBackupFile } from '@/hooks/Admin/useBackups';
 
 interface BackupListDialogProps {
@@ -77,6 +78,7 @@ export const BackupListDialog: React.FC<BackupListDialogProps> = ({
   onOpenChange,
 }) => {
   const { t } = useTranslation();
+  const { formatDate, formatTime } = usePreferences();
   const { data, isLoading, isError } = useBackupList(open);
   const {
     mutate: downloadFile,
@@ -193,10 +195,12 @@ export const BackupListDialog: React.FC<BackupListDialogProps> = ({
                                 {backup.fileName}
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
-                                {new Date(backup.createdAt).toLocaleString()}
+                                {formatDate(backup.createdAt)}{' '}
+                                {formatTime(backup.createdAt)}
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
-                                {new Date(backup.completedAt).toLocaleString()}
+                                {formatDate(backup.completedAt)}{' '}
+                                {formatTime(backup.completedAt)}
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
                                 {formatFileSize(backup.size)}
