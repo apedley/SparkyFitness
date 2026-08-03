@@ -54,3 +54,22 @@ describe('backupService has no shell-string call sites', () => {
     expect(source).not.toMatch(/executeCommand\(\s*`/);
   });
 });
+
+// The pool defaults the port to 5432 when SPARKY_FITNESS_DB_PORT is unset, so
+// the app runs fine without it — but a raw env read in the pg_dump/psql argv
+// yields a literal "undefined" port and breaks backup/restore on exactly
+// those setups. Every call site must go through the defaulted DB_PORT
+// constant.
+describe('backupService defaults the database port', () => {
+  const source = readFileSync(
+    fileURLToPath(new URL('../services/backupService.ts', import.meta.url)),
+    'utf8'
+  );
+
+  it('reads SPARKY_FITNESS_DB_PORT only once, with a 5432 fallback', () => {
+    expect(source.match(/process\.env\.SPARKY_FITNESS_DB_PORT/g)).toHaveLength(
+      1
+    );
+    expect(source).toMatch(/process\.env\.SPARKY_FITNESS_DB_PORT \|\| '5432'/);
+  });
+});

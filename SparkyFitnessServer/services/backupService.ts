@@ -21,6 +21,11 @@ const BACKUP_DIR = process.env.SPARKY_FITNESS_CUSTOM_BACKUP_DIRECTORY
 const UPLOADS_BASE_DIR = process.env.SPARKY_FITNESS_CUSTOM_UPLOADS_DIRECTORY
   ? path.resolve(process.env.SPARKY_FITNESS_CUSTOM_UPLOADS_DIRECTORY)
   : path.join(__dirname, '../uploads');
+
+// The app's pool falls back to 5432 when SPARKY_FITNESS_DB_PORT is unset
+// (db/poolManager.ts), so the app runs fine without it; the pg_dump/psql CLI
+// args must use the same default or backup/restore breaks on those setups.
+const DB_PORT = process.env.SPARKY_FITNESS_DB_PORT || '5432';
 // Ensure backup directory exists
 async function ensureBackupDirectory() {
   try {
@@ -79,7 +84,7 @@ async function performBackup(isManual = false) {
       '-h',
       process.env.SPARKY_FITNESS_DB_HOST,
       '-p',
-      process.env.SPARKY_FITNESS_DB_PORT,
+      DB_PORT,
       '-U',
       process.env.SPARKY_FITNESS_DB_USER,
       '-d',
@@ -292,7 +297,7 @@ async function performRestore(backupFilePath: any) {
         '-h',
         process.env.SPARKY_FITNESS_DB_HOST!,
         '-p',
-        process.env.SPARKY_FITNESS_DB_PORT!,
+        DB_PORT,
         '-U',
         process.env.SPARKY_FITNESS_DB_USER!,
         '-d',
@@ -317,7 +322,7 @@ async function performRestore(backupFilePath: any) {
       '-h',
       process.env.SPARKY_FITNESS_DB_HOST!,
       '-p',
-      process.env.SPARKY_FITNESS_DB_PORT!,
+      DB_PORT,
       '-U',
       process.env.SPARKY_FITNESS_DB_USER!,
       process.env.SPARKY_FITNESS_DB_NAME!,
@@ -344,7 +349,7 @@ async function performRestore(backupFilePath: any) {
       '-h',
       process.env.SPARKY_FITNESS_DB_HOST,
       '-p',
-      process.env.SPARKY_FITNESS_DB_PORT,
+      DB_PORT,
       '-U',
       process.env.SPARKY_FITNESS_DB_USER,
       '-d',
